@@ -1,4 +1,4 @@
-import { CalendarDays, Megaphone } from 'lucide-react-native';
+import { CalendarDays } from 'lucide-react-native';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -14,18 +14,20 @@ export function DatasetBadge({ sourceDate }: DatasetBadgeProps) {
 
   return (
     <View
-      className="flex-row items-center gap-2 self-start rounded-full border border-line-200 bg-paper-50 px-4 py-2"
+      className="flex-row items-center justify-between gap-3 rounded-full border border-line-200 bg-paper-50 px-4 py-3"
       style={surfaceShadow}
     >
-      <CalendarDays color={colors.inkMuted} size={16} />
-      <Text variant="caption" tone="muted">
-        {t('store.sourceDate')}: {sourceDate ?? '-'}
-      </Text>
-      <View className="h-4 w-px bg-line-200" />
-      <Megaphone color={colors.inkMuted} size={16} />
-      <Text variant="caption" tone="muted">
-        {t('app.unofficial')}
-      </Text>
+      <View className="min-w-0 flex-1 flex-row items-center gap-2">
+        <CalendarDays color={colors.inkMuted} size={18} />
+        <Text className="min-w-0" variant="caption" tone="muted">
+          {t('store.sourceDate')}: {sourceDate ?? '-'}
+        </Text>
+      </View>
+      <View className="shrink-0 rounded-full bg-emerald-50 px-3 py-1">
+        <Text className="text-water-500" variant="label">
+          {t('app.unofficial')}
+        </Text>
+      </View>
     </View>
   );
 }

@@ -47,7 +47,7 @@ export function Chip({
 
   return (
     <Pressable
-      className={`min-h-10 flex-row items-center gap-2 rounded-full border px-4 ${
+      className={`min-h-11 flex-row items-center gap-2 rounded-full border px-4 ${
         selected ? classes.selected : classes.unselected
       } ${disabled ? 'opacity-45' : 'opacity-100'} ${className}`}
       disabled={disabled}

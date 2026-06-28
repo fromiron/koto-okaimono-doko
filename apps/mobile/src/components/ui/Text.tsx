@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Text as NativeText, type TextProps as NativeTextProps } from 'react-native';
 
 type TextVariant = 'title' | 'subtitle' | 'body' | 'caption' | 'label';
-type TextTone = 'default' | 'muted' | 'danger' | 'inverse';
+type TextTone = 'default' | 'muted' | 'danger' | 'inverse' | 'teal';
 
 type TextProps = NativeTextProps & {
   children: ReactNode;
@@ -24,6 +24,7 @@ const toneClass: Record<TextTone, string> = {
   muted: 'text-ink-500',
   danger: 'text-red-700',
   inverse: 'text-white',
+  teal: 'text-water-500',
 };
 
 export function Text({

@@ -4,7 +4,6 @@ import type { ReactNode } from 'react';
 import { Image, Linking, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { BrandMark } from '@/src/components/brand/BrandMark';
 import { illustrations } from '@/src/assets/illustrations';
 import { IconBadge } from '@/src/components/ui/IconBadge';
 import { IconButton } from '@/src/components/ui/IconButton';
@@ -33,9 +32,16 @@ export default function AboutScreen() {
         <Image
           resizeMode="contain"
           source={illustrations.mapEmpty}
-          style={{ height: 192, width: '100%' }}
+          style={{ height: 180, width: '100%' }}
         />
-        <BrandMark centered />
+        <View className="mt-1 items-center gap-1">
+          <Text className="text-center text-water-700" variant="title">
+            koto okaimono doko
+          </Text>
+          <Text className="text-center text-water-500" variant="subtitle">
+            こうとうお買い物どこ
+          </Text>
+        </View>
       </View>
 
       <View className="gap-7 py-7">

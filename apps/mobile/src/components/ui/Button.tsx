@@ -5,7 +5,7 @@ import { colors } from '@/src/theme/tokens';
 
 import { Text } from './Text';
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'teal';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 type ButtonProps = PressableProps & {
@@ -22,13 +22,15 @@ const variantClass: Record<ButtonVariant, string> = {
   secondary: 'border border-water-700 bg-paper-50',
   ghost: 'bg-transparent',
   danger: 'bg-red-700',
+  teal: 'border border-water-500 bg-paper-50',
 };
 
-const textTone: Record<ButtonVariant, 'default' | 'inverse' | 'danger'> = {
+const textTone: Record<ButtonVariant, 'default' | 'inverse' | 'danger' | 'teal'> = {
   primary: 'inverse',
   secondary: 'default',
   ghost: 'default',
   danger: 'inverse',
+  teal: 'teal',
 };
 
 const sizeClass: Record<ButtonSize, string> = {
@@ -55,7 +57,11 @@ export function Button({
       disabled={isDisabled}
       {...props}
     >
-      {loading ? <ActivityIndicator color={variant === 'secondary' ? colors.primary : '#ffffff'} /> : null}
+      {loading ? (
+        <ActivityIndicator
+          color={variant === 'secondary' ? colors.primary : variant === 'teal' ? colors.teal : '#ffffff'}
+        />
+      ) : null}
       {!loading && leftIcon ? <View>{leftIcon}</View> : null}
       <Text variant="label" tone={textTone[variant]}>
         {children}

@@ -1,7 +1,7 @@
 import type { SupportedLocale } from '@koto/schema';
 import { supportedLocales } from '@koto/schema';
 import { useRouter } from 'expo-router';
-import { ChevronRight, CloudCog, FileText, Github, Info, LocateFixed, RefreshCcw } from 'lucide-react-native';
+import { ChevronRight, CloudCog, FileText, Github, Heart, Info, LocateFixed, RefreshCcw } from 'lucide-react-native';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { Linking, Pressable, Switch, View } from 'react-native';
@@ -80,17 +80,19 @@ export default function SettingsScreen() {
           </View>
         </View>
         <View className="mt-5 gap-3">
-          <Text variant="caption" tone="muted">
-            {t(`update.${updateStatus}`)}
-          </Text>
           <Button
             leftIcon={<RefreshCcw color={colors.teal} size={20} />}
             loading={updateStatus === 'checking' || updateStatus === 'downloading'}
             onPress={checkUpdate}
-            variant="secondary"
+            variant="teal"
           >
             {t('settings.checkUpdate')}
           </Button>
+          {updateStatus !== 'idle' ? (
+            <Text className="text-center" variant="caption" tone="muted">
+              {t(`update.${updateStatus}`)}
+            </Text>
+          ) : null}
           {pendingManifest ? (
             <Button onPress={applyUpdate}>
               {t('settings.applyUpdate')} {pendingManifest.version}
@@ -121,7 +123,7 @@ export default function SettingsScreen() {
       <SurfaceCard className="mb-8 px-5">
         <ActionRow
           icon={<Info color={colors.primary} size={28} />}
-          label={t('app.unofficial')}
+          label={t('settings.aboutApp')}
           onPress={() => router.push('/about')}
         />
         <ActionRow
@@ -157,7 +159,7 @@ export default function SettingsScreen() {
 
       <View className="items-center gap-2 pb-2">
         <View className="flex-row items-center gap-2">
-          <CloudCog color={colors.teal} size={22} />
+          <Heart color={colors.teal} fill={colors.teal} size={18} />
           <Text className="text-center" tone="muted">
             {t('settings.footer')}
           </Text>
@@ -184,13 +186,11 @@ function formatTimestamp(value: string | null) {
 
 function SettingRow({ divider = true, label, value }: { divider?: boolean; label: string; value: string }) {
   return (
-    <View className={`flex-row justify-between gap-3 py-3 ${divider ? 'border-b border-line-200' : ''}`}>
-      <Text className="min-w-0 flex-1 pr-2" tone="muted" variant="caption">
+    <View className={`flex-row items-center justify-between gap-3 py-3.5 ${divider ? 'border-b border-line-200' : ''}`}>
+      <Text className="min-w-0 flex-1 pr-2" tone="muted">
         {label}
       </Text>
-      <Text className="shrink-0 text-right" tone="muted" variant="caption">
-        {value}
-      </Text>
+      <Text className="shrink-0 text-right">{value}</Text>
     </View>
   );
 }

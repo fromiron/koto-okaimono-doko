@@ -1,5 +1,5 @@
 import type { Store } from '@koto/schema';
-import { Store as StoreIcon } from 'lucide-react-native';
+import { ChevronDown, Store as StoreIcon } from 'lucide-react-native';
 import { ScrollView, useWindowDimensions, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -58,6 +58,7 @@ function CollapsedContent({ count }: { count: number }) {
         <Text variant="subtitle">{t('map.visibleStores', { count })}</Text>
         <Text tone="muted">{t('map.selectPin')}</Text>
       </View>
+      <ChevronDown color={colors.inkMuted} size={26} />
     </View>
   );
 }
