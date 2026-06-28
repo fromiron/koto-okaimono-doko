@@ -32,7 +32,7 @@ map.
 | Token | Value | Role |
 |---|---:|---|
 | `radiusPill` | `999` | Chips and primary buttons |
-| `radiusCard` | `18` | Settings/About information cards |
+| `radiusCard` | `16` | Settings/About information cards |
 | `radiusSheet` | `28` | Bottom sheet top corners |
 | `radiusInput` | `28` | Search input |
 | `iconButtonSize` | `48` | Header, settings, current location buttons |
@@ -66,3 +66,51 @@ in code as `surfaceShadow`, `floatingButtonShadow`, and `bottomSheetShadow`.
   stores. Do not introduce a separate “cluster” concept in UI or code comments.
 - Japanese UI copy in `docs/wireframes.md` is the source copy. Other locales must
   have equivalent keys and must not overflow common Android screen widths.
+
+## Spacing, Grid & Layout Primitives
+
+`src/theme/tokens.ts` is the single source of truth. `src/global.css` `@theme` mirrors
+the color + radius tokens (semantic names: `primary`, `primary-soft`, `teal`,
+`teal-soft`, `coupon-b`, `purple`, `ink`, `muted`, `line`, `surface`, `page`,
+`neutral-soft`, `danger`, `danger-soft`, `facility`). `tokenParity.test.ts` keeps the
+two in sync; `styleGuard.test.ts` bans raw `rounded-[...]` and fractional spacing.
+
+### Spacing scale (4pt)
+
+| Token | px |
+|---|---:|
+| `xs` | 4 |
+| `sm` | 8 |
+| `md` | 12 |
+| `lg` | 16 |
+| `xl` | 20 |
+| `2xl` | 24 |
+| `3xl` | 32 |
+| `4xl` | 40 |
+
+Use the scale only; no off-grid values (`py-3.5`, etc. are banned by the guard test).
+
+### Semantic roles (`layout`)
+
+| Role | Value |
+|---|---:|
+| `screenGutter` | 20 |
+| `cardPadding` | 16 |
+| `sectionGap` | 24 |
+| `stackGap` | 12 |
+| `inlineGap` | 8 |
+
+### Layout primitives
+
+Apply spacing through primitives, not ad-hoc margins:
+
+- `Stack` — vertical rhythm (`gap` token)
+- `Row` — horizontal, `align` (`center`/`start`/`end`/`stretch`) + `gap`
+- `Wrap` — wrapping chip / tag clusters
+- `Section` — titled block (blue label + token-spaced content)
+- `Screen` — page container with `screenGutter`
+
+### Icon sizes (`iconSizes`)
+
+`sm` 16 · `md` 20 · `lg` 24 · `xl` 28. The brand mark (13 / 42) and the Settings
+dataset hero icon (48) are intentional exceptions.

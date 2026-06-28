@@ -13,24 +13,24 @@ type ChipProps = PressableProps & {
 
 const toneClass = {
   primary: {
-    selected: 'border-water-700 bg-water-700',
-    unselected: 'border-water-700 bg-paper-50',
-    text: 'text-water-700',
+    selected: 'border-primary bg-primary',
+    unselected: 'border-primary bg-surface',
+    text: 'text-primary',
   },
   orange: {
     selected: 'border-coupon-b bg-coupon-b',
-    unselected: 'border-coupon-b bg-paper-50',
+    unselected: 'border-coupon-b bg-surface',
     text: 'text-coupon-b',
   },
   teal: {
-    selected: 'border-water-500 bg-water-500',
-    unselected: 'border-water-500 bg-paper-50',
-    text: 'text-water-500',
+    selected: 'border-teal bg-teal',
+    unselected: 'border-teal bg-surface',
+    text: 'text-teal',
   },
   purple: {
-    selected: 'border-violet-700 bg-violet-700',
-    unselected: 'border-violet-700 bg-paper-50',
-    text: 'text-violet-700',
+    selected: 'border-purple bg-purple',
+    unselected: 'border-purple bg-surface',
+    text: 'text-purple',
   },
 };
 

@@ -20,11 +20,11 @@ const variantClass: Record<TextVariant, string> = {
 };
 
 const toneClass: Record<TextTone, string> = {
-  default: 'text-ink-950',
-  muted: 'text-ink-500',
-  danger: 'text-red-700',
+  default: 'text-ink',
+  muted: 'text-muted',
+  danger: 'text-danger',
   inverse: 'text-white',
-  teal: 'text-water-500',
+  teal: 'text-teal',
 };
 
 export function Text({

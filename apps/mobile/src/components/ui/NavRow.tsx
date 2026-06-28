@@ -38,7 +38,7 @@ export function NavRow({
       <Text className="min-w-0 flex-1" variant={labelVariant}>
         {label}
       </Text>
-      <ChevronRight color={colors.inkMuted} size={28} />
+      <ChevronRight color={colors.muted} size={28} />
     </>
   );
 
@@ -52,7 +52,7 @@ export function NavRow({
 
   return (
     <Pressable
-      className={`flex-row items-center gap-4 py-5 ${divider ? 'border-b border-line-200' : ''}`}
+      className={`flex-row items-center gap-4 py-5 ${divider ? 'border-b border-line' : ''}`}
       onPress={onPress}
     >
       {content}

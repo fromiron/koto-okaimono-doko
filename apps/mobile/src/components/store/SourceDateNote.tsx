@@ -10,8 +10,8 @@ export function SourceDateNote({ sourceDate }: { sourceDate: string }) {
   const { t } = useTranslation();
 
   return (
-    <View className="flex-row items-center gap-2 rounded-2xl border border-line-200 px-4 py-3">
-      <CalendarDays color={colors.inkMuted} size={18} />
+    <View className="flex-row items-center gap-2 rounded-card border border-line px-4 py-3">
+      <CalendarDays color={colors.muted} size={16} />
       <Text tone="muted" variant="caption">
         {t('store.sourceDate')}: {sourceDate}
       </Text>

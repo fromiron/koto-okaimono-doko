@@ -18,7 +18,7 @@ export function SurfaceCard({
 }: SurfaceCardProps) {
   return (
     <View
-      className={`rounded-[18px] border border-line-200 bg-paper-50 ${className}`}
+      className={`rounded-card border border-line bg-surface ${className}`}
       style={[shadow ? surfaceShadow : null, style]}
       {...props}
     >

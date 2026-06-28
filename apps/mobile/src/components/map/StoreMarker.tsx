@@ -34,7 +34,7 @@ export function StoreMarker({ id, lat, lng, onPress, selected = false, stores }:
         {selected ? <View style={isFacility ? styles.haloCircle : styles.haloPin} /> : null}
         {isFacility ? (
           <View style={[styles.facility, selected && styles.facilityScaled]}>
-            <StoreGlyph color={colors.surface} size={22} strokeWidth={2.4} />
+            <StoreGlyph color={colors.surface} size={20} strokeWidth={2.4} />
           </View>
         ) : (
           <View style={[styles.pin, { backgroundColor: descriptor.color }, selected && styles.pinScaled]}>

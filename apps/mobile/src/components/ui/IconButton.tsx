@@ -30,7 +30,7 @@ export function IconButton({
   return (
     <Pressable
       className={`h-12 w-12 items-center justify-center rounded-full border ${
-        selected ? 'border-water-700 bg-water-700' : 'border-line-200 bg-paper-50'
+        selected ? 'border-primary bg-primary' : 'border-line bg-surface'
       } ${disabled ? 'opacity-45' : 'opacity-100'} ${className}`}
       disabled={disabled}
       style={mergedStyle}

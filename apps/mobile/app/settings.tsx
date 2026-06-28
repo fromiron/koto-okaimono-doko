@@ -11,16 +11,20 @@ import { Button } from '@/src/components/ui/Button';
 import { Chip } from '@/src/components/ui/Chip';
 import { IconBadge } from '@/src/components/ui/IconBadge';
 import { NavRow } from '@/src/components/ui/NavRow';
+import { Row } from '@/src/components/ui/Row';
 import { Screen } from '@/src/components/ui/Screen';
+import { Section } from '@/src/components/ui/Section';
+import { Stack } from '@/src/components/ui/Stack';
 import { SurfaceCard } from '@/src/components/ui/SurfaceCard';
 import { Text } from '@/src/components/ui/Text';
+import { Wrap } from '@/src/components/ui/Wrap';
 import { useDatasetStore } from '@/src/features/dataset/datasetStore';
 import { useDatasetUpdate } from '@/src/features/dataset/useDatasetUpdate';
 import { useStoreRepository } from '@/src/features/db/useStoreRepository';
 import { setStoredLocationEnabled } from '@/src/features/preferences/locationPreference';
 import { usePreferencesStore } from '@/src/features/preferences/preferencesStore';
 import { getStoredLanguage, setStoredLanguage } from '@/src/i18n';
-import { colors } from '@/src/theme/tokens';
+import { colors, iconSizes } from '@/src/theme/tokens';
 
 const localeLabels: Record<SupportedLocale, string> = {
   ja: '日本語',
@@ -53,122 +57,120 @@ export default function SettingsScreen() {
     <Screen>
       <AppHeader centeredBrand showBack title={t('settings.title')} />
 
-      <SectionTitle>{t('settings.dataset')}</SectionTitle>
-      <SurfaceCard className="mb-8 overflow-hidden px-5 py-5">
-        <View className="flex-row gap-5">
-          <View className="h-24 w-24 flex-shrink-0 items-center justify-center rounded-[24px] bg-water-100">
-            <CloudCog color={colors.primary} size={48} />
-          </View>
-          <View className="min-w-0 flex-1">
-            <SettingRow label={t('settings.version')} value={meta?.version ?? '-'} />
-            <SettingRow label={t('settings.officialUpdatedAt')} value={meta?.officialUpdatedAt ?? '-'} />
-            <SettingRow divider={false} label={t('settings.lastCheckedAt')} value={formatTimestamp(lastCheckedAt)} />
-          </View>
-        </View>
-        <View className="mt-5 gap-3">
-          <Button
-            leftIcon={<RefreshCcw color={colors.teal} size={20} />}
-            loading={updateStatus === 'checking' || updateStatus === 'downloading'}
-            onPress={checkUpdate}
-            variant="teal"
-          >
-            {t('settings.checkUpdate')}
-          </Button>
-          {updateStatus !== 'idle' ? (
-            <Text className="text-center" variant="caption" tone="muted">
-              {t(`update.${updateStatus}`)}
+      <Stack gap="2xl">
+        <Section title={t('settings.dataset')}>
+          <SurfaceCard className="overflow-hidden p-4">
+            <Row align="start" gap="lg">
+              <View className="h-24 w-24 flex-shrink-0 items-center justify-center rounded-card bg-primary-soft">
+                <CloudCog color={colors.primary} size={48} />
+              </View>
+              <View className="min-w-0 flex-1">
+                <SettingRow label={t('settings.version')} value={meta?.version ?? '-'} />
+                <SettingRow label={t('settings.officialUpdatedAt')} value={meta?.officialUpdatedAt ?? '-'} />
+                <SettingRow divider={false} label={t('settings.lastCheckedAt')} value={formatTimestamp(lastCheckedAt)} />
+              </View>
+            </Row>
+            <Stack className="mt-4" gap="md">
+              <Button
+                leftIcon={<RefreshCcw color={colors.teal} size={iconSizes.md} />}
+                loading={updateStatus === 'checking' || updateStatus === 'downloading'}
+                onPress={checkUpdate}
+                variant="teal"
+              >
+                {t('settings.checkUpdate')}
+              </Button>
+              {updateStatus !== 'idle' ? (
+                <Text className="text-center" tone="muted" variant="caption">
+                  {t(`update.${updateStatus}`)}
+                </Text>
+              ) : null}
+              {pendingManifest ? (
+                <Button onPress={applyUpdate}>
+                  {t('settings.applyUpdate')} {pendingManifest.version}
+                </Button>
+              ) : null}
+            </Stack>
+          </SurfaceCard>
+        </Section>
+
+        <Section title={t('settings.locationTitle')}>
+          <SurfaceCard className="px-4">
+            <Row className="py-4" gap="md">
+              <IconBadge>
+                <LocateFixed color={colors.primary} size={iconSizes.xl} />
+              </IconBadge>
+              <Stack className="min-w-0 flex-1" gap="xs">
+                <Text>{t('settings.locationUse')}</Text>
+                <Text tone="muted">{t('settings.locationDetail')}</Text>
+              </Stack>
+            </Row>
+            <Row className="justify-between border-t border-line py-4">
+              <Text>{t('settings.locationToggle')}</Text>
+              <Switch
+                onValueChange={(next) => {
+                  setLocationEnabled(next);
+                  void setStoredLocationEnabled(next);
+                }}
+                trackColor={{ false: colors.line, true: colors.primary }}
+                value={locationEnabled}
+              />
+            </Row>
+          </SurfaceCard>
+        </Section>
+
+        <Section title={t('settings.appInfo')}>
+          <SurfaceCard className="px-4">
+            <NavRow
+              icon={<Info color={colors.primary} size={iconSizes.xl} />}
+              label={t('settings.aboutApp')}
+              onPress={() => router.push('/about')}
+            />
+            <NavRow
+              icon={<Github color={colors.primary} size={iconSizes.xl} />}
+              label={t('settings.github')}
+              onPress={() => Linking.openURL('https://github.com/fromiron/koto-okaimono-doko')}
+            />
+            <NavRow
+              divider={false}
+              icon={<FileText color={colors.primary} size={iconSizes.xl} />}
+              label={t('settings.license')}
+              onPress={() => Linking.openURL('https://github.com/fromiron/koto-okaimono-doko/blob/main/apps/mobile/LICENSE')}
+            />
+          </SurfaceCard>
+        </Section>
+
+        <Section title={t('settings.language')}>
+          <SurfaceCard className="p-4">
+            <Wrap gap="sm">
+              {supportedLocales.map((locale) => (
+                <Chip
+                  key={locale}
+                  selected={language === locale}
+                  onPress={() => {
+                    setLanguage(locale);
+                    void setStoredLanguage(locale);
+                  }}
+                >
+                  {localeLabels[locale]}
+                </Chip>
+              ))}
+            </Wrap>
+          </SurfaceCard>
+        </Section>
+
+        <Stack className="items-center pb-2" gap="sm">
+          <Row gap="sm">
+            <Heart color={colors.teal} fill={colors.teal} size={iconSizes.sm} />
+            <Text className="text-center" tone="muted">
+              {t('settings.footer')}
             </Text>
-          ) : null}
-          {pendingManifest ? (
-            <Button onPress={applyUpdate}>
-              {t('settings.applyUpdate')} {pendingManifest.version}
-            </Button>
-          ) : null}
-        </View>
-      </SurfaceCard>
-
-      <SectionTitle>{t('settings.locationTitle')}</SectionTitle>
-      <SurfaceCard className="mb-8 px-5">
-        <View className="flex-row items-center gap-4 py-5">
-          <IconBadge>
-            <LocateFixed color={colors.primary} size={28} />
-          </IconBadge>
-          <View className="min-w-0 flex-1">
-            <Text>{t('settings.locationUse')}</Text>
-            <Text tone="muted">{t('settings.locationDetail')}</Text>
-          </View>
-        </View>
-        <View className="flex-row items-center justify-between border-t border-line-200 py-4">
-          <Text>{t('settings.locationToggle')}</Text>
-          <Switch
-            onValueChange={(next) => {
-              setLocationEnabled(next);
-              void setStoredLocationEnabled(next);
-            }}
-            trackColor={{ false: colors.line, true: colors.primary }}
-            value={locationEnabled}
-          />
-        </View>
-      </SurfaceCard>
-
-      <SectionTitle>{t('settings.appInfo')}</SectionTitle>
-      <SurfaceCard className="mb-8 px-5">
-        <NavRow
-          icon={<Info color={colors.primary} size={28} />}
-          label={t('settings.aboutApp')}
-          onPress={() => router.push('/about')}
-        />
-        <NavRow
-          icon={<Github color={colors.primary} size={28} />}
-          label={t('settings.github')}
-          onPress={() => Linking.openURL('https://github.com/fromiron/koto-okaimono-doko')}
-        />
-        <NavRow
-          divider={false}
-          icon={<FileText color={colors.primary} size={28} />}
-          label={t('settings.license')}
-          onPress={() => Linking.openURL('https://github.com/fromiron/koto-okaimono-doko/blob/main/apps/mobile/LICENSE')}
-        />
-      </SurfaceCard>
-
-      <SectionTitle>{t('settings.language')}</SectionTitle>
-      <SurfaceCard className="mb-8 px-5 py-5">
-        <View className="flex-row flex-wrap gap-3">
-          {supportedLocales.map((locale) => (
-            <Chip
-              key={locale}
-              selected={language === locale}
-              onPress={() => {
-                setLanguage(locale);
-                void setStoredLanguage(locale);
-              }}
-            >
-              {localeLabels[locale]}
-            </Chip>
-          ))}
-        </View>
-      </SurfaceCard>
-
-      <View className="items-center gap-2 pb-2">
-        <View className="flex-row items-center gap-2">
-          <Heart color={colors.teal} fill={colors.teal} size={18} />
-          <Text className="text-center" tone="muted">
-            {t('settings.footer')}
+          </Row>
+          <Text tone="muted" variant="caption">
+            © 2026 koto okaimono doko
           </Text>
-        </View>
-        <Text variant="caption" tone="muted">
-          © 2026 koto okaimono doko
-        </Text>
-      </View>
+        </Stack>
+      </Stack>
     </Screen>
-  );
-}
-
-function SectionTitle({ children }: { children: string }) {
-  return (
-    <Text className="mb-3 text-water-700" variant="subtitle">
-      {children}
-    </Text>
   );
 }
 
@@ -178,7 +180,7 @@ function formatTimestamp(value: string | null) {
 
 function SettingRow({ divider = true, label, value }: { divider?: boolean; label: string; value: string }) {
   return (
-    <View className={`flex-row items-center justify-between gap-3 py-3.5 ${divider ? 'border-b border-line-200' : ''}`}>
+    <View className={`flex-row items-center justify-between gap-3 py-3 ${divider ? 'border-b border-line' : ''}`}>
       <Text className="min-w-0 flex-1 pr-2" tone="muted">
         {label}
       </Text>

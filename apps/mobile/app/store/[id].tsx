@@ -52,12 +52,12 @@ export default function StoreDetailScreen() {
         <View className="min-h-12 flex-row items-center justify-between gap-3">
           <BrandMark />
           <IconButton onPress={() => router.push('/settings')}>
-            <Settings color={colors.inkMuted} size={26} />
+            <Settings color={colors.muted} size={24} />
           </IconButton>
         </View>
         <View className="mt-4 flex-row items-center justify-between">
           <IconButton onPress={() => router.back()}>
-            <ChevronLeft color={colors.ink} size={26} />
+            <ChevronLeft color={colors.ink} size={24} />
           </IconButton>
           <Text className="text-center" variant="title">
             {t('store.detailTitle')}
@@ -70,8 +70,8 @@ export default function StoreDetailScreen() {
         <StoreDetailContent mode="page" sourceDate={sourceDate} stores={[store]} userLocation={userLocation} />
       ) : (
         <View className="items-center gap-4 pt-10">
-          <View className="h-16 w-16 items-center justify-center rounded-full bg-red-50">
-            <AlertCircle color={colors.danger} size={32} />
+          <View className="h-16 w-16 items-center justify-center rounded-full bg-danger-soft">
+            <AlertCircle color={colors.danger} size={28} />
           </View>
           <Text className="text-center" variant="subtitle">
             {t('store.missingTitle')}

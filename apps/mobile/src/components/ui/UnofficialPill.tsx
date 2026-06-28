@@ -8,8 +8,8 @@ export function UnofficialPill({ className = '' }: { className?: string }) {
   const { t } = useTranslation();
 
   return (
-    <View className={`rounded-full bg-emerald-50 px-3 py-1 ${className}`}>
-      <Text className="text-water-500" variant="label">
+    <View className={`rounded-full bg-teal-soft px-3 py-1 ${className}`}>
+      <Text className="text-teal" variant="label">
         {t('app.unofficial')}
       </Text>
     </View>

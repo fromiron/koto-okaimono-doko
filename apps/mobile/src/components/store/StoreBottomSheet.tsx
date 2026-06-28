@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/src/components/ui/Button';
 import { Text } from '@/src/components/ui/Text';
 import type { LatLng } from '@/src/features/map/mapStore';
-import { bottomSheetShadow, colors } from '@/src/theme/tokens';
+import { bottomSheetShadow, colors, radii } from '@/src/theme/tokens';
 
 import { sheetSnapIndex } from './bottomSheetSnap';
 import { StoreDetailContent } from './StoreDetailContent';
@@ -44,7 +44,7 @@ export function StoreBottomSheet({
   return (
     <BottomSheet
       ref={sheetRef}
-      backgroundStyle={{ backgroundColor: colors.surface, borderRadius: 28 }}
+      backgroundStyle={{ backgroundColor: colors.surface, borderRadius: radii.sheet }}
       bottomInset={insets.bottom}
       enableDynamicSizing={false}
       handleIndicatorStyle={{ backgroundColor: colors.line, width: 56 }}
@@ -84,14 +84,14 @@ function CollapsedContent({ count, onResetFilters }: { count: number; onResetFil
 
   return (
     <View className="flex-row items-center gap-4 px-5 pb-6 pt-1">
-      <View className="h-12 w-12 items-center justify-center rounded-full bg-paper-200">
-        <StoreIcon color={colors.primary} size={26} />
+      <View className="h-12 w-12 items-center justify-center rounded-full bg-primary-soft">
+        <StoreIcon color={colors.primary} size={24} />
       </View>
       <View className="min-w-0 flex-1">
         <Text variant="subtitle">{t('map.visibleStores', { count })}</Text>
         <Text tone="muted">{t('map.selectPin')}</Text>
       </View>
-      <ChevronDown color={colors.inkMuted} size={26} />
+      <ChevronDown color={colors.muted} size={24} />
     </View>
   );
 }

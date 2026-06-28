@@ -18,10 +18,10 @@ export function BrandMark({ centered = false, compact = false }: BrandMarkProps)
       </View>
       {!compact ? (
         <View className="min-w-0">
-          <Text className="text-water-700" variant="label">
+          <Text className="text-primary" variant="label">
             こうとうお買い物どこ
           </Text>
-          <Text className="text-water-500" variant="caption">
+          <Text className="text-teal" variant="caption">
             koto okaimono doko
           </Text>
         </View>
