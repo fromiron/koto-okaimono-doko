@@ -4,6 +4,7 @@ import type MapView from 'react-native-maps';
 import { IconButton } from '@/src/components/ui/IconButton';
 import { useCurrentLocation } from '@/src/features/location/useCurrentLocation';
 import { useMapStore } from '@/src/features/map/mapStore';
+import { colors } from '@/src/theme/tokens';
 
 type UserLocationButtonProps = {
   mapRef: React.RefObject<MapView | null>;
@@ -32,7 +33,7 @@ export function UserLocationButton({ mapRef }: UserLocationButtonProps) {
         );
       }}
     >
-      <LocateFixed color="#176762" size={22} />
+      <LocateFixed color={colors.primary} size={24} />
     </IconButton>
   );
 }

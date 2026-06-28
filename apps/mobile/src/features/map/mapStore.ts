@@ -22,10 +22,10 @@ type MapState = {
 };
 
 export const KOTO_INITIAL_REGION: MapRegion = {
-  latitude: 35.6728,
-  longitude: 139.8174,
-  latitudeDelta: 0.075,
-  longitudeDelta: 0.075,
+  latitude: 35.674,
+  longitude: 139.81,
+  latitudeDelta: 0.009,
+  longitudeDelta: 0.011,
 };
 
 export const useMapStore = create<MapState>((set) => ({

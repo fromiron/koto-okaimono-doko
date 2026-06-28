@@ -16,11 +16,14 @@ export default function RootLayout() {
           <Stack
             screenOptions={{
               headerShown: false,
-              contentStyle: { backgroundColor: '#faf8f2' },
+              contentStyle: { backgroundColor: '#F4FAFF' },
             }}
           >
             <Stack.Screen name="index" />
-            <Stack.Screen name="filters" options={{ presentation: 'modal' }} />
+            <Stack.Screen
+              name="filters"
+              options={{ animation: 'fade', presentation: 'transparentModal' }}
+            />
             <Stack.Screen name="settings" />
             <Stack.Screen name="about" />
             <Stack.Screen name="store/[id]" />

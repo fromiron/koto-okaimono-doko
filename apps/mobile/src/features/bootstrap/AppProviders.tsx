@@ -79,7 +79,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
   if (bootState === 'failed') {
     return (
-      <View className="flex-1 items-center justify-center gap-3 bg-paper-50 px-6">
+      <View className="flex-1 items-center justify-center gap-3 bg-paper-100 px-6">
         <Text variant="subtitle">Database error</Text>
         <Text className="text-center" tone="danger">
           {bootError}

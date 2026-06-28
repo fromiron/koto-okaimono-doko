@@ -13,10 +13,10 @@ type TextProps = NativeTextProps & {
 
 const variantClass: Record<TextVariant, string> = {
   title: 'text-3xl font-bold leading-tight',
-  subtitle: 'text-xl font-semibold leading-snug',
+  subtitle: 'text-xl font-bold leading-snug',
   body: 'text-base leading-relaxed',
   caption: 'text-xs leading-normal',
-  label: 'text-sm font-semibold leading-tight',
+  label: 'text-sm font-bold leading-tight',
 };
 
 const toneClass: Record<TextTone, string> = {

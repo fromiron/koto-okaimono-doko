@@ -23,7 +23,7 @@ const initialState = {
   couponType: 'all' as const,
   payment: 'all' as const,
   categoryMajorId: null,
-  radiusMeters: 500 as const,
+  radiusMeters: 1000 as const,
 };
 
 export const useFilterStore = create<FilterState>((set) => ({

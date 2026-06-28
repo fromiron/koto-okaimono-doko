@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { ActivityIndicator, Pressable, type PressableProps, View } from 'react-native';
 
+import { colors } from '@/src/theme/tokens';
+
 import { Text } from './Text';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
@@ -17,7 +19,7 @@ type ButtonProps = PressableProps & {
 
 const variantClass: Record<ButtonVariant, string> = {
   primary: 'bg-water-700',
-  secondary: 'bg-paper-100 border border-line-200',
+  secondary: 'border border-water-700 bg-paper-50',
   ghost: 'bg-transparent',
   danger: 'bg-red-700',
 };
@@ -32,7 +34,7 @@ const textTone: Record<ButtonVariant, 'default' | 'inverse' | 'danger'> = {
 const sizeClass: Record<ButtonSize, string> = {
   sm: 'min-h-9 px-3',
   md: 'min-h-11 px-4',
-  lg: 'min-h-12 px-5',
+  lg: 'min-h-14 px-5',
 };
 
 export function Button({
@@ -53,7 +55,7 @@ export function Button({
       disabled={isDisabled}
       {...props}
     >
-      {loading ? <ActivityIndicator color={variant === 'secondary' ? '#121417' : '#ffffff'} /> : null}
+      {loading ? <ActivityIndicator color={variant === 'secondary' ? colors.primary : '#ffffff'} /> : null}
       {!loading && leftIcon ? <View>{leftIcon}</View> : null}
       <Text variant="label" tone={textTone[variant]}>
         {children}

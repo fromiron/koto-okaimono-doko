@@ -13,7 +13,7 @@ export function Screen({ children, scroll = true }: ScreenProps) {
 
   if (!scroll) {
     return (
-      <View className="flex-1 bg-paper-50 px-5" style={{ paddingTop }}>
+      <View className="flex-1 bg-paper-100 px-5" style={{ paddingTop }}>
         {children}
       </View>
     );
@@ -21,7 +21,7 @@ export function Screen({ children, scroll = true }: ScreenProps) {
 
   return (
     <ScrollView
-      className="flex-1 bg-paper-50"
+      className="flex-1 bg-paper-100"
       contentContainerStyle={{ paddingTop, paddingBottom: 40, paddingHorizontal: 20 }}
     >
       {children}
