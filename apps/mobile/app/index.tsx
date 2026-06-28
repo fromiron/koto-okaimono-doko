@@ -91,10 +91,13 @@ export default function MapScreen() {
   const handleRegionChange = useCallback(
     (nextRegion: typeof region) => {
       setRegion(nextRegion);
-      clearSelectedStore();
     },
-    [clearSelectedStore, setRegion],
+    [setRegion],
   );
+
+  const handleMapPanDrag = useCallback(() => {
+    clearSelectedStore();
+  }, [clearSelectedStore]);
 
   return (
     <View className="flex-1 bg-paper-50">
@@ -102,6 +105,7 @@ export default function MapScreen() {
         groups={groups}
         initialRegion={KOTO_INITIAL_REGION}
         mapRef={mapRef}
+        onMapPanDrag={handleMapPanDrag}
         onRegionChangeComplete={handleRegionChange}
         onSelectStores={(stores) => selectStores(stores.map((store) => store.id))}
       />

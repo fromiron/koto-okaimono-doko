@@ -16,6 +16,7 @@ type StoreMapProps = {
   mapRef: RefObject<MapView | null>;
   initialRegion: MapRegion;
   groups: StoreLocationGroup[];
+  onMapPanDrag: () => void;
   onRegionChangeComplete: (region: MapRegion) => void;
   onSelectStores: (stores: Store[]) => void;
 };
@@ -24,6 +25,7 @@ export function StoreMap({
   groups,
   initialRegion,
   mapRef,
+  onMapPanDrag,
   onRegionChangeComplete,
   onSelectStores,
 }: StoreMapProps) {
@@ -31,6 +33,7 @@ export function StoreMap({
     <MapView
       ref={mapRef}
       initialRegion={initialRegion}
+      onPanDrag={onMapPanDrag}
       onRegionChangeComplete={onRegionChangeComplete}
       provider={PROVIDER_GOOGLE}
       showsCompass={false}
