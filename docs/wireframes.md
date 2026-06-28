@@ -17,12 +17,12 @@ Japanese: こうとうお買い物どこ
 
 | Screen | Sample |
 |---|---|
-| Map Home | [`screen-map-home.svg`](./wireframes/images/screen-map-home.svg) |
-| Store Bottom Sheet | [`screen-store-bottom-sheet.svg`](./wireframes/images/screen-store-bottom-sheet.svg) |
-| Filter Modal | [`screen-filter-modal.svg`](./wireframes/images/screen-filter-modal.svg) |
-| Store Detail Route | [`screen-store-detail.svg`](./wireframes/images/screen-store-detail.svg) |
-| Settings | [`screen-settings.svg`](./wireframes/images/screen-settings.svg) |
-| About / Unofficial Notice | [`screen-about.svg`](./wireframes/images/screen-about.svg) |
+| Map Home | [`screen-map-home.png`](./wireframes/images/screen-map-home.png) |
+| Store Bottom Sheet | [`screen-store-bottom-sheet.png`](./wireframes/images/screen-store-bottom-sheet.png) |
+| Filter Modal | [`screen-filter-modal.png`](./wireframes/images/screen-filter-modal.png) |
+| Store Detail Route | [`screen-store-detail.png`](./wireframes/images/screen-store-detail.png) |
+| Settings | [`screen-settings.png`](./wireframes/images/screen-settings.png) |
+| About / Unofficial Notice | [`screen-about.png`](./wireframes/images/screen-about.png) |
 
 ---
 
@@ -124,7 +124,7 @@ The app should not look like an official government app. It should clearly commu
 
 ## 4. Screen 01 — Map Home
 
-![Map Home sample](./wireframes/images/screen-map-home.svg)
+![Map Home sample](./wireframes/images/screen-map-home.png)
 
 ### Purpose
 
@@ -211,7 +211,7 @@ Tap map empty area
 
 ## 5. Screen 02 — Store Bottom Sheet
 
-![Store Bottom Sheet sample](./wireframes/images/screen-store-bottom-sheet.svg)
+![Store Bottom Sheet sample](./wireframes/images/screen-store-bottom-sheet.png)
 
 ### Collapsed state
 
@@ -276,7 +276,7 @@ Tap map empty area
 
 ## 6. Screen 03 — Filter Modal
 
-![Filter Modal sample](./wireframes/images/screen-filter-modal.svg)
+![Filter Modal sample](./wireframes/images/screen-filter-modal.png)
 
 ### Purpose
 
@@ -330,7 +330,7 @@ Fast narrowing by coupon availability and practical shopping intent.
 
 ## 7. Screen 04 — Store Detail Route
 
-![Store Detail sample](./wireframes/images/screen-store-detail.svg)
+![Store Detail sample](./wireframes/images/screen-store-detail.png)
 
 ### Purpose
 
@@ -385,7 +385,7 @@ Used mainly for deep link or shared store URL.
 
 ## 8. Screen 05 — Settings
 
-![Settings sample](./wireframes/images/screen-settings.svg)
+![Settings sample](./wireframes/images/screen-settings.png)
 
 ### Purpose
 
@@ -428,7 +428,7 @@ Make the data pipeline visible and trustworthy.
 
 ## 9. Screen 06 — About / Unofficial Notice
 
-![About sample](./wireframes/images/screen-about.svg)
+![About sample](./wireframes/images/screen-about.png)
 
 ### Purpose
 
