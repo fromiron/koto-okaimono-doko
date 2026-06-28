@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800" role="img" aria-label="Store detail illustration">
+  <defs>
+    <filter id="s" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="14" stdDeviation="14" flood-color="#0D47A1" flood-opacity=".14"/></filter>
+    <linearGradient id="b" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#2B7DE1"/><stop offset="1" stop-color="#0D47A1"/></linearGradient>
+    <linearGradient id="a" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#FFC34D"/><stop offset="1" stop-color="#F5A623"/></linearGradient>
+    <style>.city{fill:#DCECF8}.small{fill:#E5E7EB}.blue{fill:#0D47A1}.green{fill:#79C86D}</style>
+  </defs>
+  <rect width="800" height="800" fill="none"/>
+  <g filter="url(#s)">
+    <path d="M128 538c54-104 171-156 309-144 133 12 230-7 275-70v294H92c5-28 17-55 36-80z" fill="#EAF5FF" opacity=".75"/>
+    <rect x="260" y="228" width="310" height="255" rx="18" fill="#FFF7E8"/>
+    <rect x="250" y="205" width="330" height="45" rx="10" fill="url(#b)"/>
+    <path d="M265 248h55v72c-18 20-38 20-55 0zM320 248h55v72c-18 20-37 20-55 0zM375 248h55v72c-18 20-37 20-55 0zM430 248h55v72c-18 20-37 20-55 0zM485 248h55v72c-18 20-37 20-55 0z" fill="#fff"/>
+    <path d="M265 248h55v72c-18 20-38 20-55 0zM375 248h55v72c-18 20-37 20-55 0zM485 248h55v72c-18 20-37 20-55 0z" fill="#2B7DE1" opacity=".92"/>
+    <rect x="314" y="348" width="82" height="135" rx="9" fill="#0D47A1"/><circle cx="382" cy="416" r="5" fill="#fff"/>
+    <rect x="430" y="346" width="104" height="86" rx="8" fill="#F8FAFC" stroke="#0D47A1" stroke-width="6"/>
+    <path d="M448 408h72M448 380h72" stroke="#D9C5A3" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="602" cy="388" r="35" class="green"/><rect x="594" y="388" width="12" height="75" rx="6" fill="#805F42"/>
+    <circle cx="628" cy="425" r="20" class="green"/>
+    <rect x="535" y="438" width="66" height="58" rx="8" fill="#0D47A1"/><path d="M558 461v-18a13 13 0 0126 0v18" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round"/><path d="M548 461h42v28h-42z" fill="#fff"/>
+    <g transform="translate(112 435)">
+      <rect width="195" height="120" rx="22" fill="#F4F0EA"/>
+      <path d="M20 92c48-36 95-36 154-15" stroke="#fff" stroke-width="14" stroke-linecap="round" fill="none"/>
+      <path d="M34 58c54-17 76-42 126-48" stroke="#BFE3F8" stroke-width="18" stroke-linecap="round" fill="none"/>
+      <path d="M88 0c48 0 88 39 88 88 0 66-88 112-88 112S0 154 0 88C0 39 39 0 88 0z" fill="url(#b)" transform="translate(-25 -85) scale(.86)"/>
+      <circle cx="51" cy="-8" r="34" fill="#fff"/>
+    </g>
+    <path d="M330 505c-32 28-61 46-117 42" fill="none" stroke="#0D47A1" stroke-width="7" stroke-linecap="round" stroke-dasharray="8 16"/>
+    <g transform="translate(465 510)"><rect width="145" height="56" rx="12" fill="url(#b)"/><path d="M32 19v-12a18 18 0 0136 0v12" fill="none" stroke="#fff" stroke-width="5"/><rect x="22" y="19" width="58" height="30" fill="#fff"/><path d="M96 0v56" stroke="#fff" stroke-width="4" stroke-dasharray="8 8"/></g>
+    <g transform="translate(468 582)"><rect width="145" height="56" rx="12" fill="url(#a)"/><path d="M32 19v-12a18 18 0 0136 0v12" fill="none" stroke="#fff" stroke-width="5"/><rect x="22" y="19" width="58" height="30" fill="#fff"/><path d="M96 0v56" stroke="#fff" stroke-width="4" stroke-dasharray="8 8"/></g>
+    <g transform="translate(650 542)"><circle cx="0" cy="0" r="54" fill="#fff" filter="url(#s)"/><path d="M-22 6l54-30-18 56-13-19z" fill="#0D47A1"/></g>
+  </g>
+</svg>
