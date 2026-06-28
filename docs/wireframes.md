@@ -1,8 +1,28 @@
-# koto-okaimono-doko Wireframes
+# koto okaimono doko Wireframes
 
-`koto-okaimono-doko`는 江東区プレミアム付商品券의 사용 가능 점포를 **현재 위치 기준으로 빠르게 찾는 비공식 지도 앱**이다.
+`koto okaimono doko`는 江東区プレミアム付商品券의 사용 가능 점포를 **현재 위치 기준으로 빠르게 찾는 비공식 지도 앱**이다.
 
-이 문서는 React Native + Expo + Expo Router + Uniwind 기준의 low-fidelity wireframe이다. 구현 우선순위는 **지도 → 필터 → 점포 상세 → 데이터 업데이트 상태** 순서다.
+이 문서는 React Native + Expo + Expo Router + Uniwind 기준의 wireframe과 sample screen을 함께 정리한다. 구현 우선순위는 **지도 → 필터 → 점포 상세 → 데이터 업데이트 상태** 순서다.
+
+Brand text:
+
+```txt
+English: koto okaimono doko
+Japanese: こうとうお買い物どこ
+```
+
+---
+
+## 0. Sample screens
+
+| Screen | Sample |
+|---|---|
+| Map Home | [`screen-map-home.svg`](./wireframes/images/screen-map-home.svg) |
+| Store Bottom Sheet | [`screen-store-bottom-sheet.svg`](./wireframes/images/screen-store-bottom-sheet.svg) |
+| Filter Modal | [`screen-filter-modal.svg`](./wireframes/images/screen-filter-modal.svg) |
+| Store Detail Route | [`screen-store-detail.svg`](./wireframes/images/screen-store-detail.svg) |
+| Settings | [`screen-settings.svg`](./wireframes/images/screen-settings.svg) |
+| About / Unofficial Notice | [`screen-about.svg`](./wireframes/images/screen-about.svg) |
 
 ---
 
@@ -50,7 +70,7 @@ app/
   about.tsx              // Unofficial notice / OSS info
 ```
 
-Main navigation is intentionally shallow.
+Navigation hierarchy:
 
 ```txt
 Map Home
@@ -104,6 +124,8 @@ The app should not look like an official government app. It should clearly commu
 
 ## 4. Screen 01 — Map Home
 
+![Map Home sample](./wireframes/images/screen-map-home.svg)
+
 ### Purpose
 
 The main screen answers:
@@ -112,28 +134,27 @@ The main screen answers:
 Where can I use my coupon near me?
 ```
 
-### Default state
+### Wireframe
 
 ```txt
 ┌─────────────────────────────────────┐
-│  店舗名・住所で検索            ⚙︎   │
-├─────────────────────────────────────┤
-│  [すべて] [A・B券] [B券のみ] [紙]  │
-│  [デジタル] [食べる] [買う]        │
+│  koto okaimono doko             ⚙︎   │
+│  店舗名・住所で検索                  │
+│  [すべて] [A・B券] [B券のみ] [紙]   │
+│  [デジタル] [食べる] [買う]         │
 ├─────────────────────────────────────┤
 │                                     │
 │              MAP AREA               │
 │                                     │
-│       ○ current location            │
-│                                     │
-│       [AB]       [B]                │
-│            [AB]                     │
-│                                     │
-│                          ◎          │
-│                       現在地         │
+│       [A・B]       [B]              │
+│            [A・B]                   │
+│                          ◎ 現在地   │
 │                                     │
 ├─────────────────────────────────────┤
 │  データ基準日: 2026-06-24  非公式  │
+├─────────────────────────────────────┤
+│  12件の対象店舗                     │
+│  地図上のピンを選択してください     │
 └─────────────────────────────────────┘
 ```
 
@@ -160,9 +181,9 @@ Where can I use my coupon near me?
 ### Marker types
 
 ```txt
-[AB]   A・B券対応
-[B]    B券のみ
-[M]    Mall/facility group
+[A・B] A・B券対応
+[B]   B券のみ
+[M]   Mall/facility group
 ```
 
 ### Marker behavior
@@ -181,20 +202,16 @@ Tap map empty area
 ### Empty state on map
 
 ```txt
-┌─────────────────────────────────────┐
-│              MAP AREA               │
-│                                     │
-│      この範囲に対象店舗がありません │
-│      条件を変更するか、地図を移動   │
-│      してください                   │
-│                                     │
-│      [絞り込みをリセット]           │
-└─────────────────────────────────────┘
+この範囲に対象店舗がありません。
+条件を変更するか、地図を移動してください。
+[絞り込みをリセット]
 ```
 
 ---
 
 ## 5. Screen 02 — Store Bottom Sheet
+
+![Store Bottom Sheet sample](./wireframes/images/screen-store-bottom-sheet.svg)
 
 ### Collapsed state
 
@@ -229,20 +246,15 @@ Tap map empty area
 
 ```txt
 ┌─────────────────────────────────────┐
-│  ━━━━━                              │
 │  アーバンドック ららぽーと豊洲      │
 │  [施設内 42店舗]                    │
-│                                     │
 │  豊洲2-4-9                          │
 │                                     │
-│  ┌───────────────────────────────┐ │
-│  │ URBAN RESEARCH DOORS  [B券]    │ │
-│  │ 1F / 買う / 衣服               │ │
-│  └───────────────────────────────┘ │
-│  ┌───────────────────────────────┐ │
-│  │ RHC CAFE  [B券]                │ │
-│  │ 1F / 食べる・飲む / カフェ     │ │
-│  └───────────────────────────────┘ │
+│  URBAN RESEARCH DOORS  [B券]        │
+│  1F / 買う / 衣服                   │
+│                                     │
+│  RHC CAFE  [B券]                    │
+│  1F / 食べる・飲む / カフェ         │
 │                                     │
 │  [施設への経路を見る]              │
 └─────────────────────────────────────┘
@@ -264,9 +276,13 @@ Tap map empty area
 
 ## 6. Screen 03 — Filter Modal
 
+![Filter Modal sample](./wireframes/images/screen-filter-modal.svg)
+
 ### Purpose
 
 Fast narrowing by coupon availability and practical shopping intent.
+
+### Wireframe
 
 ```txt
 ┌─────────────────────────────────────┐
@@ -279,17 +295,13 @@ Fast narrowing by coupon availability and practical shopping intent.
 │  [すべて] [紙] [デジタル]           │
 │                                     │
 │  ジャンル                           │
-│  [すべて]                           │
-│  [食べる・飲む] [買う]              │
+│  [すべて] [食べる・飲む] [買う]    │
 │  [暮らし・住まい]                  │
 │                                     │
 │  現在地からの距離                   │
 │  [300m] [500m] [1km] [2km]          │
 │                                     │
-│  ┌───────────────────────────────┐ │
-│  │ この条件で表示                 │ │
-│  └───────────────────────────────┘ │
-│                                     │
+│  [この条件で表示]                   │
 │  条件をリセット                    │
 └─────────────────────────────────────┘
 ```
@@ -318,15 +330,18 @@ Fast narrowing by coupon availability and practical shopping intent.
 
 ## 7. Screen 04 — Store Detail Route
 
+![Store Detail sample](./wireframes/images/screen-store-detail.svg)
+
 ### Purpose
 
 Used mainly for deep link or shared store URL.
+
+### Wireframe
 
 ```txt
 ┌─────────────────────────────────────┐
 │  ← 店舗詳細                         │
 ├─────────────────────────────────────┤
-│                                     │
 │  元祖カレーパン カトレア            │
 │  [A・B券] [紙]                      │
 │                                     │
@@ -346,8 +361,7 @@ Used mainly for deep link or shared store URL.
 │  [経路を見る]                       │
 │  [公式ページを見る]                 │
 │                                     │
-├─────────────────────────────────────┤
-│  小さなMAP PREVIEW                  │
+│  MAP PREVIEW                        │
 └─────────────────────────────────────┘
 ```
 
@@ -362,23 +376,22 @@ Used mainly for deep link or shared store URL.
 ### Stale link state
 
 ```txt
-┌─────────────────────────────────────┐
-│  店舗が見つかりません               │
-│                                     │
-│  この店舗は最新データに含まれて     │
-│  いない可能性があります。           │
-│                                     │
-│  [地図に戻る]                       │
-└─────────────────────────────────────┘
+店舗が見つかりません。
+この店舗は最新データに含まれていない可能性があります。
+[地図に戻る]
 ```
 
 ---
 
 ## 8. Screen 05 — Settings
 
+![Settings sample](./wireframes/images/screen-settings.svg)
+
 ### Purpose
 
 Make the data pipeline visible and trustworthy.
+
+### Wireframe
 
 ```txt
 ┌─────────────────────────────────────┐
@@ -388,15 +401,12 @@ Make the data pipeline visible and trustworthy.
 │  バージョン       2026-06-24.1      │
 │  データ基準日     2026-06-24        │
 │  最終確認         2026-06-28 10:20  │
-│                                     │
 │  [最新データを確認]                 │
 │                                     │
-├─────────────────────────────────────┤
 │  位置情報                           │
 │  現在地周辺の店舗検索にのみ使用     │
 │  外部サーバーには送信しません       │
 │                                     │
-├─────────────────────────────────────┤
 │  アプリ情報                         │
 │  非公式アプリ                       │
 │  GitHub                             │
@@ -406,64 +416,49 @@ Make the data pipeline visible and trustworthy.
 
 ### Dataset update states
 
-#### Up to date
-
-```txt
-最新データです。
-```
-
-#### Checking
-
-```txt
-最新データを確認しています…
-```
-
-#### Downloading
-
-```txt
-データを更新しています…
-```
-
-#### Updated
-
-```txt
-データを更新しました。
-```
-
-#### Failed
-
-```txt
-データ更新に失敗しました。
-現在保存されているデータで利用できます。
-```
+| State | Copy |
+|---|---|
+| Up to date | 最新データです。 |
+| Checking | 最新データを確認しています… |
+| Downloading | データを更新しています… |
+| Updated | データを更新しました。 |
+| Failed | データ更新に失敗しました。現在保存されているデータで利用できます。 |
 
 ---
 
 ## 9. Screen 06 — About / Unofficial Notice
 
+![About sample](./wireframes/images/screen-about.svg)
+
 ### Purpose
 
 Reduce misunderstanding and clarify data source policy.
+
+### Wireframe
 
 ```txt
 ┌─────────────────────────────────────┐
 │  ← このアプリについて               │
 ├─────────────────────────────────────┤
-│  koto-okaimono-doko                 │
+│  koto okaimono doko                 │
+│  こうとうお買い物どこ               │
 │                                     │
-│  江東区プレミアム付商品券の         │
-│  対象店舗を地図で探しやすくする     │
-│  非公式アプリです。                 │
+│  非公式アプリについて               │
+│  公開されている公式店舗情報をもとに │
+│  地図上で店舗を探しやすくするための │
+│  非公式のサービスです。             │
 │                                     │
-│  掲載情報は公式サイトで公開されて   │
-│  いる店舗情報をもとに独自に地図化   │
-│  しています。                       │
+│  情報の正確性について               │
+│  最新かつ正確な情報は、必ず公式     │
+│  サイトや各店舗にてご確認ください。 │
 │                                     │
-│  最新かつ正確な情報は公式サイト     │
-│  または各店舗にてご確認ください。   │
+│  プライバシーについて               │
+│  位置情報は近くの店舗検索のみに     │
+│  使用します。外部へ送信しません。   │
 │                                     │
 │  [公式サイトを見る]                 │
 │  [GitHubを見る]                     │
+│  非公式                             │
 └─────────────────────────────────────┘
 ```
 
@@ -483,20 +478,13 @@ Recommended notice text:
 
 ### Location permission prompt context
 
-Before OS permission dialog:
-
 ```txt
-┌─────────────────────────────────────┐
-│  現在地を使いますか？               │
-│                                     │
-│  近くで使える商品券対応店舗を       │
-│  表示するために現在地を使用します。 │
-│  位置情報は外部サーバーに送信し     │
-│  ません。                           │
-│                                     │
-│  [現在地を使用する]                 │
-│  [あとで]                           │
-└─────────────────────────────────────┘
+現在地を使いますか？
+近くで使える商品券対応店舗を表示するために現在地を使用します。
+位置情報は外部サーバーに送信しません。
+
+[現在地を使用する]
+[あとで]
 ```
 
 ### Permission denied
@@ -584,12 +572,7 @@ datasetStore
   updateStatus
 ```
 
-### Do not store full store list in Zustand
-
-```txt
-SQLite is the source of truth.
-Zustand only controls UI state.
-```
+Full Store list must not be stored in Zustand. SQLite is the source of truth. Zustand only controls UI state.
 
 ---
 
