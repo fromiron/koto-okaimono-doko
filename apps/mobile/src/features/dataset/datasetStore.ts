@@ -1,7 +1,7 @@
 import type { DatasetMeta, DatasetManifest } from '@koto/schema';
 import { create } from 'zustand';
 
-type UpdateStatus = 'idle' | 'checking' | 'downloading' | 'verifying' | 'updated' | 'failed';
+export type UpdateStatus = 'idle' | 'checking' | 'downloading' | 'verifying' | 'updated' | 'upToDate' | 'failed';
 
 type DatasetState = {
   meta: DatasetMeta | null;

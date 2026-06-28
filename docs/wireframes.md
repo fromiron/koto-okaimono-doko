@@ -151,8 +151,6 @@ Where can I use my coupon near me?
 │                          ◎ 現在地   │
 │                                     │
 ├─────────────────────────────────────┤
-│  データ基準日: 2026-06-24  非公式  │
-├─────────────────────────────────────┤
 │  12件の対象店舗                     │
 │  地図上のピンを選択してください     │
 └─────────────────────────────────────┘
@@ -163,11 +161,13 @@ Where can I use my coupon near me?
 | Component | Role |
 |---|---|
 | SearchInput | Keyword search by store name, address, mall name |
-| FilterChips | Frequently used filters without opening modal |
+| FilterChips | Frequently used filters (incl. a `絞り込み` chip that opens the full filter modal) |
 | MapView | Store markers and user location |
-| CurrentLocationButton | Move camera to current location |
-| DatasetBadge | Shows official data date and unofficial status |
-| StoreBottomSheet | Opens when a marker is selected |
+| CurrentLocationButton | Move camera to current location (disabled when location is off) |
+| StoreBottomSheet | Draggable sheet: peek shows visible count / empty hint, expands to selected store(s) |
+
+> The dataset date / `非公式` badge that used to float under the map was removed; the
+> dataset date is available in Settings and inside the selected-store sheet.
 
 ### Map initial state
 
@@ -212,6 +212,11 @@ Tap map empty area
 ## 5. Screen 02 — Store Bottom Sheet
 
 ![Store Bottom Sheet sample](./wireframes/images/screen-store-bottom-sheet.png)
+
+> Implemented with `@gorhom/bottom-sheet` as a draggable sheet with two snap points
+> (a collapsed peek and an expanded detail view). Selecting a marker snaps it open;
+> the collapsed peek shows the visible-store count, or the empty-state hint + reset
+> when nothing matches.
 
 ### Collapsed state
 
@@ -299,7 +304,7 @@ Fast narrowing by coupon availability and practical shopping intent.
 │  [暮らし・住まい]                  │
 │                                     │
 │  現在地からの距離                   │
-│  [300m] [500m] [1km] [2km]          │
+│  [すべて] [300m] [500m] [1km] [2km] │
 │                                     │
 │  [この条件で表示]                   │
 │  条件をリセット                    │
@@ -322,9 +327,13 @@ Fast narrowing by coupon availability and practical shopping intent.
   couponType: 'all',
   payment: 'all',
   categoryMajor: null,
-  radiusMeters: 1000
+  radiusMeters: 'all'
 }
 ```
+
+> Distance chips (`300m`–`2km`) require location: they are disabled when the location
+> preference is off or no current location is available, and the default is `すべて`
+> (no distance filter) so enabling location never silently hides stores.
 
 ---
 
@@ -674,3 +683,36 @@ Marker press
 - Prefer bottom sheets over deep nested screens.
 - Keep data transparency visible but not intrusive.
 ```
+
+---
+
+## 17. Implementation Deltas vs Wireframe (current build)
+
+Intentional differences between these wireframes and the shipped screens:
+
+- **Location preference is functional and can be OFF.** Settings has a real toggle
+  (`位置情報の使用`) persisted to AsyncStorage (default ON). When off, the current
+  location is not requested, the map hides the user dot, the current-location button
+  is disabled, and distance/radius features are inactive.
+- **Distance (radius) filter is wired.** `radiusMeters` is `'all' | 300 | 500 | 1000 | 2000`
+  (default `'all'`). When location is available and a distance is chosen, map results are
+  filtered to that radius of the current location; otherwise the distance chips are
+  disabled with a hint and the map stays viewport-based.
+- **Store sheet is a draggable bottom sheet** (`@gorhom/bottom-sheet`) rather than a
+  fixed panel; the empty state lives inside its collapsed peek.
+- **The under-map dataset date / `非公式` badge was removed.** The dataset date is shown
+  in Settings and in the selected-store sheet; the unofficial notice lives in About and
+  the first-launch notice.
+- **Map filter row includes a `絞り込み` chip** to open the full filter modal, and the
+  category quick-chips use short labels (`食べる` / `買う`).
+- **Settings includes a language section** (ja / en / ko / zh-Hans / zh-Hant), required
+  for the multilingual UI even though it is not drawn in the wireframe.
+
+### Verification limitation
+
+The draggable sheet and the map overlays (current-location button) are validated by
+typecheck / lint / unit tests only. Gesture behavior and whether Android
+`react-native-maps` occludes the overlaying sheet must be confirmed on a device or
+emulator (`pnpm --dir apps/mobile exec expo run:android`). If the native map draws over
+the sheet on Android, fall back to the sibling-region layout described in
+`docs/design-system.md` (map height reduced so the sheet docks below it).

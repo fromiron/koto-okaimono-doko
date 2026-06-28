@@ -1,15 +1,16 @@
-import { ChevronLeft, ChevronRight, Github, Globe2, Info, LockKeyhole, ShieldCheck } from 'lucide-react-native';
+import { ChevronLeft, Github, Globe2, Info, LockKeyhole, ShieldCheck } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
-import { Image, Linking, Pressable, View } from 'react-native';
+import { Image, Linking, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { illustrations } from '@/src/assets/illustrations';
 import { IconBadge } from '@/src/components/ui/IconBadge';
 import { IconButton } from '@/src/components/ui/IconButton';
+import { NavRow } from '@/src/components/ui/NavRow';
 import { Screen } from '@/src/components/ui/Screen';
-import { SurfaceCard } from '@/src/components/ui/SurfaceCard';
 import { Text } from '@/src/components/ui/Text';
+import { UnofficialPill } from '@/src/components/ui/UnofficialPill';
 import { colors } from '@/src/theme/tokens';
 
 export default function AboutScreen() {
@@ -36,10 +37,10 @@ export default function AboutScreen() {
         />
         <View className="mt-1 items-center gap-1">
           <Text className="text-center text-water-700" variant="title">
-            koto okaimono doko
+            こうとうお買い物どこ
           </Text>
           <Text className="text-center text-water-500" variant="subtitle">
-            こうとうお買い物どこ
+            koto okaimono doko
           </Text>
         </View>
       </View>
@@ -64,25 +65,25 @@ export default function AboutScreen() {
       </View>
 
       <View className="gap-3 border-t border-line-200 pt-6">
-        <LinkRow
-          icon={<Globe2 color={colors.teal} size={30} />}
+        <NavRow
+          surface
+          icon={<Globe2 color={colors.teal} size={28} />}
+          iconTone="teal"
           label={t('about.officialSite')}
+          labelVariant="subtitle"
           onPress={() => Linking.openURL('https://koto-okaimono-premium.jp/')}
-          tone="teal"
         />
-        <LinkRow
-          icon={<Github color={colors.ink} size={30} />}
+        <NavRow
+          surface
+          icon={<Github color={colors.ink} size={28} />}
           label={t('about.github')}
+          labelVariant="subtitle"
           onPress={() => Linking.openURL('https://github.com/fromiron/koto-okaimono-doko')}
         />
       </View>
 
       <View className="items-center gap-3 pt-7">
-        <View className="rounded-full border border-water-500 bg-emerald-50 px-4 py-2">
-          <Text className="text-water-500" variant="label">
-            {t('app.unofficial')}
-          </Text>
-        </View>
+        <UnofficialPill className="px-4 py-1.5" />
         <Text className="text-center" tone="muted">
           {t('about.disclaimer')}
         </Text>
@@ -113,29 +114,5 @@ function AboutPoint({
         <Text>{body}</Text>
       </View>
     </View>
-  );
-}
-
-function LinkRow({
-  icon,
-  label,
-  onPress,
-  tone = 'primary',
-}: {
-  icon: ReactNode;
-  label: string;
-  onPress: () => void;
-  tone?: 'primary' | 'teal';
-}) {
-  return (
-    <Pressable onPress={onPress}>
-      <SurfaceCard className="flex-row items-center gap-4 px-4 py-4">
-        <IconBadge tone={tone}>{icon}</IconBadge>
-        <Text className="min-w-0 flex-1" variant="subtitle">
-          {label}
-        </Text>
-        <ChevronRight color={colors.ink} size={28} />
-      </SurfaceCard>
-    </Pressable>
   );
 }

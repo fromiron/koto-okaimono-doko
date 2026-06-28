@@ -9,6 +9,8 @@ import { LoadingState } from '@/src/components/ui/LoadingState';
 import { Text } from '@/src/components/ui/Text';
 import { bootApp } from '@/src/features/bootstrap/appBoot';
 import { activeDatabaseName, sqliteDirectory } from '@/src/features/dataset/datasetPaths';
+import { getStoredLocationEnabled } from '@/src/features/preferences/locationPreference';
+import { usePreferencesStore } from '@/src/features/preferences/preferencesStore';
 
 type DatabaseReloadContextValue = {
   reloadDatabase: () => void;
@@ -41,6 +43,12 @@ export function AppProviders({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  useEffect(() => {
+    void getStoredLocationEnabled().then((enabled) => {
+      usePreferencesStore.getState().setLocationEnabled(enabled);
+    });
   }, []);
 
   useEffect(() => {

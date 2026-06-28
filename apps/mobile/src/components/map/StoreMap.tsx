@@ -18,7 +18,7 @@ type StoreMapProps = {
   initialRegion: MapRegion;
   groups: StoreLocationGroup[];
   selectedStoreIds: string[];
-  onMapPanDrag: () => void;
+  showsUserLocation: boolean;
   onMapPress: () => void;
   onRegionChangeComplete: (region: MapRegion) => void;
   onSelectStores: (stores: Store[]) => void;
@@ -28,11 +28,11 @@ export function StoreMap({
   groups,
   initialRegion,
   mapRef,
-  onMapPanDrag,
   onMapPress,
   onRegionChangeComplete,
   onSelectStores,
   selectedStoreIds,
+  showsUserLocation,
 }: StoreMapProps) {
   const selected = new Set(selectedStoreIds);
 
@@ -41,13 +41,12 @@ export function StoreMap({
       <MapView
         ref={mapRef}
         initialRegion={initialRegion}
-        onPanDrag={onMapPanDrag}
         onPress={onMapPress}
         onRegionChangeComplete={onRegionChangeComplete}
         provider={PROVIDER_GOOGLE}
         showsCompass={false}
         showsMyLocationButton={false}
-        showsUserLocation
+        showsUserLocation={showsUserLocation}
         style={StyleSheet.absoluteFill}
       >
         {groups.map((group) => (

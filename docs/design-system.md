@@ -51,9 +51,14 @@ in code as `surfaceShadow`, `floatingButtonShadow`, and `bottomSheetShadow`.
 
 ## Screen Rules
 
-- Map Home is the primary workspace. On Android, `react-native-maps` can render
-  above React Native overlays, so the native map, dataset badge, and bottom sheet
-  are stacked as sibling regions instead of overlapping the map.
+- Map Home is the primary workspace. The store sheet is a draggable
+  `@gorhom/bottom-sheet` that overlays the bottom of the map (collapsed peek ↔
+  expanded). On Android, `react-native-maps` can render above React Native overlays,
+  so this must be verified on a device; if the native map occludes the sheet, fall
+  back to stacking the map and sheet as sibling regions (map height reduced) instead
+  of overlapping. The current-location button floats above the collapsed peek. The
+  under-map dataset/`非公式` badge was removed (the dataset date lives in Settings and
+  the selected-store sheet).
 - Coupon availability must be visible from the marker or first badge row.
 - Store, address, mall/facility, and official source text remain Japanese source
   text even when the UI language changes.

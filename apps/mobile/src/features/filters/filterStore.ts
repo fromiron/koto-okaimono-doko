@@ -2,7 +2,7 @@ import { create } from 'zustand';
 
 type CouponFilter = 'all' | 'ab' | 'b_only';
 type PaymentFilter = 'all' | 'paper' | 'digital';
-type RadiusMeters = 300 | 500 | 1000 | 2000;
+export type RadiusMeters = 'all' | 300 | 500 | 1000 | 2000;
 
 type FilterState = {
   keyword: string;
@@ -23,7 +23,7 @@ const initialState = {
   couponType: 'all' as const,
   payment: 'all' as const,
   categoryMajorId: null,
-  radiusMeters: 1000 as const,
+  radiusMeters: 'all' as const,
 };
 
 export const useFilterStore = create<FilterState>((set) => ({

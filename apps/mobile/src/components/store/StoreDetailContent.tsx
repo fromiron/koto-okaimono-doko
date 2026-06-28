@@ -1,5 +1,5 @@
 import type { Store } from '@koto/schema';
-import { CalendarDays, ExternalLink, Footprints, MapPin, Navigation, Phone } from 'lucide-react-native';
+import { ExternalLink, Footprints, MapPin, Navigation, Phone } from 'lucide-react-native';
 import { Image, Linking, Pressable, View } from 'react-native';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import { useTranslation } from 'react-i18next';
@@ -16,6 +16,7 @@ import { colors, surfaceShadow } from '@/src/theme/tokens';
 
 import { CouponBadge } from './CouponBadge';
 import { PaymentBadge } from './PaymentBadge';
+import { SourceDateNote } from './SourceDateNote';
 import {
   getAddressText,
   getCategoryText,
@@ -26,11 +27,13 @@ import {
   openDirections,
 } from './storeDisplay';
 
+type Mode = 'sheet' | 'page';
+
 type StoreDetailContentProps = {
   stores: Store[];
   sourceDate?: string | null;
   userLocation?: LatLng | null;
-  mode?: 'sheet' | 'page';
+  mode?: Mode;
 };
 
 export function StoreDetailContent({
@@ -66,28 +69,14 @@ function SingleStoreContent({
   store: Store;
   sourceDate?: string | null;
   userLocation?: LatLng | null;
-  mode: 'sheet' | 'page';
+  mode: Mode;
 }) {
   const { t } = useTranslation();
-  const categoryText = getCategoryText(store, t);
 
   if (mode === 'page') {
     return (
       <View className="gap-5 pb-8">
-        <SurfaceCard className="flex-row gap-4 p-4">
-          <Image
-            resizeMode="cover"
-            source={illustrations.storeDetail}
-            style={{ borderRadius: 18, height: 120, width: 120 }}
-          />
-          <View className="min-w-0 flex-1 justify-center gap-3">
-            <Text className="min-w-0" variant="subtitle">
-              {store.name}
-            </Text>
-            <BadgeRow store={store} />
-            <Text tone="muted">{categoryText}</Text>
-          </View>
-        </SurfaceCard>
+        <StoreIdentity mode="page" store={store} />
 
         <SurfaceCard className="px-4">
           <InfoRow
@@ -95,9 +84,7 @@ function SingleStoreContent({
             label={t('store.address')}
             value={getAddressText(store)}
           />
-          {store.phone ? (
-            <PhoneRow phone={store.phone} label={t('store.phone')} />
-          ) : null}
+          {store.phone ? <PhoneRow label={t('store.phone')} phone={store.phone} /> : null}
           <InfoRow
             divider={false}
             icon={
@@ -110,29 +97,7 @@ function SingleStoreContent({
           />
         </SurfaceCard>
 
-        <View className="flex-row gap-3">
-          <Button
-            className="flex-1"
-            leftIcon={<Navigation color={colors.primary} size={20} />}
-            onPress={() => openDirections(store)}
-            size="lg"
-            variant="secondary"
-          >
-            {t('store.directions')}
-          </Button>
-          {store.officialDetailUrl ? (
-            <Button
-              className="flex-1"
-              leftIcon={<ExternalLink color={colors.teal} size={20} />}
-              onPress={() => Linking.openURL(store.officialDetailUrl!)}
-              size="lg"
-              variant="teal"
-            >
-              {t('store.officialPage')}
-            </Button>
-          ) : null}
-        </View>
-
+        <StoreActions mode="page" store={store} />
         <MapPreview store={store} />
       </View>
     );
@@ -140,25 +105,7 @@ function SingleStoreContent({
 
   return (
     <View className="gap-5 px-5 pb-8 pt-1">
-      <View className="flex-row items-center gap-4">
-        <View
-          className="h-24 w-24 items-center justify-center rounded-full bg-paper-50"
-          style={surfaceShadow}
-        >
-          <Image
-            resizeMode="cover"
-            source={illustrations.storeDetail}
-            style={{ borderRadius: 48, height: 96, width: 96 }}
-          />
-        </View>
-        <View className="min-w-0 flex-1 gap-2">
-          <Text className="min-w-0" variant="subtitle">
-            {store.name}
-          </Text>
-          <BadgeRow store={store} />
-          <Text tone="muted">{categoryText}</Text>
-        </View>
-      </View>
+      <StoreIdentity mode="sheet" store={store} />
 
       <View>
         <View className="flex-row items-start gap-3 border-t border-line-200 py-4">
@@ -171,52 +118,9 @@ function SingleStoreContent({
         </View>
       </View>
 
-      <View className="flex-row gap-3">
-        <Button
-          className="flex-1"
-          leftIcon={<Navigation color="#ffffff" size={20} />}
-          onPress={() => openDirections(store)}
-          size="lg"
-        >
-          {t('store.directions')}
-        </Button>
-        {store.officialDetailUrl ? (
-          <Button
-            className="flex-1"
-            leftIcon={<ExternalLink color={colors.primary} size={20} />}
-            onPress={() => Linking.openURL(store.officialDetailUrl!)}
-            size="lg"
-            variant="secondary"
-          >
-            {t('store.officialPage')}
-          </Button>
-        ) : null}
-      </View>
+      <StoreActions mode="sheet" store={store} />
 
-      {sourceDate ? (
-        <View className="flex-row items-center gap-2 rounded-2xl border border-line-200 px-4 py-3">
-          <CalendarDays color={colors.inkMuted} size={18} />
-          <Text tone="muted" variant="caption">
-            {t('store.sourceDate')}: {sourceDate}
-          </Text>
-        </View>
-      ) : null}
-    </View>
-  );
-}
-
-function PhoneRow({ phone, label }: { phone: string; label: string }) {
-  return (
-    <View className="flex-row gap-4 border-b border-line-200 py-4">
-      <View className="pt-1">
-        <Phone color={colors.primary} fill={colors.primary} size={26} />
-      </View>
-      <View className="min-w-0 flex-1 gap-1">
-        <Text variant="label">{label}</Text>
-        <Pressable onPress={() => Linking.openURL(`tel:${phone.replace(/[^0-9+]/g, '')}`)}>
-          <Text className="text-water-700">{phone}</Text>
-        </Pressable>
-      </View>
+      {sourceDate ? <SourceDateNote sourceDate={sourceDate} /> : null}
     </View>
   );
 }
@@ -228,7 +132,7 @@ function LocationGroupContent({
 }: {
   stores: Store[];
   sourceDate?: string | null;
-  mode: 'sheet' | 'page';
+  mode: Mode;
 }) {
   const { t } = useTranslation();
   const title = getFacilityName(stores) ?? t('map.groupedStores', { count: stores.length });
@@ -278,16 +182,96 @@ function LocationGroupContent({
         </Button>
       ) : null}
 
-      {sourceDate && mode === 'sheet' ? (
-        <View className="flex-row items-center gap-2 rounded-2xl border border-line-200 px-4 py-3">
-          <CalendarDays color={colors.inkMuted} size={18} />
-          <Text tone="muted" variant="caption">
-            {t('store.sourceDate')}: {sourceDate}
-          </Text>
-        </View>
-      ) : null}
+      {sourceDate && mode === 'sheet' ? <SourceDateNote sourceDate={sourceDate} /> : null}
 
       {mode === 'page' && first ? <MapPreview store={first} /> : null}
+    </View>
+  );
+}
+
+/** Image + name + badges + category block, sized for the sheet (circular) or page (card). */
+function StoreIdentity({ mode, store }: { mode: Mode; store: Store }) {
+  const { t } = useTranslation();
+  const column = (
+    <View className="min-w-0 flex-1 gap-2">
+      <Text className="min-w-0" variant="subtitle">
+        {store.name}
+      </Text>
+      <BadgeRow store={store} />
+      <Text tone="muted">{getCategoryText(store, t)}</Text>
+    </View>
+  );
+
+  if (mode === 'page') {
+    return (
+      <SurfaceCard className="flex-row gap-4 p-4">
+        <Image
+          resizeMode="cover"
+          source={illustrations.storeDetail}
+          style={{ borderRadius: 18, height: 120, width: 120 }}
+        />
+        {column}
+      </SurfaceCard>
+    );
+  }
+
+  return (
+    <View className="flex-row items-center gap-4">
+      <View className="h-24 w-24 items-center justify-center rounded-full bg-paper-50" style={surfaceShadow}>
+        <Image
+          resizeMode="cover"
+          source={illustrations.storeDetail}
+          style={{ borderRadius: 48, height: 96, width: 96 }}
+        />
+      </View>
+      {column}
+    </View>
+  );
+}
+
+/** Directions + official-page buttons. Sheet uses a filled primary; page uses outlines. */
+function StoreActions({ mode, store }: { mode: Mode; store: Store }) {
+  const { t } = useTranslation();
+  const isPage = mode === 'page';
+
+  return (
+    <View className="flex-row gap-3">
+      <Button
+        className="flex-1"
+        leftIcon={<Navigation color={isPage ? colors.primary : '#ffffff'} size={20} />}
+        onPress={() => openDirections(store)}
+        size="lg"
+        variant={isPage ? 'secondary' : 'primary'}
+      >
+        {t('store.directions')}
+      </Button>
+      {store.officialDetailUrl ? (
+        <Button
+          className="flex-1"
+          leftIcon={<ExternalLink color={isPage ? colors.teal : colors.primary} size={20} />}
+          onPress={() => Linking.openURL(store.officialDetailUrl!)}
+          size="lg"
+          variant={isPage ? 'teal' : 'secondary'}
+        >
+          {t('store.officialPage')}
+        </Button>
+      ) : null}
+    </View>
+  );
+}
+
+function PhoneRow({ label, phone }: { label: string; phone: string }) {
+  return (
+    <View className="flex-row gap-4 border-b border-line-200 py-4">
+      <View className="pt-1">
+        <Phone color={colors.primary} fill={colors.primary} size={26} />
+      </View>
+      <View className="min-w-0 flex-1 gap-1">
+        <Text variant="label">{label}</Text>
+        <Pressable onPress={() => Linking.openURL(`tel:${phone.replace(/[^0-9+]/g, '')}`)}>
+          <Text className="text-water-700">{phone}</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }

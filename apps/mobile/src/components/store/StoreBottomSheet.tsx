@@ -1,56 +1,89 @@
 import type { Store } from '@koto/schema';
+import BottomSheet, { BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 import { ChevronDown, Store as StoreIcon } from 'lucide-react-native';
-import { ScrollView, useWindowDimensions, View } from 'react-native';
+import { useEffect, useMemo, useRef } from 'react';
+import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
+import { Button } from '@/src/components/ui/Button';
 import { Text } from '@/src/components/ui/Text';
 import type { LatLng } from '@/src/features/map/mapStore';
 import { bottomSheetShadow, colors } from '@/src/theme/tokens';
 
+import { sheetSnapIndex } from './bottomSheetSnap';
 import { StoreDetailContent } from './StoreDetailContent';
+
+/** Visible height of the collapsed peek; map overlays (badge, location button) sit above it. */
+export const SHEET_PEEK_HEIGHT = 148;
 
 type StoreBottomSheetProps = {
   stores: Store[];
   visibleStoreCount: number;
   sourceDate?: string | null;
   userLocation?: LatLng | null;
+  onResetFilters: () => void;
 };
 
 export function StoreBottomSheet({
+  onResetFilters,
   sourceDate,
   stores,
   userLocation,
   visibleStoreCount,
 }: StoreBottomSheetProps) {
-  const { height } = useWindowDimensions();
-  const expandedHeight = Math.min(height * 0.56, 540);
-  const collapsedHeight = 132;
-  const sheetHeight = stores.length > 0 ? expandedHeight : collapsedHeight;
+  const insets = useSafeAreaInsets();
+  const sheetRef = useRef<BottomSheet>(null);
+  const snapPoints = useMemo(() => [SHEET_PEEK_HEIGHT, '62%'], []);
+  const hasSelection = stores.length > 0;
+
+  useEffect(() => {
+    sheetRef.current?.snapToIndex(sheetSnapIndex(hasSelection));
+  }, [hasSelection]);
 
   return (
-    <View
-      className="rounded-t-[28px] bg-paper-50"
-      style={[bottomSheetShadow, { height: sheetHeight }]}
+    <BottomSheet
+      ref={sheetRef}
+      backgroundStyle={{ backgroundColor: colors.surface, borderRadius: 28 }}
+      bottomInset={insets.bottom}
+      enableDynamicSizing={false}
+      handleIndicatorStyle={{ backgroundColor: colors.line, width: 56 }}
+      index={sheetSnapIndex(hasSelection)}
+      snapPoints={snapPoints}
+      style={bottomSheetShadow}
     >
-      <View className="items-center py-3">
-        <View className="h-1.5 w-24 rounded-full bg-line-200" />
-      </View>
-      {stores.length === 0 ? (
-        <CollapsedContent count={visibleStoreCount} />
-      ) : (
-        <ScrollView showsVerticalScrollIndicator={false}>
+      {hasSelection ? (
+        <BottomSheetScrollView showsVerticalScrollIndicator={false}>
           <StoreDetailContent sourceDate={sourceDate} stores={stores} userLocation={userLocation} />
-        </ScrollView>
+        </BottomSheetScrollView>
+      ) : (
+        <BottomSheetView>
+          <CollapsedContent count={visibleStoreCount} onResetFilters={onResetFilters} />
+        </BottomSheetView>
       )}
-    </View>
+    </BottomSheet>
   );
 }
 
-function CollapsedContent({ count }: { count: number }) {
+function CollapsedContent({ count, onResetFilters }: { count: number; onResetFilters: () => void }) {
   const { t } = useTranslation();
 
+  if (count === 0) {
+    return (
+      <View className="items-center gap-3 px-6 pb-8 pt-1">
+        <Text className="text-center" variant="subtitle">
+          {t('map.noStores')}
+        </Text>
+        <Text className="text-center" tone="muted">
+          {t('map.emptyHint')}
+        </Text>
+        <Button onPress={onResetFilters}>{t('map.resetFilters')}</Button>
+      </View>
+    );
+  }
+
   return (
-    <View className="flex-row items-center gap-4 px-5 pb-6">
+    <View className="flex-row items-center gap-4 px-5 pb-6 pt-1">
       <View className="h-12 w-12 items-center justify-center rounded-full bg-paper-200">
         <StoreIcon color={colors.primary} size={26} />
       </View>
