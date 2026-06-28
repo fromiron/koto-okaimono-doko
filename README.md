@@ -16,6 +16,14 @@ pnpm mobile:start
 Android production map builds need `GOOGLE_MAPS_API_KEY`. The app can run from bundled `seed.sqlite`; dataset updates use `EXPO_PUBLIC_DATASET_MANIFEST_URL`.
 Use Expo Go only for layout, navigation, and local data smoke checks. Validate the Android map in a development or production build created with `GOOGLE_MAPS_API_KEY`, because the app's native Google Maps configuration is applied at build time.
 
+Create local mobile environment settings from the example before native Android map checks:
+
+```bash
+cp apps/mobile/.env.example apps/mobile/.env.local
+$EDITOR apps/mobile/.env.local
+pnpm --dir apps/mobile exec expo run:android
+```
+
 ## CI Local Check
 
 Run GitHub Actions locally before pushing workflow changes:

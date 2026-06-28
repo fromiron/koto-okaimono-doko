@@ -1,6 +1,6 @@
 import type { ExpoConfig } from 'expo/config';
 
-const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY;
+const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY?.trim();
 
 const plugins: NonNullable<ExpoConfig['plugins']> = [
   'expo-router',
