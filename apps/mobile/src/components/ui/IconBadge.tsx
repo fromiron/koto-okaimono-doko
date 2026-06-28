@@ -8,9 +8,9 @@ type IconBadgeProps = {
 };
 
 const toneClass = {
-  primary: 'bg-paper-200',
-  teal: 'bg-emerald-50',
-  neutral: 'bg-line-200',
+  primary: 'bg-primary-soft',
+  teal: 'bg-teal-soft',
+  neutral: 'bg-line',
 };
 
 export function IconBadge({ children, className = '', tone = 'primary' }: IconBadgeProps) {

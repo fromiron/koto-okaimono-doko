@@ -22,7 +22,7 @@ import { useFilterStore } from '@/src/features/filters/filterStore';
 import { KOTO_INITIAL_REGION, useMapStore } from '@/src/features/map/mapStore';
 import { usePreferencesStore } from '@/src/features/preferences/preferencesStore';
 import { useSelectedStoreStore } from '@/src/features/selected-store/selectedStoreStore';
-import { colors } from '@/src/theme/tokens';
+import { colors, space } from '@/src/theme/tokens';
 
 export default function MapScreen() {
   const { t } = useTranslation();
@@ -96,7 +96,7 @@ export default function MapScreen() {
     [visibleGroups],
   );
 
-  const top = Math.max(insets.top, 14) + 10;
+  const top = Math.max(insets.top, space.lg);
   const allSelected =
     filters.couponType === 'all' &&
     filters.payment === 'all' &&
@@ -110,15 +110,15 @@ export default function MapScreen() {
   );
 
   return (
-    <View className="flex-1 bg-paper-50">
+    <View className="flex-1 bg-surface">
       <View
-        className="bg-paper-50 px-5 pb-4"
+        className="bg-surface px-5 pb-4"
         style={{ paddingTop: top }}
       >
         <View className="mb-4 flex-row items-center justify-between gap-3">
           <BrandMark />
           <IconButton onPress={() => router.push('/settings')}>
-            <Settings color={colors.inkMuted} size={26} />
+            <Settings color={colors.muted} size={24} />
           </IconButton>
         </View>
 
@@ -131,7 +131,7 @@ export default function MapScreen() {
 
         <ScrollView
           className="-mx-5 mt-4"
-          contentContainerStyle={{ gap: 10, paddingHorizontal: 20 }}
+          contentContainerStyle={{ gap: space.sm, paddingHorizontal: space.xl }}
           horizontal
           showsHorizontalScrollIndicator={false}
         >

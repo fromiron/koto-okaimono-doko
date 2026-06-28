@@ -28,7 +28,7 @@ export function AppHeader({
       <View className="min-h-14 flex-row items-center justify-between gap-3">
         {showBack ? (
           <IconButton onPress={() => router.back()}>
-            <ChevronLeft color={colors.ink} size={26} />
+            <ChevronLeft color={colors.ink} size={24} />
           </IconButton>
         ) : centeredBrand ? (
           <View className="h-12 w-12" />
@@ -46,7 +46,7 @@ export function AppHeader({
 
         {showSettings ? (
           <IconButton onPress={() => router.push('/settings')}>
-            <Settings color={colors.inkMuted} size={26} />
+            <Settings color={colors.muted} size={24} />
           </IconButton>
         ) : showBack || centeredBrand ? (
           <View className="h-12 w-12" />

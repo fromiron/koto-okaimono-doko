@@ -10,6 +10,7 @@ import { Button } from '@/src/components/ui/Button';
 import { Chip } from '@/src/components/ui/Chip';
 import { IconButton } from '@/src/components/ui/IconButton';
 import { Text } from '@/src/components/ui/Text';
+import { Wrap } from '@/src/components/ui/Wrap';
 import { useFilterStore } from '@/src/features/filters/filterStore';
 import { useMapStore } from '@/src/features/map/mapStore';
 import { usePreferencesStore } from '@/src/features/preferences/preferencesStore';
@@ -28,18 +29,18 @@ export default function FiltersScreen() {
     <View className="flex-1 justify-end bg-black/40">
       <Pressable className="absolute inset-0" onPress={() => router.back()} />
       <View
-        className="max-h-[82%] rounded-t-[28px] bg-paper-50 px-6 pt-3"
+        className="max-h-[82%] rounded-t-sheet bg-surface px-6 pt-3"
         style={[bottomSheetShadow, { paddingBottom: Math.max(insets.bottom, 18) }]}
       >
         <View className="mb-5 items-center">
-          <View className="h-1.5 w-24 rounded-full bg-line-200" />
+          <View className="h-1.5 w-24 rounded-full bg-line" />
         </View>
         <View className="mb-6 flex-row items-center justify-center">
           <Text className="text-center" variant="title">
             {t('filters.title')}
           </Text>
           <View className="absolute right-0">
-            <IconButton className="bg-gray-100" shadow={false} onPress={() => router.back()}>
+            <IconButton className="bg-neutral-soft" shadow={false} onPress={() => router.back()}>
               <X color={colors.ink} size={28} />
             </IconButton>
           </View>
@@ -120,7 +121,7 @@ export default function FiltersScreen() {
             {t('filters.applyConditions')}
           </Button>
           <Pressable className="items-center py-1" onPress={filters.reset}>
-            <Text className="text-water-700" variant="label">
+            <Text className="text-primary" variant="label">
               {t('filters.resetConditions')}
             </Text>
           </Pressable>
@@ -140,9 +141,9 @@ function FilterSection({
   title: string;
 }) {
   return (
-    <View className={`gap-4 py-5 ${divider ? 'border-b border-line-200' : ''}`}>
+    <View className={`gap-4 py-5 ${divider ? 'border-b border-line' : ''}`}>
       <Text variant="subtitle">{title}</Text>
-      <View className="flex-row flex-wrap gap-3">{children}</View>
+      <Wrap gap="md">{children}</Wrap>
     </View>
   );
 }

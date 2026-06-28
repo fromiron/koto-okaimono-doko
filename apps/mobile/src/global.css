@@ -2,16 +2,24 @@
 @import 'uniwind';
 
 @theme {
-  --color-ink-950: #333333;
-  --color-ink-700: #4b5563;
-  --color-ink-500: #6b7280;
-  --color-paper-50: #ffffff;
-  --color-paper-100: #f4faff;
-  --color-paper-200: #eaf3ff;
-  --color-line-200: #e5e7eb;
-  --color-water-500: #2dbe7f;
-  --color-water-700: #0d47a1;
-  --color-coupon-ab: #0d47a1;
+  --color-primary: #0d47a1;
+  --color-primary-soft: #eaf3ff;
+  --color-teal: #2dbe7f;
+  --color-teal-soft: #ecfdf5;
   --color-coupon-b: #f5a623;
-  --color-facility-700: #5f6368;
+  --color-purple: #6d28d9;
+  --color-ink: #333333;
+  --color-muted: #6b7280;
+  --color-line: #e5e7eb;
+  --color-surface: #ffffff;
+  --color-page: #f4faff;
+  --color-neutral-soft: #f3f4f6;
+  --color-danger: #b91c1c;
+  --color-danger-soft: #fef2f2;
+  --color-facility: #5f6368;
+
+  --radius-thumb: 12px;
+  --radius-card: 16px;
+  --radius-sheet: 28px;
+  --radius-input: 28px;
 }

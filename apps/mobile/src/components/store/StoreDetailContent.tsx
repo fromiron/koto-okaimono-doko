@@ -12,7 +12,7 @@ import { SurfaceCard } from '@/src/components/ui/SurfaceCard';
 import { Text } from '@/src/components/ui/Text';
 import { illustrations } from '@/src/assets/illustrations';
 import type { LatLng } from '@/src/features/map/mapStore';
-import { colors, surfaceShadow } from '@/src/theme/tokens';
+import { colors, radii, surfaceShadow } from '@/src/theme/tokens';
 
 import { CouponBadge } from './CouponBadge';
 import { PaymentBadge } from './PaymentBadge';
@@ -89,7 +89,7 @@ function SingleStoreContent({
             divider={false}
             icon={
               <IconBadge className="h-10 w-10" tone="teal">
-                <Footprints color={colors.teal} size={22} />
+                <Footprints color={colors.teal} size={20} />
               </IconBadge>
             }
             label={t('store.currentDistance')}
@@ -108,12 +108,12 @@ function SingleStoreContent({
       <StoreIdentity mode="sheet" store={store} />
 
       <View>
-        <View className="flex-row items-start gap-3 border-t border-line-200 py-4">
-          <MapPin color={colors.primary} fill={colors.primary} size={26} />
+        <View className="flex-row items-start gap-3 border-t border-line py-4">
+          <MapPin color={colors.primary} fill={colors.primary} size={24} />
           <Text className="min-w-0 flex-1">{getAddressText(store)}</Text>
         </View>
-        <View className="flex-row items-center gap-3 border-t border-line-200 py-4">
-          <Footprints color={colors.primary} size={26} />
+        <View className="flex-row items-center gap-3 border-t border-line py-4">
+          <Footprints color={colors.primary} size={24} />
           <Text className="min-w-0 flex-1">{getDistanceText(store, userLocation, t)}</Text>
         </View>
       </View>
@@ -148,7 +148,7 @@ function LocationGroupContent({
         />
         <View className="min-w-0 flex-1 gap-2">
           <Text variant="subtitle">{title}</Text>
-          <View className="self-start rounded-full bg-facility-700 px-3 py-1">
+          <View className="self-start rounded-full bg-facility px-3 py-1">
             <Text className="text-white" variant="caption">
               {t('store.facilityStoreCount', { count: stores.length })}
             </Text>
@@ -160,7 +160,7 @@ function LocationGroupContent({
       <SurfaceCard className="px-4" shadow={mode === 'page'}>
         {stores.map((store, index) => (
           <View
-            className={`py-4 ${index < stores.length - 1 ? 'border-b border-line-200' : ''}`}
+            className={`py-4 ${index < stores.length - 1 ? 'border-b border-line' : ''}`}
             key={store.id}
           >
             <View className="mb-2 flex-row items-start justify-between gap-3">
@@ -208,7 +208,7 @@ function StoreIdentity({ mode, store }: { mode: Mode; store: Store }) {
         <Image
           resizeMode="cover"
           source={illustrations.storeDetail}
-          style={{ borderRadius: 18, height: 120, width: 120 }}
+          style={{ borderRadius: radii.card, height: 120, width: 120 }}
         />
         {column}
       </SurfaceCard>
@@ -217,7 +217,7 @@ function StoreIdentity({ mode, store }: { mode: Mode; store: Store }) {
 
   return (
     <View className="flex-row items-center gap-4">
-      <View className="h-24 w-24 items-center justify-center rounded-full bg-paper-50" style={surfaceShadow}>
+      <View className="h-24 w-24 items-center justify-center rounded-full bg-surface" style={surfaceShadow}>
         <Image
           resizeMode="cover"
           source={illustrations.storeDetail}
@@ -262,14 +262,14 @@ function StoreActions({ mode, store }: { mode: Mode; store: Store }) {
 
 function PhoneRow({ label, phone }: { label: string; phone: string }) {
   return (
-    <View className="flex-row gap-4 border-b border-line-200 py-4">
+    <View className="flex-row gap-4 border-b border-line py-4">
       <View className="pt-1">
-        <Phone color={colors.primary} fill={colors.primary} size={26} />
+        <Phone color={colors.primary} fill={colors.primary} size={24} />
       </View>
       <View className="min-w-0 flex-1 gap-1">
         <Text variant="label">{label}</Text>
         <Pressable onPress={() => Linking.openURL(`tel:${phone.replace(/[^0-9+]/g, '')}`)}>
-          <Text className="text-water-700">{phone}</Text>
+          <Text className="text-primary">{phone}</Text>
         </Pressable>
       </View>
     </View>
@@ -297,7 +297,7 @@ function MapPreview({ store }: { store: Store }) {
 
   return (
     <View className="gap-2">
-      <View className="h-56 overflow-hidden rounded-[18px] border border-line-200">
+      <View className="h-56 overflow-hidden rounded-card border border-line">
         <MapView
           initialRegion={{
             latitude: store.lat,

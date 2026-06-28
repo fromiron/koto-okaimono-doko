@@ -10,9 +10,9 @@ export function CouponBadge({ couponType }: { couponType: CouponType }) {
 
   return (
     <View
-      className={`rounded-full border px-3 py-1 ${isAb ? 'border-coupon-ab' : 'border-coupon-b'}`}
+      className={`rounded-full border px-3 py-1 ${isAb ? 'border-primary' : 'border-coupon-b'}`}
     >
-      <Text className={isAb ? 'text-water-700' : 'text-coupon-b'} variant="label">
+      <Text className={isAb ? 'text-primary' : 'text-coupon-b'} variant="label">
         {isAb ? t('filters.ab') : t('filters.bOnly')}
       </Text>
     </View>

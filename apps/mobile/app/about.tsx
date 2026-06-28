@@ -8,10 +8,12 @@ import { illustrations } from '@/src/assets/illustrations';
 import { IconBadge } from '@/src/components/ui/IconBadge';
 import { IconButton } from '@/src/components/ui/IconButton';
 import { NavRow } from '@/src/components/ui/NavRow';
+import { Row } from '@/src/components/ui/Row';
 import { Screen } from '@/src/components/ui/Screen';
+import { Stack } from '@/src/components/ui/Stack';
 import { Text } from '@/src/components/ui/Text';
 import { UnofficialPill } from '@/src/components/ui/UnofficialPill';
-import { colors } from '@/src/theme/tokens';
+import { colors, iconSizes } from '@/src/theme/tokens';
 
 export default function AboutScreen() {
   const { t } = useTranslation();
@@ -19,55 +21,51 @@ export default function AboutScreen() {
 
   return (
     <Screen>
-      <View className="mb-6 flex-row items-center justify-between">
+      <Row className="mb-6 justify-between">
         <IconButton onPress={() => router.back()}>
-          <ChevronLeft color={colors.ink} size={26} />
+          <ChevronLeft color={colors.ink} size={iconSizes.lg} />
         </IconButton>
         <Text className="text-center" variant="subtitle">
           {t('about.title')}
         </Text>
         <View className="h-12 w-12" />
-      </View>
+      </Row>
 
-      <View className="items-center border-b border-line-200 pb-7">
-        <Image
-          resizeMode="contain"
-          source={illustrations.mapEmpty}
-          style={{ height: 180, width: '100%' }}
-        />
-        <View className="mt-1 items-center gap-1">
-          <Text className="text-center text-water-700" variant="title">
+      <Stack className="items-center border-b border-line pb-6" gap="xs">
+        <Image resizeMode="contain" source={illustrations.mapEmpty} style={{ height: 180, width: '100%' }} />
+        <Stack className="items-center" gap="xs">
+          <Text className="text-center text-primary" variant="title">
             こうとうお買い物どこ
           </Text>
-          <Text className="text-center text-water-500" variant="subtitle">
+          <Text className="text-center text-teal" variant="subtitle">
             koto okaimono doko
           </Text>
-        </View>
-      </View>
+        </Stack>
+      </Stack>
 
-      <View className="gap-7 py-7">
+      <Stack className="py-6" gap="2xl">
         <AboutPoint
           body={t('about.body')}
-          icon={<Info color={colors.primary} size={28} />}
+          icon={<Info color={colors.primary} size={iconSizes.xl} />}
           title={t('about.unofficialTitle')}
         />
         <AboutPoint
           body={t('about.accuracyBody')}
-          icon={<ShieldCheck color={colors.teal} size={28} />}
+          icon={<ShieldCheck color={colors.teal} size={iconSizes.xl} />}
           title={t('about.accuracyTitle')}
           tone="teal"
         />
         <AboutPoint
           body={t('about.privacyBody')}
-          icon={<LockKeyhole color={colors.primary} size={28} />}
+          icon={<LockKeyhole color={colors.primary} size={iconSizes.xl} />}
           title={t('about.privacyTitle')}
         />
-      </View>
+      </Stack>
 
-      <View className="gap-3 border-t border-line-200 pt-6">
+      <Stack className="border-t border-line pt-6" gap="md">
         <NavRow
           surface
-          icon={<Globe2 color={colors.teal} size={28} />}
+          icon={<Globe2 color={colors.teal} size={iconSizes.xl} />}
           iconTone="teal"
           label={t('about.officialSite')}
           labelVariant="subtitle"
@@ -75,22 +73,22 @@ export default function AboutScreen() {
         />
         <NavRow
           surface
-          icon={<Github color={colors.ink} size={28} />}
+          icon={<Github color={colors.ink} size={iconSizes.xl} />}
           label={t('about.github')}
           labelVariant="subtitle"
           onPress={() => Linking.openURL('https://github.com/fromiron/koto-okaimono-doko')}
         />
-      </View>
+      </Stack>
 
-      <View className="items-center gap-3 pt-7">
-        <UnofficialPill className="px-4 py-1.5" />
+      <Stack className="items-center pt-6" gap="md">
+        <UnofficialPill className="px-4 py-2" />
         <Text className="text-center" tone="muted">
           {t('about.disclaimer')}
         </Text>
-        <Text variant="caption" tone="muted">
+        <Text tone="muted" variant="caption">
           © 2026 koto okaimono doko
         </Text>
-      </View>
+      </Stack>
     </Screen>
   );
 }
@@ -107,12 +105,12 @@ function AboutPoint({
   tone?: 'primary' | 'teal';
 }) {
   return (
-    <View className="flex-row gap-5">
+    <Row align="start" gap="lg">
       <IconBadge tone={tone}>{icon}</IconBadge>
-      <View className="min-w-0 flex-1 gap-2">
+      <Stack className="min-w-0 flex-1" gap="sm">
         <Text variant="subtitle">{title}</Text>
         <Text>{body}</Text>
-      </View>
-    </View>
+      </Stack>
+    </Row>
   );
 }

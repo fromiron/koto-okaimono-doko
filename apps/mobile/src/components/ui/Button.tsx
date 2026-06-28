@@ -18,11 +18,11 @@ type ButtonProps = PressableProps & {
 };
 
 const variantClass: Record<ButtonVariant, string> = {
-  primary: 'bg-water-700',
-  secondary: 'border border-water-700 bg-paper-50',
+  primary: 'bg-primary',
+  secondary: 'border border-primary bg-surface',
   ghost: 'bg-transparent',
-  danger: 'bg-red-700',
-  teal: 'border border-water-500 bg-paper-50',
+  danger: 'bg-danger',
+  teal: 'border border-teal bg-surface',
 };
 
 const textTone: Record<ButtonVariant, 'default' | 'inverse' | 'danger' | 'teal'> = {

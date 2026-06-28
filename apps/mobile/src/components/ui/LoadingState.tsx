@@ -6,7 +6,7 @@ import { Text } from './Text';
 
 export function LoadingState({ message }: { message: string }) {
   return (
-    <View className="flex-1 items-center justify-center gap-3 bg-paper-100 px-8">
+    <View className="flex-1 items-center justify-center gap-3 bg-page px-8">
       <ActivityIndicator color={colors.primary} />
       <Text tone="muted">{message}</Text>
     </View>
