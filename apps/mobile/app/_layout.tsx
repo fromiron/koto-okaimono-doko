@@ -1,0 +1,32 @@
+import '@/src/i18n';
+
+import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+import { AppProviders } from '@/src/features/bootstrap/AppProviders';
+
+export default function RootLayout() {
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <AppProviders>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: '#faf8f2' },
+            }}
+          >
+            <Stack.Screen name="index" />
+            <Stack.Screen name="filters" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="settings" />
+            <Stack.Screen name="about" />
+            <Stack.Screen name="store/[id]" />
+          </Stack>
+          <StatusBar style="dark" />
+        </AppProviders>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
+  );
+}

@@ -32,3 +32,4 @@
 - Support `ja`, `en`, `ko`, `zh-Hans`, and `zh-Hant`. Official Store names, addresses, and facility names remain in Japanese source text.
 - Android production map builds require `GOOGLE_MAPS_API_KEY`; iOS uses Apple Maps by default.
 - Implement incrementally. After each phase, run typecheck, lint, and tests where applicable.
+- When adding or changing GitHub Actions, run the relevant workflow locally with `act` before treating the CI change as ready. Use the repo `.actrc` image mapping and document any local-only limitation.

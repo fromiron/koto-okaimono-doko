@@ -1,0 +1,15 @@
+@import 'tailwindcss';
+@import 'uniwind';
+
+@theme {
+  --color-ink-950: #121417;
+  --color-ink-700: #3d454f;
+  --color-ink-500: #69727e;
+  --color-paper-50: #faf8f2;
+  --color-paper-100: #f1eee4;
+  --color-line-200: #ded8c8;
+  --color-water-500: #1f8c87;
+  --color-water-700: #176762;
+  --color-coupon-ab: #2364aa;
+  --color-coupon-b: #c46a19;
+}

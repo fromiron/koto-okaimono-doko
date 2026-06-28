@@ -1,0 +1,32 @@
+{
+  "name": "koto-okaimono-doko",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.33.2",
+  "scripts": {
+    "mobile:start": "pnpm --filter @koto/mobile start",
+    "mobile:android": "pnpm --filter @koto/mobile android",
+    "mobile:ios": "pnpm --filter @koto/mobile ios",
+    "typecheck": "tsc -b",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "dataset:fetch": "tsx packages/dataset-cli/src/fetchOfficial.ts",
+    "dataset:parse": "tsx packages/dataset-cli/src/parse.ts",
+    "dataset:normalize": "tsx packages/dataset-cli/src/normalize.ts",
+    "dataset:validate": "tsx packages/dataset-cli/src/validate.ts",
+    "dataset:build-sqlite": "tsx packages/dataset-cli/src/buildSqlite.ts",
+    "dataset:export-manifest": "tsx packages/dataset-cli/src/exportManifest.ts",
+    "dataset:build": "tsx packages/dataset-cli/src/index.ts",
+    "dataset:test": "vitest run packages/dataset-cli"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@types/node": "^25.0.3",
+    "eslint": "^9.39.2",
+    "prettier": "^3.7.4",
+    "tsx": "^4.21.0",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.49.0",
+    "vitest": "^4.0.16"
+  }
+}

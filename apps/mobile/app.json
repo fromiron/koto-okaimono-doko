@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "こうとうお買い物どこ",
+    "slug": "koto-okaimono-doko",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "koto-okaimono-doko",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.koto.okaimono.doko",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "現在地周辺の取扱店を表示するために使用します。位置情報は保存・送信しません。"
+      }
+    },
+    "android": {
+      "package": "app.koto.okaimono.doko",
+      "config": {
+        "googleMaps": {
+          "apiKey": "$GOOGLE_MAPS_API_KEY"
+        }
+      },
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-localization",
+      "expo-sqlite",
+      "expo-asset",
+      "expo-splash-screen"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

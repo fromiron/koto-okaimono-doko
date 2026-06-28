@@ -1,0 +1,33 @@
+# こうとうお買い物どこ
+
+Unofficial offline-first map app for stores participating in `こうとう商店街DEお買い物券＋2026`.
+
+## Development
+
+```bash
+pnpm install
+pnpm dataset:build
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm mobile:start
+```
+
+Android production map builds need `GOOGLE_MAPS_API_KEY`. The app can run from bundled `seed.sqlite`; dataset updates use `EXPO_PUBLIC_DATASET_MANIFEST_URL`.
+
+## CI Local Check
+
+Run GitHub Actions locally before pushing workflow changes:
+
+```bash
+act -W .github/workflows/mobile-ci.yml -j quality
+```
+
+The dataset workflow can be smoke-checked with:
+
+```bash
+act -W .github/workflows/build-dataset.yml -j build-dataset
+```
+
+Pages deployment is intended for GitHub-hosted CI, not local `act`.
+Artifact upload and Pages upload are skipped under `act` because local runs do not provide GitHub's artifact runtime token.
