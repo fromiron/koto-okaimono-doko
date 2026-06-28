@@ -11,6 +11,8 @@ import { Chip } from '@/src/components/ui/Chip';
 import { IconButton } from '@/src/components/ui/IconButton';
 import { Text } from '@/src/components/ui/Text';
 import { useFilterStore } from '@/src/features/filters/filterStore';
+import { useMapStore } from '@/src/features/map/mapStore';
+import { usePreferencesStore } from '@/src/features/preferences/preferencesStore';
 import { colors, bottomSheetShadow } from '@/src/theme/tokens';
 
 export default function FiltersScreen() {
@@ -18,6 +20,9 @@ export default function FiltersScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const filters = useFilterStore();
+  const userLocation = useMapStore((state) => state.userLocation);
+  const locationEnabled = usePreferencesStore((state) => state.locationEnabled);
+  const radiusAvailable = locationEnabled && userLocation != null;
 
   return (
     <View className="flex-1 justify-end bg-black/40">
@@ -82,21 +87,32 @@ export default function FiltersScreen() {
           </FilterSection>
 
           <FilterSection divider={false} title={t('filters.radius')}>
-            {[
-              [300, 'filters.meters300'],
-              [500, 'filters.meters500'],
-              [1000, 'filters.meters1000'],
-              [2000, 'filters.meters2000'],
-            ].map(([value, label]) => (
+            <Chip selected={filters.radiusMeters === 'all'} onPress={() => filters.setRadiusMeters('all')}>
+              {t('common.all')}
+            </Chip>
+            {(
+              [
+                [300, 'filters.meters300'],
+                [500, 'filters.meters500'],
+                [1000, 'filters.meters1000'],
+                [2000, 'filters.meters2000'],
+              ] as const
+            ).map(([value, label]) => (
               <Chip
                 key={value}
+                disabled={!radiusAvailable}
                 selected={filters.radiusMeters === value}
-                onPress={() => filters.setRadiusMeters(value as 300 | 500 | 1000 | 2000)}
+                onPress={() => filters.setRadiusMeters(value)}
               >
-                {t(label as 'filters.meters300')}
+                {t(label)}
               </Chip>
             ))}
           </FilterSection>
+          {!radiusAvailable ? (
+            <Text className="pb-2" tone="muted" variant="caption">
+              {t('filters.radiusNeedsLocation')}
+            </Text>
+          ) : null}
         </ScrollView>
 
         <View className="gap-4 pt-4">

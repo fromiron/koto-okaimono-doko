@@ -1,22 +1,24 @@
 import type { SupportedLocale } from '@koto/schema';
 import { supportedLocales } from '@koto/schema';
 import { useRouter } from 'expo-router';
-import { ChevronRight, CloudCog, FileText, Github, Heart, Info, LocateFixed, RefreshCcw } from 'lucide-react-native';
-import type { ReactNode } from 'react';
+import { CloudCog, FileText, Github, Heart, Info, LocateFixed, RefreshCcw } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { Linking, Pressable, Switch, View } from 'react-native';
+import { Linking, Switch, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AppHeader } from '@/src/components/brand/AppHeader';
 import { Button } from '@/src/components/ui/Button';
 import { Chip } from '@/src/components/ui/Chip';
 import { IconBadge } from '@/src/components/ui/IconBadge';
+import { NavRow } from '@/src/components/ui/NavRow';
 import { Screen } from '@/src/components/ui/Screen';
 import { SurfaceCard } from '@/src/components/ui/SurfaceCard';
 import { Text } from '@/src/components/ui/Text';
-import { checkForDatasetUpdate, useApplyCandidateDataset } from '@/src/features/dataset/DatasetUpdater';
 import { useDatasetStore } from '@/src/features/dataset/datasetStore';
+import { useDatasetUpdate } from '@/src/features/dataset/useDatasetUpdate';
 import { useStoreRepository } from '@/src/features/db/useStoreRepository';
+import { setStoredLocationEnabled } from '@/src/features/preferences/locationPreference';
+import { usePreferencesStore } from '@/src/features/preferences/preferencesStore';
 import { getStoredLanguage, setStoredLanguage } from '@/src/i18n';
 import { colors } from '@/src/theme/tokens';
 
@@ -32,36 +34,20 @@ export default function SettingsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const repository = useStoreRepository();
-  const applyCandidate = useApplyCandidateDataset();
+  const { applyUpdate, checkUpdate } = useDatasetUpdate();
   const meta = useDatasetStore((state) => state.meta);
   const pendingManifest = useDatasetStore((state) => state.pendingManifest);
   const updateStatus = useDatasetStore((state) => state.updateStatus);
   const lastCheckedAt = useDatasetStore((state) => state.lastCheckedAt);
   const setDatasetMeta = useDatasetStore((state) => state.setDatasetMeta);
-  const setPendingManifest = useDatasetStore((state) => state.setPendingManifest);
-  const setUpdateStatus = useDatasetStore((state) => state.setUpdateStatus);
+  const locationEnabled = usePreferencesStore((state) => state.locationEnabled);
+  const setLocationEnabled = usePreferencesStore((state) => state.setLocationEnabled);
   const [language, setLanguage] = useState<SupportedLocale>('ja');
 
   useEffect(() => {
     void getStoredLanguage().then(setLanguage);
     void repository.getDatasetMeta().then(setDatasetMeta);
   }, [repository, setDatasetMeta]);
-
-  async function checkUpdate() {
-    setUpdateStatus('checking');
-    const { result, manifest } = await checkForDatasetUpdate(meta);
-    if (manifest) setPendingManifest(manifest);
-    setUpdateStatus(result.status === 'failed' ? 'failed' : result.status === 'updated' ? 'updated' : 'idle');
-  }
-
-  async function applyUpdate() {
-    setUpdateStatus('verifying');
-    await applyCandidate();
-    setPendingManifest(null);
-    const nextMeta = await repository.getDatasetMeta();
-    setDatasetMeta(nextMeta);
-    setUpdateStatus('idle');
-  }
 
   return (
     <Screen>
@@ -111,27 +97,33 @@ export default function SettingsScreen() {
             <Text>{t('settings.locationUse')}</Text>
             <Text tone="muted">{t('settings.locationDetail')}</Text>
           </View>
-          <ChevronRight color={colors.inkMuted} size={28} />
         </View>
         <View className="flex-row items-center justify-between border-t border-line-200 py-4">
           <Text>{t('settings.locationToggle')}</Text>
-          <Switch disabled value trackColor={{ false: colors.line, true: colors.primary }} />
+          <Switch
+            onValueChange={(next) => {
+              setLocationEnabled(next);
+              void setStoredLocationEnabled(next);
+            }}
+            trackColor={{ false: colors.line, true: colors.primary }}
+            value={locationEnabled}
+          />
         </View>
       </SurfaceCard>
 
       <SectionTitle>{t('settings.appInfo')}</SectionTitle>
       <SurfaceCard className="mb-8 px-5">
-        <ActionRow
+        <NavRow
           icon={<Info color={colors.primary} size={28} />}
           label={t('settings.aboutApp')}
           onPress={() => router.push('/about')}
         />
-        <ActionRow
+        <NavRow
           icon={<Github color={colors.primary} size={28} />}
           label={t('settings.github')}
           onPress={() => Linking.openURL('https://github.com/fromiron/koto-okaimono-doko')}
         />
-        <ActionRow
+        <NavRow
           divider={false}
           icon={<FileText color={colors.primary} size={28} />}
           label={t('settings.license')}
@@ -192,28 +184,5 @@ function SettingRow({ divider = true, label, value }: { divider?: boolean; label
       </Text>
       <Text className="shrink-0 text-right">{value}</Text>
     </View>
-  );
-}
-
-function ActionRow({
-  divider = true,
-  icon,
-  label,
-  onPress,
-}: {
-  divider?: boolean;
-  icon: ReactNode;
-  label: string;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      className={`flex-row items-center gap-4 py-5 ${divider ? 'border-b border-line-200' : ''}`}
-      onPress={onPress}
-    >
-      <IconBadge>{icon}</IconBadge>
-      <Text className="min-w-0 flex-1">{label}</Text>
-      <ChevronRight color={colors.inkMuted} size={28} />
-    </Pressable>
   );
 }

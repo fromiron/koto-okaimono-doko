@@ -5,7 +5,6 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { useDatabaseReload } from '@/src/features/bootstrap/AppProviders';
 
 import {
-  backupDatabaseName,
   candidateDatabaseName,
   datasetPaths,
   sqliteDirectory,
@@ -75,13 +74,17 @@ export async function applyCandidateDataset(): Promise<void> {
     });
   }
 
+  // The previous active database's WAL/SHM sidecars are not moved with the
+  // .sqlite file, so remove the orphans before promoting the candidate. Leaving
+  // them would let SQLite apply a stale WAL to the newly promoted database.
+  await FileSystem.deleteAsync(`${datasetPaths.activeDatabaseUri}-wal`, { idempotent: true });
+  await FileSystem.deleteAsync(`${datasetPaths.activeDatabaseUri}-shm`, { idempotent: true });
+
   try {
     await FileSystem.moveAsync({
       from: datasetPaths.candidateDatabaseUri,
       to: datasetPaths.activeDatabaseUri,
     });
-    await FileSystem.deleteAsync(`${sqliteDirectory}/${backupDatabaseName}-wal`, { idempotent: true });
-    await FileSystem.deleteAsync(`${sqliteDirectory}/${backupDatabaseName}-shm`, { idempotent: true });
   } catch (error) {
     const backupInfo = await FileSystem.getInfoAsync(datasetPaths.backupDatabaseUri);
     if (backupInfo.exists) {

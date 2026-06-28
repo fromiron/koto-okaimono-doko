@@ -19,10 +19,10 @@ export function BrandMark({ centered = false, compact = false }: BrandMarkProps)
       {!compact ? (
         <View className="min-w-0">
           <Text className="text-water-700" variant="label">
-            koto okaimono doko
+            こうとうお買い物どこ
           </Text>
           <Text className="text-water-500" variant="caption">
-            こうとうお買い物どこ
+            koto okaimono doko
           </Text>
         </View>
       ) : null}

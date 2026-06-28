@@ -4,6 +4,7 @@ import type MapView from 'react-native-maps';
 import { IconButton } from '@/src/components/ui/IconButton';
 import { useCurrentLocation } from '@/src/features/location/useCurrentLocation';
 import { useMapStore } from '@/src/features/map/mapStore';
+import { usePreferencesStore } from '@/src/features/preferences/preferencesStore';
 import { colors } from '@/src/theme/tokens';
 
 type UserLocationButtonProps = {
@@ -13,11 +14,12 @@ type UserLocationButtonProps = {
 export function UserLocationButton({ mapRef }: UserLocationButtonProps) {
   const { requestCurrentLocation, status } = useCurrentLocation();
   const region = useMapStore((state) => state.region);
+  const locationEnabled = usePreferencesStore((state) => state.locationEnabled);
 
   return (
     <IconButton
       accessibilityLabel="Current location"
-      disabled={status === 'requesting'}
+      disabled={!locationEnabled || status === 'requesting'}
       onPress={async () => {
         const location = await requestCurrentLocation();
         if (!location) return;

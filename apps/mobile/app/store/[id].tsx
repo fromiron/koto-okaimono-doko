@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 
 import { BrandMark } from '@/src/components/brand/BrandMark';
 import { StoreDetailContent } from '@/src/components/store/StoreDetailContent';
-import { EmptyState } from '@/src/components/ui/EmptyState';
+import { Button } from '@/src/components/ui/Button';
 import { IconButton } from '@/src/components/ui/IconButton';
 import { LoadingState } from '@/src/components/ui/LoadingState';
 import { Screen } from '@/src/components/ui/Screen';
@@ -69,9 +69,17 @@ export default function StoreDetailScreen() {
       {store ? (
         <StoreDetailContent mode="page" sourceDate={sourceDate} stores={[store]} userLocation={userLocation} />
       ) : (
-        <View className="items-center">
-          <EmptyState message={`${t('store.missingTitle')}\n${t('store.missingBody')}`} />
-          <AlertCircle color={colors.danger} size={30} />
+        <View className="items-center gap-4 pt-10">
+          <View className="h-16 w-16 items-center justify-center rounded-full bg-red-50">
+            <AlertCircle color={colors.danger} size={32} />
+          </View>
+          <Text className="text-center" variant="subtitle">
+            {t('store.missingTitle')}
+          </Text>
+          <Text className="text-center" tone="muted">
+            {t('store.missingBody')}
+          </Text>
+          <Button onPress={() => router.replace('/')}>{t('store.backToMap')}</Button>
         </View>
       )}
     </Screen>

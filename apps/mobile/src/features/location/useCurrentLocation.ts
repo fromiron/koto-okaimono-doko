@@ -2,12 +2,20 @@ import * as Location from 'expo-location';
 import { useCallback, useState } from 'react';
 
 import { useMapStore } from '@/src/features/map/mapStore';
+import { usePreferencesStore } from '@/src/features/preferences/preferencesStore';
 
 export function useCurrentLocation() {
   const setUserLocation = useMapStore((state) => state.setUserLocation);
-  const [status, setStatus] = useState<'idle' | 'requesting' | 'granted' | 'denied' | 'failed'>('idle');
+  const locationEnabled = usePreferencesStore((state) => state.locationEnabled);
+  const [status, setStatus] = useState<'idle' | 'requesting' | 'granted' | 'denied' | 'failed' | 'disabled'>('idle');
 
   const requestCurrentLocation = useCallback(async () => {
+    if (!locationEnabled) {
+      setStatus('disabled');
+      setUserLocation(null);
+      return null;
+    }
+
     setStatus('requesting');
     const permission = await Location.requestForegroundPermissionsAsync();
     if (permission.status !== Location.PermissionStatus.GRANTED) {
@@ -35,7 +43,7 @@ export function useCurrentLocation() {
       setUserLocation(null);
       return null;
     }
-  }, [setUserLocation]);
+  }, [locationEnabled, setUserLocation]);
 
   return {
     requestCurrentLocation,
