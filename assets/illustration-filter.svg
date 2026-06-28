@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800" role="img" aria-label="Filter modal illustration">
+  <defs>
+    <filter id="s" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="14" stdDeviation="14" flood-color="#0D47A1" flood-opacity=".13"/></filter>
+    <linearGradient id="blue" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#2B7DE1"/><stop offset="1" stop-color="#0D47A1"/></linearGradient>
+    <linearGradient id="amber" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#FFC34D"/><stop offset="1" stop-color="#F5A623"/></linearGradient>
+    <linearGradient id="mint" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#55D99D"/><stop offset="1" stop-color="#2DBE7F"/></linearGradient>
+    <style>.line{stroke:#D1D5DB;stroke-width:10;stroke-linecap:round}.chipline{stroke:#D1D5DB;stroke-width:8;stroke-linecap:round}</style>
+  </defs>
+  <rect width="800" height="800" fill="none"/>
+  <path d="M150 600c60-115 140-168 270-157 125 11 218-42 255-137v352H120c0-18 10-38 30-58z" fill="#EAF5FF" opacity=".7"/>
+  <g filter="url(#s)">
+    <rect x="232" y="105" width="336" height="590" rx="46" fill="#fff"/>
+    <rect x="350" y="128" width="100" height="12" rx="6" fill="#D1D5DB"/>
+    <circle cx="400" cy="215" r="62" fill="#EDF5FF" stroke="#CDE3FF" stroke-width="6"/>
+    <path d="M365 187h70l-28 34v34h-14v-34z" fill="url(#blue)"/>
+    <g transform="translate(270 305)"><rect width="260" height="95" rx="22" fill="#fff" filter="url(#s)"/><path d="M38 22h130" class="line"/><circle cx="45" cy="60" r="30" fill="#DDEBFF"/><path d="M27 65l18-18 18 18v18H27z" fill="#0D47A1"/><circle cx="112" cy="60" r="27" fill="#F1F1F1"/><rect x="101" y="45" width="22" height="30" fill="#777"/><circle cx="170" cy="60" r="27" fill="#F1F1F1"/><circle cx="170" cy="55" r="16" fill="#777"/><circle cx="225" cy="60" r="27" fill="#F1F1F1"/><rect x="211" y="49" width="28" height="22" fill="#777"/></g>
+    <g transform="translate(270 430)"><rect width="260" height="95" rx="22" fill="#fff" filter="url(#s)"/><path d="M38 22h130" class="line"/><path d="M24 30l20-15 14 22-20 15z" fill="#F5A623"/><circle cx="58" cy="62" r="30" fill="#FFF0CF"/><rect x="38" y="52" width="40" height="23" rx="4" fill="url(#amber)"/><circle cx="128" cy="62" r="27" fill="#F1F1F1"/><rect x="110" y="52" width="36" height="20" rx="4" fill="#777"/><circle cx="195" cy="62" r="27" fill="#F1F1F1"/><path d="M183 50l24 24M207 50l-24 24" stroke="#777" stroke-width="6" stroke-linecap="round"/></g>
+    <g transform="translate(270 555)"><rect width="260" height="85" rx="22" fill="#fff" filter="url(#s)"/><path d="M38 22h130" class="line"/><circle cx="58" cy="58" r="30" fill="#DDF8EB"/><rect x="44" y="43" width="28" height="28" rx="4" fill="none" stroke="#2DBE7F" stroke-width="5"/><circle cx="128" cy="58" r="27" fill="#F1F1F1"/><circle cx="195" cy="58" r="27" fill="#F1F1F1"/></g>
+    <rect x="292" y="660" width="216" height="48" rx="24" fill="url(#blue)"/><path d="M382 683l15 14 31-31" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g filter="url(#s)">
+    <rect x="95" y="155" width="210" height="58" rx="29" fill="#fff" stroke="#0D47A1" stroke-width="3"/><rect x="120" y="174" width="42" height="22" rx="4" fill="url(#blue)"/><path d="M188 184h60" class="chipline"/><circle cx="273" cy="184" r="16" fill="#0D47A1"/><path d="M264 184l8 8 15-18" stroke="#fff" stroke-width="5" fill="none"/>
+    <rect x="505" y="185" width="220" height="58" rx="29" fill="#fff" stroke="#F5A623" stroke-width="3"/><rect x="532" y="204" width="42" height="22" rx="4" fill="url(#amber)"/><path d="M604 214h60" class="chipline"/><circle cx="690" cy="214" r="16" fill="#F5A623"/><path d="M681 214l8 8 15-18" stroke="#fff" stroke-width="5" fill="none"/>
+    <rect x="120" y="250" width="230" height="58" rx="29" fill="#fff" stroke="#2DBE7F" stroke-width="3"/><rect x="148" y="267" width="26" height="30" fill="#2DBE7F"/><path d="M205 279h72" class="chipline"/><circle cx="316" cy="279" r="16" fill="#2DBE7F"/><path d="M307 279l8 8 15-18" stroke="#fff" stroke-width="5" fill="none"/>
+    <circle cx="645" cy="430" r="44" fill="#fff"/><path d="M621 412h48l-19 23v22h-10v-22z" fill="#0D47A1"/>
+  </g>
+</svg>
