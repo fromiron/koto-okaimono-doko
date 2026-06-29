@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react';
-import { Text as NativeText, type TextProps as NativeTextProps } from 'react-native';
+import { Text as NativeText, type TextProps as NativeTextProps, type TextStyle } from 'react-native';
 
-type TextVariant = 'title' | 'subtitle' | 'body' | 'caption' | 'label';
+import { typography, type TypographyToken } from '@/src/theme/tokens';
+
+type TextVariant = TypographyToken;
 type TextTone = 'default' | 'muted' | 'danger' | 'inverse' | 'teal';
 
 type TextProps = NativeTextProps & {
@@ -11,12 +13,14 @@ type TextProps = NativeTextProps & {
   className?: string;
 };
 
-const variantClass: Record<TextVariant, string> = {
-  title: 'text-3xl font-bold leading-tight',
-  subtitle: 'text-xl font-bold leading-snug',
-  body: 'text-base leading-relaxed',
-  caption: 'text-xs leading-normal',
-  label: 'text-sm font-bold leading-tight',
+const variantStyle: Record<TextVariant, TextStyle> = {
+  display: typography.display,
+  title: typography.title,
+  subtitle: typography.subtitle,
+  body: typography.body,
+  label: typography.label,
+  caption: typography.caption,
+  micro: typography.micro,
 };
 
 const toneClass: Record<TextTone, string> = {
@@ -30,12 +34,13 @@ const toneClass: Record<TextTone, string> = {
 export function Text({
   children,
   className = '',
+  style,
   tone = 'default',
   variant = 'body',
   ...props
 }: TextProps) {
   return (
-    <NativeText className={`${variantClass[variant]} ${toneClass[tone]} ${className}`} {...props}>
+    <NativeText className={`${toneClass[tone]} ${className}`} style={[variantStyle[variant], style]} {...props}>
       {children}
     </NativeText>
   );

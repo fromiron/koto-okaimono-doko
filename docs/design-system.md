@@ -7,25 +7,33 @@ frame inside the app.
 
 ## Visual Thesis
 
-`koto okaimono doko` is a practical local map app: bright white surfaces, clear
-blue coupon state, friendly teal accents, and compact information over a native
-map.
+`koto okaimono doko` is a practical local map app on **warm paper** surfaces.
+Colour is reserved for coupon state — blue `primary` = A・B, amber `couponB` = B —
+while everything else stays paper, ink, and hairline. Markers and coupon badges use
+a **ticket-stub** language (the premium shopping coupon). The map home leads with a
+near-me framing and a 地図 / リスト toggle. See `docs/redesign-h.md` for the full
+"H" design direction this implements.
 
 ## Color Tokens
 
+Colour discipline: only A・B (`primary`) and B (`couponB`) carry hue as coupon
+state. Facility markers and clusters are neutral; payment-medium and category chips
+use the neutral `Chip` tone. `teal` is reserved for privacy/positive accents.
+
 | Token | Value | Role |
 |---|---:|---|
-| `primary` | `#0D47A1` | Primary actions, A/B coupon markers, selected chips |
-| `primarySoft` | `#EAF3FF` | Icon badge and selected soft backgrounds |
-| `couponB` | `#F5A623` | B-only coupon markers and chips |
-| `teal` | `#2DBE7F` | Paper/digital badges, privacy/positive accents |
-| `ink` | `#333333` | Primary text |
+| `primary` | `#0D47A1` | A・B coupon state, primary actions, selected controls |
+| `primarySoft` | `#EAF3FF` | A・B icon badge / soft backgrounds |
+| `couponB` | `#F5A623` | B coupon state |
+| `teal` | `#2DBE7F` | Privacy/positive accents, data-update action |
+| `ink` | `#333333` | Primary text, neutral selected chips, clusters |
 | `muted` | `#6B7280` | Secondary text |
-| `line` | `#E5E7EB` | Dividers and low-contrast borders |
+| `line` | `#E7DECE` | Warm hairline dividers and borders |
 | `surface` | `#FFFFFF` | Cards, bottom sheets, floating controls |
-| `page` | `#F4FAFF` | Settings/About background |
+| `page` | `#FAF4E8` | Warm paper app background (all screens) |
+| `neutralSoft` | `#F2ECDE` | Warm neutral control track |
 | `danger` | `#B91C1C` | Error text |
-| `facility` | `#5F6368` | Mall/facility marker |
+| `facility` | `#5F6368` | Mall/facility marker (neutral) |
 
 ## Shape Tokens
 
@@ -37,6 +45,23 @@ map.
 | `radiusInput` | `28` | Search input |
 | `iconButtonSize` | `48` | Header, settings, current location buttons |
 | `markerSize` | `48` | Coupon and facility map markers |
+
+## Typography Tokens
+
+`tokens.ts` exposes a `typography` scale (size / line-height / weight) that the
+`Text` component maps to directly via its `variant` prop, so every heading shares
+one rhythm instead of ad-hoc per-screen sizes. Tone (color) is applied separately
+through the `tone` prop and Tailwind text-color utilities.
+
+| Variant | px / line-height | Weight | Role |
+|---|---:|---:|---|
+| `display` | 30 / 36 | 700 | Hero wordmark (About) |
+| `title` | 24 / 30 | 700 | Screen titles (設定, 店舗詳細, 絞り込み) |
+| `subtitle` | 18 / 24 | 700 | Section + card titles, store names |
+| `body` | 16 / 24 | 400 | Default reading text |
+| `label` | 14 / 20 | 700 | Buttons, chips, badges, cluster counts |
+| `caption` | 12 / 16 | 400 | Notes, timestamps |
+| `micro` | 12 / 14 | 700 | Map marker glyphs |
 
 ## Shadow Tokens
 

@@ -1,15 +1,13 @@
-import { ChevronLeft, Github, Globe2, Info, LockKeyhole, ShieldCheck } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import { Github, Globe2, Heart, Info, LockKeyhole, ShieldCheck, ShoppingBag } from 'lucide-react-native';
 import type { ReactNode } from 'react';
-import { Image, Linking, View } from 'react-native';
+import { Linking, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { illustrations } from '@/src/assets/illustrations';
 import { IconBadge } from '@/src/components/ui/IconBadge';
-import { IconButton } from '@/src/components/ui/IconButton';
 import { NavRow } from '@/src/components/ui/NavRow';
 import { Row } from '@/src/components/ui/Row';
 import { Screen } from '@/src/components/ui/Screen';
+import { ScreenHeader } from '@/src/components/ui/ScreenHeader';
 import { Stack } from '@/src/components/ui/Stack';
 import { Text } from '@/src/components/ui/Text';
 import { UnofficialPill } from '@/src/components/ui/UnofficialPill';
@@ -17,24 +15,15 @@ import { colors, iconSizes } from '@/src/theme/tokens';
 
 export default function AboutScreen() {
   const { t } = useTranslation();
-  const router = useRouter();
 
   return (
     <Screen>
-      <Row className="mb-6 justify-between">
-        <IconButton onPress={() => router.back()}>
-          <ChevronLeft color={colors.ink} size={iconSizes.lg} />
-        </IconButton>
-        <Text className="text-center" variant="subtitle">
-          {t('about.title')}
-        </Text>
-        <View className="h-12 w-12" />
-      </Row>
+      <ScreenHeader title={t('about.title')} />
 
-      <Stack className="items-center border-b border-line pb-6" gap="xs">
-        <Image resizeMode="contain" source={illustrations.mapEmpty} style={{ height: 180, width: '100%' }} />
+      <Stack className="items-center border-b border-line pb-6" gap="lg">
+        <AboutHero />
         <Stack className="items-center" gap="xs">
-          <Text className="text-center text-primary" variant="title">
+          <Text className="text-center text-primary" variant="display">
             こうとうお買い物どこ
           </Text>
           <Text className="text-center text-teal" variant="subtitle">
@@ -90,6 +79,34 @@ export default function AboutScreen() {
         </Text>
       </Stack>
     </Screen>
+  );
+}
+
+function AboutHero() {
+  return (
+    <View
+      className="w-full items-center justify-center overflow-hidden rounded-sheet border border-line bg-primary-soft"
+      style={{ height: 168 }}
+    >
+      <View className="relative h-20 w-20 items-center justify-center">
+        <ShoppingBag color={colors.teal} size={60} strokeWidth={2.4} />
+        <View className="absolute inset-0 items-center justify-center" pointerEvents="none">
+          <Heart color={colors.teal} fill={colors.teal} size={18} style={{ marginTop: 7 }} />
+        </View>
+      </View>
+      <Row className="mt-3" gap="sm">
+        <View className="rounded-full bg-primary px-3 py-1">
+          <Text tone="inverse" variant="label">
+            A・B
+          </Text>
+        </View>
+        <View className="rounded-full bg-coupon-b px-3 py-1">
+          <Text tone="inverse" variant="label">
+            B
+          </Text>
+        </View>
+      </Row>
+    </View>
   );
 }
 

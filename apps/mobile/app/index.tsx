@@ -8,9 +8,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { BrandMark } from '@/src/components/brand/BrandMark';
+import { clusterByGrid, type MarkerCluster } from '@/src/components/map/clusterGroups';
 import { StoreMap, type StoreLocationGroup } from '@/src/components/map/StoreMap';
 import { UserLocationButton } from '@/src/components/map/UserLocationButton';
-import { SHEET_PEEK_HEIGHT, StoreBottomSheet } from '@/src/components/store/StoreBottomSheet';
+import { SHEET_PEEK_HEIGHT, StoreBottomSheet, type MapViewMode } from '@/src/components/store/StoreBottomSheet';
 import { Chip } from '@/src/components/ui/Chip';
 import { IconButton } from '@/src/components/ui/IconButton';
 import { SearchInput } from '@/src/components/ui/SearchInput';
@@ -43,10 +44,16 @@ export default function MapScreen() {
   const setDatasetMeta = useDatasetStore((state) => state.setDatasetMeta);
   const { checkUpdate } = useDatasetUpdate();
   const [groups, setGroups] = useState<StoreLocationGroup[]>([]);
+  const [viewMode, setViewMode] = useState<MapViewMode>('map');
 
   const visibleGroups = useMemo(
     () => filterGroupsByRadius(groups, locationEnabled ? userLocation : null, filters.radiusMeters),
     [groups, locationEnabled, userLocation, filters.radiusMeters],
+  );
+
+  const clusters = useMemo(
+    () => clusterByGrid(visibleGroups, region.longitudeDelta),
+    [visibleGroups, region.longitudeDelta],
   );
 
   useEffect(() => {
@@ -96,6 +103,11 @@ export default function MapScreen() {
     [visibleGroups],
   );
 
+  const visibleStores = useMemo(
+    () => visibleGroups.flatMap((group) => group.stores),
+    [visibleGroups],
+  );
+
   const top = Math.max(insets.top, space.lg);
   const allSelected =
     filters.couponType === 'all' &&
@@ -109,10 +121,25 @@ export default function MapScreen() {
     [setRegion],
   );
 
+  const handleClusterPress = useCallback(
+    (cluster: MarkerCluster<StoreLocationGroup>) => {
+      mapRef.current?.animateToRegion(
+        {
+          latitude: cluster.lat,
+          longitude: cluster.lng,
+          latitudeDelta: Math.max(region.latitudeDelta / 2.5, 0.004),
+          longitudeDelta: Math.max(region.longitudeDelta / 2.5, 0.004),
+        },
+        320,
+      );
+    },
+    [region.latitudeDelta, region.longitudeDelta],
+  );
+
   return (
-    <View className="flex-1 bg-surface">
+    <View className="flex-1 bg-page">
       <View
-        className="bg-surface px-5 pb-4"
+        className="border-b border-line bg-page px-5 pb-4"
         style={{ paddingTop: top }}
       >
         <View className="mb-4 flex-row items-center justify-between gap-3">
@@ -153,26 +180,28 @@ export default function MapScreen() {
           </Chip>
           <Chip
             selected={filters.payment === 'paper'}
-            tone="teal"
+            tone="neutral"
             onPress={() => filters.setPayment(filters.payment === 'paper' ? 'all' : 'paper')}
           >
             {t('filters.paper')}
           </Chip>
           <Chip
             selected={filters.payment === 'digital'}
-            tone="teal"
+            tone="neutral"
             onPress={() => filters.setPayment(filters.payment === 'digital' ? 'all' : 'digital')}
           >
             {t('filters.digital')}
           </Chip>
           <Chip
             selected={filters.categoryMajorId === 'eat_drink'}
+            tone="neutral"
             onPress={() => filters.setCategoryMajorId(filters.categoryMajorId === 'eat_drink' ? null : 'eat_drink')}
           >
             {t('map.eatChip')}
           </Chip>
           <Chip
             selected={filters.categoryMajorId === 'shopping'}
+            tone="neutral"
             onPress={() => filters.setCategoryMajorId(filters.categoryMajorId === 'shopping' ? null : 'shopping')}
           >
             {t('map.shopChip')}
@@ -185,26 +214,33 @@ export default function MapScreen() {
 
       <View className="min-h-0 flex-1">
         <StoreMap
-          groups={visibleGroups}
+          clusters={clusters}
           initialRegion={KOTO_INITIAL_REGION}
           mapRef={mapRef}
+          onClusterPress={handleClusterPress}
           onMapPress={clearSelectedStore}
           onRegionChangeComplete={handleRegionChange}
           onSelectStores={(stores) => selectStores(stores.map((store) => store.id))}
           selectedStoreIds={selectedStoreIds}
           showsUserLocation={locationEnabled}
         />
-        <View
-          style={{ bottom: SHEET_PEEK_HEIGHT + 12, elevation: 18, position: 'absolute', right: 20, zIndex: 18 }}
-        >
-          <UserLocationButton mapRef={mapRef} />
-        </View>
+        {selectedStoreIds.length === 0 ? (
+          <View
+            style={{ bottom: SHEET_PEEK_HEIGHT + insets.bottom + 12, elevation: 18, position: 'absolute', right: 20, zIndex: 18 }}
+          >
+            <UserLocationButton mapRef={mapRef} />
+          </View>
+        ) : null}
         <StoreBottomSheet
+          onChangeViewMode={setViewMode}
           onResetFilters={filters.reset}
+          onSelectStore={(id) => selectStores([id])}
           sourceDate={meta?.officialUpdatedAt}
           stores={selectedStores}
           userLocation={userLocation}
+          viewMode={viewMode}
           visibleStoreCount={visibleStoreCount}
+          visibleStores={visibleStores}
         />
       </View>
     </View>
