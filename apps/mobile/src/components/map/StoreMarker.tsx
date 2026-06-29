@@ -1,5 +1,6 @@
 import type { Store } from '@koto/schema';
-import { Store as StoreGlyph } from 'lucide-react-native';
+import { Building2 } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Marker } from 'react-native-maps';
 
@@ -17,32 +18,63 @@ type StoreMarkerProps = {
   onPress: () => void;
 };
 
+// The marker is a "ticket-stub" tag (coupon color + white border + ticket eye +
+// label) with a downward nub whose tip marks the precise coordinate. A fixed
+// canvas keeps the captured-bitmap geometry deterministic so the tip never
+// drifts; the selected halo is absolutely positioned so it never shifts the tip.
+const CANVAS_W = 150;
+const CANVAS_H = 92;
+const TAG_TOP = 14;
+const TAG_H = 42;
+const NUB_H = 12;
+// nub tip y inside the canvas (tag bottom - 2px overlap + nub height)
+const TIP_Y = TAG_TOP + TAG_H - 2 + NUB_H;
+const TIP_ANCHOR_Y = TIP_Y / CANVAS_H;
+
 export function StoreMarker({ id, lat, lng, onPress, selected = false, stores }: StoreMarkerProps) {
   const descriptor = getStoreMarkerDescriptor(stores);
   const isFacility = descriptor.kind === 'facility';
 
+  // react-native-maps captures custom marker views to a bitmap on Android. Keep
+  // tracking OFF for performance, re-enabling only briefly after mount and on any
+  // appearance change so the capture stays correct.
+  const [tracksViewChanges, setTracksViewChanges] = useState(true);
+  useEffect(() => {
+    setTracksViewChanges(true);
+    const handle = setTimeout(() => setTracksViewChanges(false), 800);
+    return () => clearTimeout(handle);
+  }, [selected, descriptor.kind, descriptor.color, descriptor.label]);
+
   return (
     <Marker
-      anchor={isFacility ? { x: 0.5, y: 0.5 } : { x: 0.5, y: 0.96 }}
+      anchor={isFacility ? { x: 0.5, y: 0.5 } : { x: 0.5, y: TIP_ANCHOR_Y }}
       coordinate={{ latitude: lat, longitude: lng }}
       identifier={id}
       onPress={onPress}
       stopPropagation
-      tracksViewChanges={selected}
+      tracksViewChanges={tracksViewChanges}
+      zIndex={selected ? 10 : 1}
     >
-      <View style={[styles.wrap, selected && styles.wrapSelected]}>
-        {selected ? <View style={isFacility ? styles.haloCircle : styles.haloPin} /> : null}
+      <View style={styles.canvas}>
         {isFacility ? (
-          <View style={[styles.facility, selected && styles.facilityScaled]}>
-            <StoreGlyph color={colors.surface} size={20} strokeWidth={2.4} />
+          <View style={styles.facilityWrap}>
+            {selected ? <View pointerEvents="none" style={styles.halo} /> : null}
+            <View style={[styles.facility, selected && styles.lifted]}>
+              <Building2 color={colors.surface} size={20} strokeWidth={2.4} />
+            </View>
           </View>
         ) : (
-          <View style={[styles.pin, { backgroundColor: descriptor.color }, selected && styles.pinScaled]}>
-            <View style={styles.pinContent}>
-              <Text className="text-center" tone="inverse" variant="label">
-                {descriptor.label}
-              </Text>
+          <View style={styles.tagGroup}>
+            <View style={styles.tagWrap}>
+              {selected ? <View pointerEvents="none" style={styles.halo} /> : null}
+              <View style={[styles.tag, { backgroundColor: descriptor.color }, selected && styles.lifted]}>
+                <View style={styles.eye} />
+                <Text style={styles.label} tone="inverse" variant="micro">
+                  {descriptor.label}
+                </Text>
+              </View>
             </View>
+            <View style={[styles.nub, { borderTopColor: descriptor.color }]} />
           </View>
         )}
       </View>
@@ -50,79 +82,70 @@ export function StoreMarker({ id, lat, lng, onPress, selected = false, stores }:
   );
 }
 
-const PIN_SIZE = 38;
 const pinShadow = {
-  elevation: 5,
-  shadowColor: '#111827',
-  shadowOffset: { width: 0, height: 3 },
-  shadowOpacity: 0.28,
-  shadowRadius: 4,
+  elevation: 4,
+  shadowColor: '#1B2430',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.26,
+  shadowRadius: 3,
+};
+
+const liftedShadow = {
+  elevation: 9,
+  shadowColor: '#1B2430',
+  shadowOffset: { width: 0, height: 5 },
+  shadowOpacity: 0.32,
+  shadowRadius: 6,
 };
 
 const styles = StyleSheet.create({
-  wrap: {
-    alignItems: 'center',
-    height: 56,
-    justifyContent: 'center',
-    width: 56,
+  canvas: { width: CANVAS_W, height: CANVAS_H, alignItems: 'center', justifyContent: 'flex-start' },
+  tagGroup: { marginTop: TAG_TOP, alignItems: 'center' },
+  tagWrap: { position: 'relative' },
+  halo: {
+    position: 'absolute',
+    top: -6,
+    left: -6,
+    right: -6,
+    bottom: -6,
+    backgroundColor: colors.surface,
+    borderRadius: 18,
+    ...liftedShadow,
   },
-  wrapSelected: {
-    height: 64,
-    width: 64,
-  },
-  pin: {
+  tag: {
+    height: TAG_H,
+    flexDirection: 'row',
     alignItems: 'center',
-    borderBottomLeftRadius: 3,
-    borderBottomRightRadius: PIN_SIZE / 2,
+    gap: 5,
+    paddingHorizontal: 11,
+    borderRadius: 12,
+    borderWidth: 2.5,
     borderColor: colors.surface,
-    borderTopLeftRadius: PIN_SIZE / 2,
-    borderTopRightRadius: PIN_SIZE / 2,
-    borderWidth: 3,
-    height: PIN_SIZE,
-    justifyContent: 'center',
-    transform: [{ rotate: '-45deg' }],
-    width: PIN_SIZE,
     ...pinShadow,
   },
-  pinScaled: {
-    transform: [{ rotate: '-45deg' }, { scale: 1.18 }],
+  eye: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.surface, opacity: 0.92 },
+  label: { letterSpacing: 0.3 },
+  nub: {
+    marginTop: -2,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 9,
+    borderRightWidth: 9,
+    borderTopWidth: NUB_H,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
   },
-  pinContent: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    transform: [{ rotate: '45deg' }],
-  },
+  facilityWrap: { marginTop: CANVAS_H / 2 - 21, position: 'relative' },
   facility: {
-    alignItems: 'center',
-    backgroundColor: colors.facility,
-    borderColor: colors.surface,
-    borderRadius: 21,
-    borderWidth: 3,
-    height: 42,
-    justifyContent: 'center',
     width: 42,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 13,
+    backgroundColor: colors.facility,
+    borderWidth: 2.5,
+    borderColor: colors.surface,
     ...pinShadow,
   },
-  facilityScaled: {
-    transform: [{ scale: 1.18 }],
-  },
-  haloPin: {
-    backgroundColor: colors.surface,
-    borderColor: colors.primarySoft,
-    borderRadius: 32,
-    borderWidth: 5,
-    bottom: 2,
-    height: 56,
-    position: 'absolute',
-    width: 56,
-  },
-  haloCircle: {
-    backgroundColor: colors.surface,
-    borderColor: colors.primarySoft,
-    borderRadius: 30,
-    borderWidth: 5,
-    height: 60,
-    position: 'absolute',
-    width: 60,
-  },
+  lifted: { ...liftedShadow },
 });

@@ -537,7 +537,6 @@ components/map/
   StoreMap.tsx
   StoreMarker.tsx
   UserLocationButton.tsx
-  MapLegend.tsx
 
 components/store/
   StoreBottomSheet.tsx

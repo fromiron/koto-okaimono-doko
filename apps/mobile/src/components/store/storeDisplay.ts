@@ -16,7 +16,10 @@ export function getCategoryText(store: Store, t: TFunction): string {
 
 export function getAddressText(store: Store): string {
   const address = store.address.startsWith('東京都') ? store.address : `東京都江東区${store.address}`;
-  return store.floor ? `${address}\n${store.floor}` : address;
+  if (store.floor && !address.includes(store.floor)) {
+    return `${address}\n${store.floor}`;
+  }
+  return address;
 }
 
 export function getFacilityName(stores: Store[]): string | null {

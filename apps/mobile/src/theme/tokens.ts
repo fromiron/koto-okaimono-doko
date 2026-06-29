@@ -14,10 +14,10 @@ export const colors = {
   purple: '#6D28D9',
   ink: '#333333',
   muted: '#6B7280',
-  line: '#E5E7EB',
+  line: '#E7DECE',
   surface: '#FFFFFF',
-  page: '#F4FAFF',
-  neutralSoft: '#F3F4F6',
+  page: '#FAF4E8',
+  neutralSoft: '#F2ECDE',
   danger: '#B91C1C',
   dangerSoft: '#FEF2F2',
   facility: '#5F6368',
@@ -63,26 +63,52 @@ export const iconSizes = {
 } as const;
 export type IconSizeToken = keyof typeof iconSizes;
 
+/**
+ * Typography scale — the single source of truth for text size, line-height and
+ * weight. The `Text` component maps each variant straight to these values so
+ * every heading shares one rhythm instead of ad-hoc per-screen sizes.
+ *
+ * display  hero wordmark (About)            30 / 36 · 700
+ * title    screen titles (設定 etc.)         24 / 30 · 700
+ * subtitle section + card + store names     18 / 24 · 700
+ * body     default reading text             16 / 24 · 400
+ * label    buttons · chips · badges         14 / 20 · 700
+ * caption  notes · timestamps               12 / 16 · 400
+ * micro    map marker glyphs                12 / 14 · 700
+ */
+export const typography = {
+  display: { fontSize: 30, lineHeight: 36, fontWeight: '700' },
+  title: { fontSize: 24, lineHeight: 30, fontWeight: '700' },
+  subtitle: { fontSize: 18, lineHeight: 24, fontWeight: '700' },
+  body: { fontSize: 16, lineHeight: 24, fontWeight: '400' },
+  label: { fontSize: 14, lineHeight: 20, fontWeight: '700' },
+  caption: { fontSize: 12, lineHeight: 16, fontWeight: '400' },
+  micro: { fontSize: 12, lineHeight: 14, fontWeight: '700' },
+} as const;
+export type TypographyToken = keyof typeof typography;
+
+// Shadows use a neutral slate tone (never a colored glow) and stay tight so cards
+// read as quietly lifted, not as AI-style halos.
 export const surfaceShadow: ViewStyle = {
-  elevation: 5,
-  shadowColor: '#0D47A1',
-  shadowOffset: { width: 0, height: 8 },
-  shadowOpacity: 0.08,
-  shadowRadius: 18,
+  elevation: 3,
+  shadowColor: '#0F172A',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.07,
+  shadowRadius: 4,
 };
 
 export const floatingButtonShadow: ViewStyle = {
-  elevation: 7,
-  shadowColor: '#111827',
-  shadowOffset: { width: 0, height: 5 },
-  shadowOpacity: 0.16,
-  shadowRadius: 12,
+  elevation: 4,
+  shadowColor: '#0F172A',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.12,
+  shadowRadius: 6,
 };
 
 export const bottomSheetShadow: ViewStyle = {
-  elevation: 10,
-  shadowColor: '#111827',
-  shadowOffset: { width: 0, height: -6 },
+  elevation: 12,
+  shadowColor: '#0F172A',
+  shadowOffset: { width: 0, height: -4 },
   shadowOpacity: 0.1,
-  shadowRadius: 18,
+  shadowRadius: 16,
 };

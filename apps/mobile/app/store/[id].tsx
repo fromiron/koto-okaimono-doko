@@ -1,16 +1,15 @@
 import type { Store } from '@koto/schema';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { AlertCircle, ChevronLeft, Settings } from 'lucide-react-native';
+import { AlertCircle } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { BrandMark } from '@/src/components/brand/BrandMark';
 import { StoreDetailContent } from '@/src/components/store/StoreDetailContent';
 import { Button } from '@/src/components/ui/Button';
-import { IconButton } from '@/src/components/ui/IconButton';
 import { LoadingState } from '@/src/components/ui/LoadingState';
 import { Screen } from '@/src/components/ui/Screen';
+import { ScreenHeader } from '@/src/components/ui/ScreenHeader';
 import { Text } from '@/src/components/ui/Text';
 import { useDatasetStore } from '@/src/features/dataset/datasetStore';
 import { useStoreRepository } from '@/src/features/db/useStoreRepository';
@@ -48,23 +47,7 @@ export default function StoreDetailScreen() {
 
   return (
     <Screen>
-      <View className="mb-6">
-        <View className="min-h-12 flex-row items-center justify-between gap-3">
-          <BrandMark />
-          <IconButton onPress={() => router.push('/settings')}>
-            <Settings color={colors.muted} size={24} />
-          </IconButton>
-        </View>
-        <View className="mt-4 flex-row items-center justify-between">
-          <IconButton onPress={() => router.back()}>
-            <ChevronLeft color={colors.ink} size={24} />
-          </IconButton>
-          <Text className="text-center" variant="title">
-            {t('store.detailTitle')}
-          </Text>
-          <View className="h-12 w-12" />
-        </View>
-      </View>
+      <ScreenHeader title={t('store.detailTitle')} />
 
       {store ? (
         <StoreDetailContent mode="page" sourceDate={sourceDate} stores={[store]} userLocation={userLocation} />

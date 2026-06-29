@@ -8,7 +8,7 @@ type ChipProps = PressableProps & {
   selected?: boolean;
   leftIcon?: ReactNode;
   className?: string;
-  tone?: 'primary' | 'orange' | 'teal' | 'purple';
+  tone?: 'primary' | 'orange' | 'teal' | 'purple' | 'neutral';
 };
 
 const toneClass = {
@@ -31,6 +31,11 @@ const toneClass = {
     selected: 'border-purple bg-purple',
     unselected: 'border-purple bg-surface',
     text: 'text-purple',
+  },
+  neutral: {
+    selected: 'border-ink bg-ink',
+    unselected: 'border-line bg-surface',
+    text: 'text-ink',
   },
 };
 

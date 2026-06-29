@@ -1,6 +1,6 @@
 import type { Store } from '@koto/schema';
-import { ExternalLink, Footprints, MapPin, Navigation, Phone } from 'lucide-react-native';
-import { Image, Linking, Pressable, View } from 'react-native';
+import { Building2, ExternalLink, Footprints, MapPin, Navigation, Phone } from 'lucide-react-native';
+import { Linking, Pressable, View } from 'react-native';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import { useTranslation } from 'react-i18next';
 
@@ -10,13 +10,13 @@ import { IconBadge } from '@/src/components/ui/IconBadge';
 import { InfoRow } from '@/src/components/ui/InfoRow';
 import { SurfaceCard } from '@/src/components/ui/SurfaceCard';
 import { Text } from '@/src/components/ui/Text';
-import { illustrations } from '@/src/assets/illustrations';
 import type { LatLng } from '@/src/features/map/mapStore';
-import { colors, radii, surfaceShadow } from '@/src/theme/tokens';
+import { colors } from '@/src/theme/tokens';
 
 import { CouponBadge } from './CouponBadge';
 import { PaymentBadge } from './PaymentBadge';
 import { SourceDateNote } from './SourceDateNote';
+import { StoreAvatar } from './StoreAvatar';
 import {
   getAddressText,
   getCategoryText,
@@ -97,7 +97,7 @@ function SingleStoreContent({
           />
         </SurfaceCard>
 
-        <StoreActions mode="page" store={store} />
+        <StoreActions store={store} />
         <MapPreview store={store} />
       </View>
     );
@@ -118,7 +118,7 @@ function SingleStoreContent({
         </View>
       </View>
 
-      <StoreActions mode="sheet" store={store} />
+      <StoreActions store={store} />
 
       {sourceDate ? <SourceDateNote sourceDate={sourceDate} /> : null}
     </View>
@@ -141,11 +141,9 @@ function LocationGroupContent({
   return (
     <View className={mode === 'page' ? 'gap-5 pb-8' : 'gap-4 px-5 pb-8 pt-1'}>
       <View className="flex-row items-center gap-4">
-        <Image
-          resizeMode="cover"
-          source={illustrations.mallGroup}
-          style={{ borderColor: colors.line, borderRadius: 48, borderWidth: 1, height: 96, width: 96 }}
-        />
+        <View className="h-24 w-24 items-center justify-center rounded-full border border-line bg-neutral-soft">
+          <Building2 color={colors.facility} size={36} />
+        </View>
         <View className="min-w-0 flex-1 gap-2">
           <Text variant="subtitle">{title}</Text>
           <View className="self-start rounded-full bg-facility px-3 py-1">
@@ -189,7 +187,7 @@ function LocationGroupContent({
   );
 }
 
-/** Image + name + badges + category block, sized for the sheet (circular) or page (card). */
+/** Avatar + name + badges + category block, sized for the sheet or the page card. */
 function StoreIdentity({ mode, store }: { mode: Mode; store: Store }) {
   const { t } = useTranslation();
   const column = (
@@ -204,12 +202,8 @@ function StoreIdentity({ mode, store }: { mode: Mode; store: Store }) {
 
   if (mode === 'page') {
     return (
-      <SurfaceCard className="flex-row gap-4 p-4">
-        <Image
-          resizeMode="cover"
-          source={illustrations.storeDetail}
-          style={{ borderRadius: radii.card, height: 120, width: 120 }}
-        />
+      <SurfaceCard className="flex-row items-center gap-4 p-4">
+        <StoreAvatar name={store.name} size={88} />
         {column}
       </SurfaceCard>
     );
@@ -217,41 +211,34 @@ function StoreIdentity({ mode, store }: { mode: Mode; store: Store }) {
 
   return (
     <View className="flex-row items-center gap-4">
-      <View className="h-24 w-24 items-center justify-center rounded-full bg-surface" style={surfaceShadow}>
-        <Image
-          resizeMode="cover"
-          source={illustrations.storeDetail}
-          style={{ borderRadius: 48, height: 96, width: 96 }}
-        />
-      </View>
+      <StoreAvatar name={store.name} size={88} />
       {column}
     </View>
   );
 }
 
-/** Directions + official-page buttons. Sheet uses a filled primary; page uses outlines. */
-function StoreActions({ mode, store }: { mode: Mode; store: Store }) {
+/** Directions (primary) + official-page (secondary) actions, consistent in sheet and page. */
+function StoreActions({ store }: { store: Store }) {
   const { t } = useTranslation();
-  const isPage = mode === 'page';
 
   return (
     <View className="flex-row gap-3">
       <Button
         className="flex-1"
-        leftIcon={<Navigation color={isPage ? colors.primary : '#ffffff'} size={20} />}
+        leftIcon={<Navigation color="#ffffff" size={20} />}
         onPress={() => openDirections(store)}
         size="lg"
-        variant={isPage ? 'secondary' : 'primary'}
+        variant="primary"
       >
         {t('store.directions')}
       </Button>
       {store.officialDetailUrl ? (
         <Button
           className="flex-1"
-          leftIcon={<ExternalLink color={isPage ? colors.teal : colors.primary} size={20} />}
+          leftIcon={<ExternalLink color={colors.primary} size={20} />}
           onPress={() => Linking.openURL(store.officialDetailUrl!)}
           size="lg"
-          variant={isPage ? 'teal' : 'secondary'}
+          variant="secondary"
         >
           {t('store.officialPage')}
         </Button>

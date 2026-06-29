@@ -2,7 +2,7 @@ import { categories } from '@koto/core';
 import { useRouter } from 'expo-router';
 import { X } from 'lucide-react-native';
 import type { ReactNode } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Dimensions, Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -24,29 +24,30 @@ export default function FiltersScreen() {
   const userLocation = useMapStore((state) => state.userLocation);
   const locationEnabled = usePreferencesStore((state) => state.locationEnabled);
   const radiusAvailable = locationEnabled && userLocation != null;
+  // A definite height + bottom anchor makes this a real bottom sheet. The
+  // justify-end utility is not honoured on this overlay, so the anchor is set
+  // inline; the inner list scrolls and the action footer stays pinned.
+  const sheetHeight = Math.round(Dimensions.get('window').height * 0.82);
 
   return (
-    <View className="flex-1 justify-end bg-black/40">
+    <View className="flex-1 bg-black/40" style={{ justifyContent: 'flex-end' }}>
       <Pressable className="absolute inset-0" onPress={() => router.back()} />
       <View
-        className="max-h-[82%] rounded-t-sheet bg-surface px-6 pt-3"
-        style={[bottomSheetShadow, { paddingBottom: Math.max(insets.bottom, 18) }]}
+        className="rounded-t-sheet bg-surface px-6 pt-3"
+        style={[bottomSheetShadow, { height: sheetHeight, paddingBottom: Math.max(insets.bottom, 18) }]}
       >
-        <View className="mb-5 items-center">
-          <View className="h-1.5 w-24 rounded-full bg-line" />
+        <View className="mb-4 items-center pt-1">
+          <View className="h-1 w-10 rounded-full bg-line" />
         </View>
-        <View className="mb-6 flex-row items-center justify-center">
-          <Text className="text-center" variant="title">
-            {t('filters.title')}
-          </Text>
-          <View className="absolute right-0">
-            <IconButton className="bg-neutral-soft" shadow={false} onPress={() => router.back()}>
-              <X color={colors.ink} size={28} />
-            </IconButton>
-          </View>
+        <View className="mb-4 min-h-12 flex-row items-center justify-between gap-3">
+          <View className="h-12 w-12" />
+          <Text variant="title">{t('filters.title')}</Text>
+          <IconButton className="bg-neutral-soft" shadow={false} onPress={() => router.back()}>
+            <X color={colors.ink} size={24} />
+          </IconButton>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
           <FilterSection title={t('filters.couponType')}>
             <Chip selected={filters.couponType === 'all'} onPress={() => filters.setCouponType('all')}>
               {t('common.all')}
@@ -60,26 +61,26 @@ export default function FiltersScreen() {
           </FilterSection>
 
           <FilterSection title={t('filters.payment')}>
-            <Chip selected={filters.payment === 'all'} onPress={() => filters.setPayment('all')}>
+            <Chip selected={filters.payment === 'all'} tone="neutral" onPress={() => filters.setPayment('all')}>
               {t('common.all')}
             </Chip>
-            <Chip selected={filters.payment === 'paper'} tone="teal" onPress={() => filters.setPayment('paper')}>
+            <Chip selected={filters.payment === 'paper'} tone="neutral" onPress={() => filters.setPayment('paper')}>
               {t('filters.paper')}
             </Chip>
-            <Chip selected={filters.payment === 'digital'} tone="teal" onPress={() => filters.setPayment('digital')}>
+            <Chip selected={filters.payment === 'digital'} tone="neutral" onPress={() => filters.setPayment('digital')}>
               {t('filters.digital')}
             </Chip>
           </FilterSection>
 
           <FilterSection title={t('filters.category')}>
-            <Chip selected={filters.categoryMajorId === null} onPress={() => filters.setCategoryMajorId(null)}>
+            <Chip selected={filters.categoryMajorId === null} tone="neutral" onPress={() => filters.setCategoryMajorId(null)}>
               {t('common.all')}
             </Chip>
             {categories.map((category) => (
               <Chip
                 key={category.id}
                 selected={filters.categoryMajorId === category.id}
-                tone={category.id === 'life_home' ? 'purple' : 'primary'}
+                tone="neutral"
                 onPress={() => filters.setCategoryMajorId(category.id)}
               >
                 {t(category.translationKey)}
@@ -88,7 +89,7 @@ export default function FiltersScreen() {
           </FilterSection>
 
           <FilterSection divider={false} title={t('filters.radius')}>
-            <Chip selected={filters.radiusMeters === 'all'} onPress={() => filters.setRadiusMeters('all')}>
+            <Chip selected={filters.radiusMeters === 'all'} tone="neutral" onPress={() => filters.setRadiusMeters('all')}>
               {t('common.all')}
             </Chip>
             {(
@@ -103,6 +104,7 @@ export default function FiltersScreen() {
                 key={value}
                 disabled={!radiusAvailable}
                 selected={filters.radiusMeters === value}
+                tone="neutral"
                 onPress={() => filters.setRadiusMeters(value)}
               >
                 {t(label)}
