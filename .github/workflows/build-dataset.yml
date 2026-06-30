@@ -53,13 +53,13 @@ jobs:
           path: data/latest
 
       - name: Upload Pages artifact
-        if: github.event_name != 'pull_request' && env.ACT != 'true'
-        uses: actions/upload-pages-artifact@v4
+        if: github.event_name != 'pull_request' && env.ACT != 'true' && vars.PUBLISH_GITHUB_PAGES == 'true'
+        uses: actions/upload-pages-artifact@v5
         with:
           path: data/latest
 
   deploy-pages:
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && vars.PUBLISH_GITHUB_PAGES == 'true'
     needs: build-dataset
     runs-on: ubuntu-latest
     environment:
@@ -67,4 +67,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
