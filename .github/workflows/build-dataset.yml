@@ -25,6 +25,8 @@ concurrency:
 jobs:
   build-dataset:
     runs-on: ubuntu-latest
+    env:
+      DATASET_BASE_URL: https://fromiron.github.io/koto-okaimono-doko
     steps:
       - uses: actions/checkout@v7
 

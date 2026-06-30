@@ -6,7 +6,7 @@ import type { DatasetManifest, DatasetMeta, Store } from '@koto/schema';
 import { outputPaths } from './paths';
 
 const DATASET_BASE_URL =
-  process.env.DATASET_BASE_URL ?? 'https://example.github.io/koto-okaimono-doko/data/latest';
+  process.env.DATASET_BASE_URL ?? 'https://fromiron.github.io/koto-okaimono-doko';
 
 export async function exportManifest(meta: DatasetMeta, stores: Store[]): Promise<DatasetManifest> {
   const [sqliteHash, sqliteStat, jsonHash, jsonStat] = await Promise.all([
