@@ -41,4 +41,26 @@ describe('parseListPage', () => {
       sourceUpdatedAt: '2026-06-24',
     });
   });
+
+  it('does not emit store rows whose detail links are outside the official detail URL policy', () => {
+    const rows = parseListPage(`
+      <p id="store-list-hit">検索結果<strong>1</strong>件</p>
+      <div id="store-list-inner">
+        <div class="box">
+          <ul class="kinds">
+            <li class="kinds-spec">
+              <figure><img src="/list/images/icon_paper.png" alt="紙"></figure>
+            </li>
+          </ul>
+          <a href="javascript:alert(1)" class="box-link">
+            <h4>Unsafe Link Store</h4>
+            <p>〒135-0004 森下1-6-10</p>
+            <div class="category">《買う》菓子・パン</div>
+          </a>
+        </div>
+      </div>
+    `);
+
+    expect(rows).toEqual([]);
+  });
 });

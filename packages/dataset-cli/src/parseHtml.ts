@@ -2,12 +2,10 @@ import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { normalizePostalCode, normalizeSearchText, parseOfficialCategory, stripPostalCode } from '@koto/core';
-import type { CouponType } from '@koto/schema';
+import { normalizeOfficialDetailUrl, type CouponType } from '@koto/schema';
 import { load } from 'cheerio';
 
 import { rawDir } from './paths';
-
-const BASE_URL = 'https://koto-okaimono-premium.jp';
 
 export type ParsedStoreRow = {
   id: string;
@@ -53,7 +51,10 @@ export function parseListPage(html: string): ParsedStoreRow[] {
   $('#store-list-inner > .box').each((_, element) => {
     const box = $(element);
     const link = box.find('a.box-link').attr('href');
-    const sourceDetailId = link?.split('/').filter(Boolean).at(-1);
+    const officialDetailUrl = link ? normalizeOfficialDetailUrl(link) : null;
+    const sourceDetailId = officialDetailUrl
+      ? new URL(officialDetailUrl).pathname.split('/').filter(Boolean).at(-1)
+      : null;
     const name = box.find('h4').text().replace(/\s+/g, ' ').trim();
     const addressText = box.find('a.box-link > p').first().text().replace(/\s+/g, ' ').trim();
     const categoryRaw = box.find('.category').text().replace(/\s+/g, ' ').trim();
@@ -62,7 +63,7 @@ export function parseListPage(html: string): ParsedStoreRow[] {
       .map((_, image) => $(image).attr('alt') ?? '')
       .get();
 
-    if (!link || !sourceDetailId || !name || !addressText || !categoryRaw) {
+    if (!officialDetailUrl || !sourceDetailId || !name || !addressText || !categoryRaw) {
       return;
     }
 
@@ -84,7 +85,7 @@ export function parseListPage(html: string): ParsedStoreRow[] {
       couponType: iconAlts.includes('B') ? 'b_only' : 'ab',
       acceptsPaper: iconAlts.includes('紙'),
       acceptsDigital: iconAlts.includes('デジタル'),
-      officialDetailUrl: new URL(link, BASE_URL).toString(),
+      officialDetailUrl,
       sourceUpdatedAt: parseOfficialUpdatedAt(html),
     });
   });

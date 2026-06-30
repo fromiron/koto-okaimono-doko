@@ -1,5 +1,36 @@
 import { z } from 'zod';
 
+export const OFFICIAL_SOURCE_ORIGIN = 'https://koto-okaimono-premium.jp';
+const OFFICIAL_DETAIL_PATH_PREFIX = '/list/detail/';
+
+export function isAllowedOfficialDetailUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return (
+      url.protocol === 'https:' &&
+      url.origin === OFFICIAL_SOURCE_ORIGIN &&
+      url.pathname.startsWith(OFFICIAL_DETAIL_PATH_PREFIX) &&
+      url.pathname.length > OFFICIAL_DETAIL_PATH_PREFIX.length
+    );
+  } catch {
+    return false;
+  }
+}
+
+export function normalizeOfficialDetailUrl(value: string): string | null {
+  try {
+    const url = new URL(value, OFFICIAL_SOURCE_ORIGIN);
+    const normalized = url.toString();
+    return isAllowedOfficialDetailUrl(normalized) ? normalized : null;
+  } catch {
+    return null;
+  }
+}
+
+export const OfficialDetailUrlSchema = z.string().url().refine(isAllowedOfficialDetailUrl, {
+  message: 'Official detail URL must be an HTTPS koto-okaimono-premium.jp detail page',
+});
+
 export const CouponTypeSchema = z.enum(['ab', 'b_only']);
 export type CouponType = z.infer<typeof CouponTypeSchema>;
 
@@ -30,7 +61,7 @@ export const StoreSchema = z.object({
   lng: z.number().nullable(),
   locationSource: z.string(),
   locationConfidence: LocationConfidenceSchema,
-  officialDetailUrl: z.string().url().nullable(),
+  officialDetailUrl: OfficialDetailUrlSchema.nullable(),
   homepageUrl: z.string().url().nullable(),
   sourceUpdatedAt: z.string().nullable(),
   createdAt: z.string(),

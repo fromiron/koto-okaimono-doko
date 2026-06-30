@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export const MAX_SQLITE_DATASET_BYTES = 5 * 1024 * 1024;
+
 export const DatasetManifestSchema = z.object({
   datasetId: z.string().min(1),
   version: z.string().min(1),
@@ -9,7 +11,7 @@ export const DatasetManifestSchema = z.object({
   sqlite: z.object({
     url: z.string().url(),
     sha256: z.string().regex(/^[a-f0-9]{64}$/),
-    size: z.number().int().positive(),
+    size: z.number().int().positive().max(MAX_SQLITE_DATASET_BYTES),
   }),
   json: z
     .object({

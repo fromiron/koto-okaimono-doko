@@ -1,4 +1,4 @@
-import type { Store } from '@koto/schema';
+import { isAllowedOfficialDetailUrl, type Store } from '@koto/schema';
 import { Building2, ExternalLink, Footprints, MapPin, Navigation, Phone } from 'lucide-react-native';
 import { Linking, Pressable, View } from 'react-native';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
@@ -220,6 +220,10 @@ function StoreIdentity({ mode, store }: { mode: Mode; store: Store }) {
 /** Directions (primary) + official-page (secondary) actions, consistent in sheet and page. */
 function StoreActions({ store }: { store: Store }) {
   const { t } = useTranslation();
+  const officialDetailUrl =
+    store.officialDetailUrl && isAllowedOfficialDetailUrl(store.officialDetailUrl)
+      ? store.officialDetailUrl
+      : null;
 
   return (
     <View className="flex-row gap-3">
@@ -232,11 +236,11 @@ function StoreActions({ store }: { store: Store }) {
       >
         {t('store.directions')}
       </Button>
-      {store.officialDetailUrl ? (
+      {officialDetailUrl ? (
         <Button
           className="flex-1"
           leftIcon={<ExternalLink color={colors.primary} size={20} />}
-          onPress={() => Linking.openURL(store.officialDetailUrl!)}
+          onPress={() => Linking.openURL(officialDetailUrl)}
           size="lg"
           variant="secondary"
         >

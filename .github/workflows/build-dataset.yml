@@ -25,16 +25,20 @@ concurrency:
 jobs:
   build-dataset:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     env:
       DATASET_BASE_URL: https://fromiron.github.io/koto-okaimono-doko
     steps:
-      - uses: actions/checkout@v7
+      # actions/checkout@v7
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
-      - uses: pnpm/action-setup@v6
+      # pnpm/action-setup@v6
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271
         with:
           version: 10.33.2
 
-      - uses: actions/setup-node@v6
+      # actions/setup-node@v6
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version: 24
           cache: pnpm
@@ -45,10 +49,12 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - run: pnpm dataset:build
+        timeout-minutes: 45
 
       - run: pnpm dataset:test
 
-      - uses: actions/upload-artifact@v7
+      # actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: env.ACT != 'true'
         with:
           name: dataset-latest
@@ -56,7 +62,8 @@ jobs:
 
       - name: Upload Pages artifact
         if: github.event_name != 'pull_request' && env.ACT != 'true' && vars.PUBLISH_GITHUB_PAGES == 'true'
-        uses: actions/upload-pages-artifact@v5
+        # actions/upload-pages-artifact@v5
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
         with:
           path: data/latest
 
@@ -69,4 +76,5 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v5
+        # actions/deploy-pages@v5
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128

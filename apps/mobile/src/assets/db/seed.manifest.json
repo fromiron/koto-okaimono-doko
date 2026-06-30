@@ -2,16 +2,16 @@
   "datasetId": "koto-premium-coupon-2026",
   "version": "2026-06-24.1",
   "officialUpdatedAt": "2026-06-24",
-  "generatedAt": "2026-06-30T00:28:24.969Z",
+  "generatedAt": "2026-06-30T01:45:24.899Z",
   "storeCount": 1444,
   "sqlite": {
     "url": "https://fromiron.github.io/koto-okaimono-doko/stores.sqlite",
-    "sha256": "666561ffa30c784cbcfca5be1136a6e8a374b07a4f0c0fd5e0c83b69e33be49e",
+    "sha256": "b90c7f9cd20be217ae7d71342bffba9d3df79b8235047a00888a7f87ed7578f2",
     "size": 1024000
   },
   "json": {
     "url": "https://fromiron.github.io/koto-okaimono-doko/stores.json",
-    "sha256": "2ef63985d4e1be019510a8ba4e15e917507645965f65827a1e3440914911c186",
+    "sha256": "e1312005fbf99c91aab6429a978107d390282ef5d458332852b10292735eacf1",
     "size": 1595590
   }
 }
