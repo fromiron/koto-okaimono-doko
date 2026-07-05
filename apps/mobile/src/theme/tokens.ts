@@ -6,22 +6,23 @@ import type { ViewStyle } from 'react-native';
  * `src/theme/tokenParity.test.ts` asserts the two stay in sync.
  */
 export const colors = {
-  primary: '#0D47A1',
-  primarySoft: '#EAF3FF',
-  teal: '#2DBE7F',
-  tealSoft: '#ECFDF5',
-  couponB: '#F5A623',
-  purple: '#6D28D9',
-  ink: '#333333',
-  muted: '#6B7280',
-  line: '#E7DECE',
+  primary: '#EA5F3F',
+  primarySoft: '#FDECE6',
+  couponB: '#F5A31C',
+  couponBSoft: '#FEF2D9',
+  teal: '#3D9E83',
+  tealSoft: '#E4F3ED',
+  purple: '#6C4CB0',
+  ink: '#33302B',
+  muted: '#6E6459',
+  line: '#EEE3D3',
   surface: '#FFFFFF',
-  page: '#FAF4E8',
-  neutralSoft: '#F2ECDE',
-  danger: '#B91C1C',
-  dangerSoft: '#FEF2F2',
-  facility: '#5F6368',
-  overlay: 'rgba(17, 24, 39, 0.38)',
+  page: '#FBF6EF',
+  neutralSoft: '#F4ECDF',
+  danger: '#B3261E',
+  dangerSoft: '#FBE9E7',
+  facility: '#6F6862',
+  overlay: 'rgba(51, 48, 43, 0.42)',
 } as const;
 
 /** 4pt spacing scale. Use these everywhere; no off-grid values. */
@@ -49,7 +50,7 @@ export const layout = {
 export const radii = {
   thumb: 12,
   card: 16,
-  sheet: 28,
+  sheet: 32,
   input: 28,
   pill: 999,
 } as const;
@@ -77,38 +78,48 @@ export type IconSizeToken = keyof typeof iconSizes;
  * micro    map marker glyphs                12 / 14 · 700
  */
 export const typography = {
-  display: { fontSize: 30, lineHeight: 36, fontWeight: '700' },
-  title: { fontSize: 24, lineHeight: 30, fontWeight: '700' },
-  subtitle: { fontSize: 18, lineHeight: 24, fontWeight: '700' },
+  display: { fontSize: 30, lineHeight: 36, fontWeight: '800', letterSpacing: -0.4 },
+  title: { fontSize: 24, lineHeight: 30, fontWeight: '700', letterSpacing: -0.3 },
+  subtitle: { fontSize: 18, lineHeight: 24, fontWeight: '700', letterSpacing: -0.2 },
   body: { fontSize: 16, lineHeight: 24, fontWeight: '400' },
-  label: { fontSize: 14, lineHeight: 20, fontWeight: '700' },
+  label: { fontSize: 14, lineHeight: 20, fontWeight: '700', letterSpacing: 0.1 },
   caption: { fontSize: 12, lineHeight: 16, fontWeight: '400' },
-  micro: { fontSize: 12, lineHeight: 14, fontWeight: '700' },
+  micro: { fontSize: 12, lineHeight: 14, fontWeight: '700', letterSpacing: 0.3 },
 } as const;
 export type TypographyToken = keyof typeof typography;
 
-// Shadows use a neutral slate tone (never a colored glow) and stay tight so cards
-// read as quietly lifted, not as AI-style halos.
+// Shadows use a warm-ink tone (never a colored glow) with a soft, wide blur so
+// surfaces read as gently lifted off the washi paper — quiet, not AI-halo.
 export const surfaceShadow: ViewStyle = {
   elevation: 3,
-  shadowColor: '#0F172A',
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.07,
-  shadowRadius: 4,
+  shadowColor: '#241C12',
+  shadowOffset: { width: 0, height: 3 },
+  shadowOpacity: 0.08,
+  shadowRadius: 8,
 };
 
 export const floatingButtonShadow: ViewStyle = {
-  elevation: 4,
-  shadowColor: '#0F172A',
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.12,
-  shadowRadius: 6,
+  elevation: 5,
+  shadowColor: '#241C12',
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.14,
+  shadowRadius: 12,
+};
+
+// A soft, coloured lift for filled primary CTAs so the main action reads as the
+// warmest, most tappable thing on screen.
+export const primaryButtonShadow: ViewStyle = {
+  elevation: 6,
+  shadowColor: '#EA5F3F',
+  shadowOffset: { width: 0, height: 6 },
+  shadowOpacity: 0.26,
+  shadowRadius: 14,
 };
 
 export const bottomSheetShadow: ViewStyle = {
-  elevation: 12,
-  shadowColor: '#0F172A',
-  shadowOffset: { width: 0, height: -4 },
-  shadowOpacity: 0.1,
-  shadowRadius: 16,
+  elevation: 14,
+  shadowColor: '#241C12',
+  shadowOffset: { width: 0, height: -6 },
+  shadowOpacity: 0.12,
+  shadowRadius: 22,
 };

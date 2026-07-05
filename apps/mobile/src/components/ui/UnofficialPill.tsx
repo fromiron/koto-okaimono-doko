@@ -3,13 +3,13 @@ import { useTranslation } from 'react-i18next';
 
 import { Text } from './Text';
 
-/** Mint "非公式 / Unofficial" badge used on the map dataset row and the About screen. */
+/** Quiet neutral "非公式 / Unofficial" badge — a disclaimer, so it carries no brand hue. */
 export function UnofficialPill({ className = '' }: { className?: string }) {
   const { t } = useTranslation();
 
   return (
-    <View className={`rounded-full bg-teal-soft px-3 py-1 ${className}`}>
-      <Text className="text-teal" variant="label">
+    <View className={`rounded-full bg-neutral-soft px-3 py-1 ${className}`}>
+      <Text tone="muted" variant="label">
         {t('app.unofficial')}
       </Text>
     </View>

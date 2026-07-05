@@ -2,7 +2,7 @@ import { boundsFromRegion } from '@koto/core';
 import { Filter, Settings } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { Dimensions, View } from 'react-native';
 import type MapView from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -69,6 +69,10 @@ export default function MapScreen() {
     if (!locationEnabled) setUserLocation(null);
   }, [locationEnabled, setUserLocation]);
 
+  // Typing a keyword searches the WHOLE dataset (no viewport bounds) — users
+  // expect global search; the visible-area constraint only applies to browsing.
+  const searching = filters.keyword.trim().length > 0;
+
   useEffect(() => {
     const handle = setTimeout(() => {
       void repository
@@ -77,7 +81,7 @@ export default function MapScreen() {
           couponType: filters.couponType,
           payment: filters.payment,
           categoryMajorId: filters.categoryMajorId,
-          bounds: boundsFromRegion(region),
+          bounds: searching ? undefined : boundsFromRegion(region),
           limit: 500,
         })
         .then(setGroups);
@@ -87,6 +91,7 @@ export default function MapScreen() {
   }, [
     repository,
     region,
+    searching,
     filters.keyword,
     filters.couponType,
     filters.payment,
@@ -109,16 +114,41 @@ export default function MapScreen() {
   );
 
   const top = Math.max(insets.top, space.lg);
+  // Concrete width for the absolutely-positioned deck so its flex-1 children
+  // (search + chip row) always get a firm width instead of collapsing to 0.
+  const screenWidth = Dimensions.get('window').width;
   const allSelected =
     filters.couponType === 'all' &&
     filters.payment === 'all' &&
     filters.categoryMajorId === null;
+  // Only the coupon filter lives inline; payment / category / radius are set in
+  // the filter sheet, so the filter button lights up when any of them is active.
+  const advancedActive =
+    filters.payment !== 'all' || filters.categoryMajorId !== null || filters.radiusMeters !== 'all';
 
   const handleRegionChange = useCallback(
     (nextRegion: typeof region) => {
       setRegion(nextRegion);
     },
     [setRegion],
+  );
+
+  // Selecting a store from the list (e.g. a global search result) flies the map
+  // to it, so picking a far-away match lands the user on the right block.
+  const handleSelectStore = useCallback(
+    (id: string) => {
+      selectStores([id]);
+      const store = visibleStores.find((candidate) => candidate.id === id);
+      if (store?.lat != null && store.lng != null) {
+        // Bias the centre south so the marker lands in the map area left
+        // visible above the half-open detail sheet.
+        mapRef.current?.animateToRegion(
+          { latitude: store.lat - 0.002, longitude: store.lng, latitudeDelta: 0.008, longitudeDelta: 0.008 },
+          400,
+        );
+      }
+    },
+    [selectStores, visibleStores],
   );
 
   const handleClusterPress = useCallback(
@@ -138,111 +168,89 @@ export default function MapScreen() {
 
   return (
     <View className="flex-1 bg-page">
-      <View
-        className="border-b border-line bg-page px-5 pb-4"
-        style={{ paddingTop: top }}
-      >
-        <View className="mb-4 flex-row items-center justify-between gap-3">
-          <BrandMark />
-          <IconButton onPress={() => router.push('/settings')}>
-            <Settings color={colors.muted} size={24} />
-          </IconButton>
-        </View>
+      {/* The map is a normal flex child filling the screen; controls float over
+          it. (An absolutely-positioned wrapper hides the Android map surface.) */}
+      <StoreMap
+        clusters={clusters}
+        initialRegion={KOTO_INITIAL_REGION}
+        mapRef={mapRef}
+        onClusterPress={handleClusterPress}
+        onMapPress={clearSelectedStore}
+        onRegionChangeComplete={handleRegionChange}
+        onSelectStores={(stores) => selectStores(stores.map((store) => store.id))}
+        selectedStoreIds={selectedStoreIds}
+        showsUserLocation={locationEnabled}
+      />
 
-        <SearchInput
-          elevated
-          onChangeText={filters.setKeyword}
-          placeholder={t('map.searchPlaceholder')}
-          value={filters.keyword}
-        />
-
-        <ScrollView
-          className="-mx-5 mt-4"
-          contentContainerStyle={{ gap: space.sm, paddingHorizontal: space.xl }}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-        >
-          <Chip selected={allSelected} onPress={filters.reset}>
-            {t('common.all')}
-          </Chip>
-          <Chip
-            selected={filters.couponType === 'ab'}
-            onPress={() => filters.setCouponType(filters.couponType === 'ab' ? 'all' : 'ab')}
-          >
-            {t('filters.ab')}
-          </Chip>
-          <Chip
-            selected={filters.couponType === 'b_only'}
-            tone="orange"
-            onPress={() => filters.setCouponType(filters.couponType === 'b_only' ? 'all' : 'b_only')}
-          >
-            {t('filters.bOnly')}
-          </Chip>
-          <Chip
-            selected={filters.payment === 'paper'}
-            tone="neutral"
-            onPress={() => filters.setPayment(filters.payment === 'paper' ? 'all' : 'paper')}
-          >
-            {t('filters.paper')}
-          </Chip>
-          <Chip
-            selected={filters.payment === 'digital'}
-            tone="neutral"
-            onPress={() => filters.setPayment(filters.payment === 'digital' ? 'all' : 'digital')}
-          >
-            {t('filters.digital')}
-          </Chip>
-          <Chip
-            selected={filters.categoryMajorId === 'eat_drink'}
-            tone="neutral"
-            onPress={() => filters.setCategoryMajorId(filters.categoryMajorId === 'eat_drink' ? null : 'eat_drink')}
-          >
-            {t('map.eatChip')}
-          </Chip>
-          <Chip
-            selected={filters.categoryMajorId === 'shopping'}
-            tone="neutral"
-            onPress={() => filters.setCategoryMajorId(filters.categoryMajorId === 'shopping' ? null : 'shopping')}
-          >
-            {t('map.shopChip')}
-          </Chip>
-          <Chip leftIcon={<Filter color={colors.primary} size={16} />} onPress={() => router.push('/filters')}>
-            {t('filters.title')}
-          </Chip>
-        </ScrollView>
-      </View>
-
-      <View className="min-h-0 flex-1">
-        <StoreMap
-          clusters={clusters}
-          initialRegion={KOTO_INITIAL_REGION}
-          mapRef={mapRef}
-          onClusterPress={handleClusterPress}
-          onMapPress={clearSelectedStore}
-          onRegionChangeComplete={handleRegionChange}
-          onSelectStores={(stores) => selectStores(stores.map((store) => store.id))}
-          selectedStoreIds={selectedStoreIds}
-          showsUserLocation={locationEnabled}
-        />
-        {selectedStoreIds.length === 0 ? (
-          <View
-            style={{ bottom: SHEET_PEEK_HEIGHT + insets.bottom + 12, elevation: 18, position: 'absolute', right: 20, zIndex: 18 }}
-          >
-            <UserLocationButton mapRef={mapRef} />
+      {/* Floating glass command deck — search + filters hover over the map. */}
+      <View className="absolute left-0 top-0" pointerEvents="box-none" style={{ paddingTop: top, width: screenWidth }}>
+        <View className="px-4" pointerEvents="box-none">
+          <View className="flex-row items-center gap-2">
+            <BrandMark compact />
+            <View className="min-w-0 flex-1">
+              <SearchInput
+                elevated
+                onChangeText={filters.setKeyword}
+                placeholder={t('map.searchPlaceholder')}
+                value={filters.keyword}
+              />
+            </View>
+            <IconButton
+              accessibilityLabel={t('filters.title')}
+              onPress={() => router.push('/filters')}
+              selected={advancedActive}
+            >
+              <Filter color={advancedActive ? colors.surface : colors.primary} size={22} />
+            </IconButton>
+            <IconButton onPress={() => router.push('/settings')}>
+              <Settings color={colors.muted} size={22} />
+            </IconButton>
           </View>
-        ) : null}
-        <StoreBottomSheet
-          onChangeViewMode={setViewMode}
-          onResetFilters={filters.reset}
-          onSelectStore={(id) => selectStores([id])}
-          sourceDate={meta?.officialUpdatedAt}
-          stores={selectedStores}
-          userLocation={userLocation}
-          viewMode={viewMode}
-          visibleStoreCount={visibleStoreCount}
-          visibleStores={visibleStores}
-        />
+
+          {/* Only the coupon-type chips stay inline — the one decision every
+              user makes constantly. Payment / genre / distance live behind the
+              filter button so the map stays uncluttered. */}
+          <View className="mt-3 flex-row flex-wrap" style={{ gap: space.sm }}>
+            <Chip selected={allSelected} onPress={filters.reset}>
+              {t('common.all')}
+            </Chip>
+            <Chip
+              selected={filters.couponType === 'ab'}
+              onPress={() => filters.setCouponType(filters.couponType === 'ab' ? 'all' : 'ab')}
+            >
+              {t('filters.ab')}
+            </Chip>
+            <Chip
+              selected={filters.couponType === 'b_only'}
+              tone="orange"
+              onPress={() => filters.setCouponType(filters.couponType === 'b_only' ? 'all' : 'b_only')}
+            >
+              {t('filters.bOnly')}
+            </Chip>
+          </View>
+        </View>
       </View>
+
+      {selectedStoreIds.length === 0 ? (
+        <View
+          style={{ bottom: SHEET_PEEK_HEIGHT + insets.bottom + 12, elevation: 18, position: 'absolute', right: 20, zIndex: 18 }}
+        >
+          <UserLocationButton mapRef={mapRef} />
+        </View>
+      ) : null}
+      <StoreBottomSheet
+        onChangeViewMode={setViewMode}
+        onClearSelection={clearSelectedStore}
+        onResetFilters={filters.reset}
+        onSelectStore={handleSelectStore}
+        searching={searching}
+        sourceDate={meta?.officialUpdatedAt}
+        stores={selectedStores}
+        userLocation={userLocation}
+        viewMode={viewMode}
+        visibleStoreCount={visibleStoreCount}
+        visibleStores={visibleStores}
+      />
     </View>
   );
 }

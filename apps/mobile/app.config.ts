@@ -7,7 +7,17 @@ const plugins: NonNullable<ExpoConfig['plugins']> = [
   'expo-localization',
   'expo-sqlite',
   'expo-asset',
-  'expo-splash-screen',
+  [
+    'expo-splash-screen',
+    {
+      // splash-icon.png is icon.png (the full poster artwork) padded into the
+      // centre-66% safe circle — the SAME geometry as the adaptive-icon
+      // foreground, so launcher icon and launch screen show one image.
+      backgroundColor: '#FBF6EF',
+      image: './assets/splash-icon.png',
+      imageWidth: 180,
+    },
+  ],
 ];
 
 if (googleMapsApiKey) {
@@ -39,7 +49,7 @@ const config: ExpoConfig = {
   android: {
     package: 'app.koto.okaimono.doko',
     adaptiveIcon: {
-      backgroundColor: '#E6F4FE',
+      backgroundColor: '#FBF6EF',
       foregroundImage: './assets/android-icon-foreground.png',
       backgroundImage: './assets/android-icon-background.png',
       monochromeImage: './assets/android-icon-monochrome.png',

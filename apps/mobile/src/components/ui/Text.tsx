@@ -4,7 +4,7 @@ import { Text as NativeText, type TextProps as NativeTextProps, type TextStyle }
 import { typography, type TypographyToken } from '@/src/theme/tokens';
 
 type TextVariant = TypographyToken;
-type TextTone = 'default' | 'muted' | 'danger' | 'inverse' | 'teal';
+type TextTone = 'default' | 'muted' | 'danger' | 'inverse';
 
 type TextProps = NativeTextProps & {
   children: ReactNode;
@@ -28,7 +28,6 @@ const toneClass: Record<TextTone, string> = {
   muted: 'text-muted',
   danger: 'text-danger',
   inverse: 'text-white',
-  teal: 'text-teal',
 };
 
 export function Text({

@@ -1,12 +1,13 @@
 import { isAllowedOfficialDetailUrl, type Store } from '@koto/schema';
 import { Building2, ExternalLink, Footprints, MapPin, Navigation, Phone } from 'lucide-react-native';
-import { Linking, Pressable, View } from 'react-native';
+import { Linking, View } from 'react-native';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 
 import { StoreMarker } from '@/src/components/map/StoreMarker';
+import { ActionTile } from '@/src/components/ui/ActionTile';
 import { Button } from '@/src/components/ui/Button';
-import { IconBadge } from '@/src/components/ui/IconBadge';
 import { InfoRow } from '@/src/components/ui/InfoRow';
 import { SurfaceCard } from '@/src/components/ui/SurfaceCard';
 import { Text } from '@/src/components/ui/Text';
@@ -20,7 +21,6 @@ import { StoreAvatar } from './StoreAvatar';
 import {
   getAddressText,
   getCategoryText,
-  getDistanceText,
   getDistanceValueText,
   getFacilityAddress,
   getFacilityName,
@@ -73,54 +73,31 @@ function SingleStoreContent({
 }) {
   const { t } = useTranslation();
 
-  if (mode === 'page') {
-    return (
-      <View className="gap-5 pb-8">
-        <StoreIdentity mode="page" store={store} />
-
-        <SurfaceCard className="px-4">
-          <InfoRow
-            icon={<MapPin color={colors.primary} fill={colors.primary} size={28} />}
-            label={t('store.address')}
-            value={getAddressText(store)}
-          />
-          {store.phone ? <PhoneRow label={t('store.phone')} phone={store.phone} /> : null}
-          <InfoRow
-            divider={false}
-            icon={
-              <IconBadge className="h-10 w-10" tone="teal">
-                <Footprints color={colors.teal} size={20} />
-              </IconBadge>
-            }
-            label={t('store.currentDistance')}
-            value={getDistanceValueText(store, userLocation, t)}
-          />
-        </SurfaceCard>
-
-        <StoreActions store={store} />
-        <MapPreview store={store} />
-      </View>
-    );
-  }
-
   return (
-    <View className="gap-5 px-5 pb-8 pt-1">
-      <StoreIdentity mode="sheet" store={store} />
+    <View className={mode === 'page' ? 'gap-5 pb-8' : 'gap-5 px-5 pb-8 pt-1'}>
+      <StoreHero store={store} />
 
-      <View>
-        <View className="flex-row items-start gap-3 border-t border-line py-4">
-          <MapPin color={colors.primary} fill={colors.primary} size={24} />
-          <Text className="min-w-0 flex-1">{getAddressText(store)}</Text>
-        </View>
-        <View className="flex-row items-center gap-3 border-t border-line py-4">
-          <Footprints color={colors.primary} size={24} />
-          <Text className="min-w-0 flex-1">{getDistanceText(store, userLocation, t)}</Text>
-        </View>
-      </View>
+      <StoreQuickActions store={store} t={t} />
 
-      <StoreActions store={store} />
+      <SurfaceCard className="px-4" shadow={mode === 'page'}>
+        <InfoRow
+          icon={<MapPin color={colors.primary} fill={colors.primary} size={24} />}
+          label={t('store.address')}
+          value={getAddressText(store)}
+        />
+        <InfoRow
+          divider={false}
+          icon={<Footprints color={colors.teal} size={24} />}
+          label={t('store.currentDistance')}
+          value={getDistanceValueText(store, userLocation, t)}
+        />
+      </SurfaceCard>
 
-      {sourceDate ? <SourceDateNote sourceDate={sourceDate} /> : null}
+      {mode === 'page' ? (
+        <MapPreview store={store} />
+      ) : sourceDate ? (
+        <SourceDateNote sourceDate={sourceDate} />
+      ) : null}
     </View>
   );
 }
@@ -140,8 +117,9 @@ function LocationGroupContent({
 
   return (
     <View className={mode === 'page' ? 'gap-5 pb-8' : 'gap-4 px-5 pb-8 pt-1'}>
-      <View className="flex-row items-center gap-4">
-        <View className="h-24 w-24 items-center justify-center rounded-full border border-line bg-neutral-soft">
+      <View className="flex-row items-center gap-4 overflow-hidden rounded-card border border-line bg-neutral-soft px-4 py-5">
+        <View className="absolute -right-10 -top-12 h-32 w-32 rounded-full bg-surface/60" pointerEvents="none" />
+        <View className="h-24 w-24 items-center justify-center rounded-full border border-line bg-surface">
           <Building2 color={colors.facility} size={36} />
         </View>
         <View className="min-w-0 flex-1 gap-2">
@@ -187,82 +165,57 @@ function LocationGroupContent({
   );
 }
 
-/** Avatar + name + badges + category block, sized for the sheet or the page card. */
-function StoreIdentity({ mode, store }: { mode: Mode; store: Store }) {
+/** Tinted place-card banner: monogram, name, coupon + payment badges, category. */
+function StoreHero({ store }: { store: Store }) {
   const { t } = useTranslation();
-  const column = (
-    <View className="min-w-0 flex-1 gap-2">
-      <Text className="min-w-0" variant="subtitle">
+
+  return (
+    <View className="items-center gap-3 overflow-hidden rounded-card border border-line bg-primary-soft px-5 py-6">
+      {/* Quiet oversized washes give the flat tint card a sense of depth. */}
+      <View className="absolute -right-10 -top-12 h-36 w-36 rounded-full bg-primary/10" pointerEvents="none" />
+      <View className="absolute -bottom-14 -left-12 h-32 w-32 rounded-full bg-surface/60" pointerEvents="none" />
+      <StoreAvatar name={store.name} size={80} />
+      <Text className="text-center" variant="subtitle">
         {store.name}
       </Text>
       <BadgeRow store={store} />
-      <Text tone="muted">{getCategoryText(store, t)}</Text>
-    </View>
-  );
-
-  if (mode === 'page') {
-    return (
-      <SurfaceCard className="flex-row items-center gap-4 p-4">
-        <StoreAvatar name={store.name} size={88} />
-        {column}
-      </SurfaceCard>
-    );
-  }
-
-  return (
-    <View className="flex-row items-center gap-4">
-      <StoreAvatar name={store.name} size={88} />
-      {column}
+      <Text className="text-center" tone="muted">
+        {getCategoryText(store, t)}
+      </Text>
     </View>
   );
 }
 
-/** Directions (primary) + official-page (secondary) actions, consistent in sheet and page. */
-function StoreActions({ store }: { store: Store }) {
-  const { t } = useTranslation();
+/** Route / call / official as an even row of icon tiles. */
+function StoreQuickActions({ store, t }: { store: Store; t: TFunction }) {
   const officialDetailUrl =
     store.officialDetailUrl && isAllowedOfficialDetailUrl(store.officialDetailUrl)
       ? store.officialDetailUrl
       : null;
+  const phone = store.phone ? store.phone.replace(/[^0-9+]/g, '') : null;
 
   return (
     <View className="flex-row gap-3">
-      <Button
-        className="flex-1"
-        leftIcon={<Navigation color="#ffffff" size={20} />}
+      <ActionTile
+        icon={<Navigation color={colors.surface} size={22} />}
+        label={t('store.directions')}
         onPress={() => openDirections(store)}
-        size="lg"
         variant="primary"
-      >
-        {t('store.directions')}
-      </Button>
-      {officialDetailUrl ? (
-        <Button
-          className="flex-1"
-          leftIcon={<ExternalLink color={colors.primary} size={20} />}
-          onPress={() => Linking.openURL(officialDetailUrl)}
-          size="lg"
-          variant="secondary"
-        >
-          {t('store.officialPage')}
-        </Button>
+      />
+      {phone ? (
+        <ActionTile
+          icon={<Phone color={colors.primary} size={22} />}
+          label={t('store.phone')}
+          onPress={() => Linking.openURL(`tel:${phone}`)}
+        />
       ) : null}
-    </View>
-  );
-}
-
-function PhoneRow({ label, phone }: { label: string; phone: string }) {
-  return (
-    <View className="flex-row gap-4 border-b border-line py-4">
-      <View className="pt-1">
-        <Phone color={colors.primary} fill={colors.primary} size={24} />
-      </View>
-      <View className="min-w-0 flex-1 gap-1">
-        <Text variant="label">{label}</Text>
-        <Pressable onPress={() => Linking.openURL(`tel:${phone.replace(/[^0-9+]/g, '')}`)}>
-          <Text className="text-primary">{phone}</Text>
-        </Pressable>
-      </View>
+      {officialDetailUrl ? (
+        <ActionTile
+          icon={<ExternalLink color={colors.primary} size={22} />}
+          label={t('store.officialPage')}
+          onPress={() => Linking.openURL(officialDetailUrl)}
+        />
+      ) : null}
     </View>
   );
 }
@@ -271,7 +224,7 @@ function BadgeRow({ store }: { store: Store }) {
   const { t } = useTranslation();
 
   return (
-    <View className="flex-row flex-wrap items-center gap-2">
+    <View className="flex-row flex-wrap items-center justify-center gap-2">
       <CouponBadge couponType={store.couponType} />
       {store.acceptsPaper ? <PaymentBadge label={t('filters.paper')} /> : null}
       {store.acceptsDigital ? <PaymentBadge label={t('filters.digital')} /> : null}

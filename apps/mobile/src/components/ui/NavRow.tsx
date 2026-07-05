@@ -5,6 +5,7 @@ import { Pressable } from 'react-native';
 import { colors } from '@/src/theme/tokens';
 
 import { IconBadge } from './IconBadge';
+import { PressableScale } from './PressableScale';
 import { SurfaceCard } from './SurfaceCard';
 import { Text } from './Text';
 
@@ -12,7 +13,7 @@ type NavRowProps = {
   icon: ReactNode;
   label: string;
   onPress: () => void;
-  iconTone?: 'primary' | 'teal' | 'neutral';
+  iconTone?: 'primary' | 'teal' | 'coupon' | 'neutral';
   labelVariant?: 'body' | 'subtitle';
   /** Render the row inside its own elevated card instead of a divided list row. */
   surface?: boolean;
@@ -44,15 +45,15 @@ export function NavRow({
 
   if (surface) {
     return (
-      <Pressable onPress={onPress}>
+      <PressableScale onPress={onPress} pressedScale={0.98}>
         <SurfaceCard className="flex-row items-center gap-4 px-4 py-4">{content}</SurfaceCard>
-      </Pressable>
+      </PressableScale>
     );
   }
 
   return (
     <Pressable
-      className={`flex-row items-center gap-4 py-5 ${divider ? 'border-b border-line' : ''}`}
+      className={`flex-row items-center gap-4 py-5 active:bg-neutral-soft ${divider ? 'border-b border-line' : ''}`}
       onPress={onPress}
     >
       {content}

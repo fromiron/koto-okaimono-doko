@@ -31,9 +31,11 @@ export function ClusterMarker({ count, id, lat, lng, onPress }: ClusterMarkerPro
       stopPropagation
       tracksViewChanges={tracks}
     >
-      <View style={styles.ring}>
+      {/* collapsable={false}: keep the padded ring as the real captured view so
+          the bubble's border/shadow isn't clipped by Android view flattening. */}
+      <View collapsable={false} style={styles.ring}>
         <View style={[styles.bubble, { borderRadius: size / 2, height: size, width: size }]}>
-          <Text className="text-center" tone="inverse" variant="label">
+          <Text allowFontScaling={false} className="text-center" tone="inverse" variant="label">
             {count}
           </Text>
         </View>
@@ -55,7 +57,7 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     elevation: 6,
     justifyContent: 'center',
-    shadowColor: '#1B2430',
+    shadowColor: '#2A231C',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.26,
     shadowRadius: 4,

@@ -1,12 +1,15 @@
 import type { ReactNode } from 'react';
-import { Pressable, type PressableProps } from 'react-native';
+import type { PressableProps, StyleProp, ViewStyle } from 'react-native';
 
 import { floatingButtonShadow } from '@/src/theme/tokens';
 
-type IconButtonProps = PressableProps & {
+import { PressableScale } from './PressableScale';
+
+type IconButtonProps = Omit<PressableProps, 'style'> & {
   children: ReactNode;
   selected?: boolean;
   className?: string;
+  style?: StyleProp<ViewStyle>;
   shadow?: boolean;
 };
 
@@ -19,24 +22,17 @@ export function IconButton({
   style,
   ...props
 }: IconButtonProps) {
-  const mergedStyle =
-    typeof style === 'function'
-      ? (state: Parameters<NonNullable<typeof style>>[0]) => [
-          shadow ? floatingButtonShadow : null,
-          style(state),
-        ]
-      : [shadow ? floatingButtonShadow : null, style];
-
   return (
-    <Pressable
+    <PressableScale
       className={`h-12 w-12 items-center justify-center rounded-full border ${
-        selected ? 'border-primary bg-primary' : 'border-line bg-surface'
+        selected ? 'border-primary bg-primary' : 'border-line bg-surface active:bg-neutral-soft'
       } ${disabled ? 'opacity-45' : 'opacity-100'} ${className}`}
       disabled={disabled}
-      style={mergedStyle}
+      pressedScale={0.9}
+      style={[shadow ? floatingButtonShadow : null, style]}
       {...props}
     >
       {children}
-    </Pressable>
+    </PressableScale>
   );
 }

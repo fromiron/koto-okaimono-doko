@@ -1,30 +1,43 @@
-# こうとうお買い物どこ / Koto Okaimono Doko
+<div align="center">
 
-Unofficial, offline-first map app for finding stores that accept the 2026 Koto City
-premium shopping coupon program (`こうとう商店街DEお買い物券＋2026`).
+<img src="assets/brand/main.png" alt="こうとうお買い物どこ — 2026年 江東区 プレミアム付商品券 対応店舗マップ" width="420" />
 
+# こうとうお買い物どこ
+
+**Koto Okaimono Doko** — unofficial, offline-first map app for finding stores that
+accept the 2026 Koto City premium shopping coupon
+(`こうとう商店街DEお買い物券＋2026`).
+
+Unofficial · Open Source · JA / EN / 한국어 / 简体 / 繁體
+
+</div>
+
+> [!NOTE]
 > This is an unofficial service and is not affiliated with any municipality or
 > company. Always confirm the latest information on the official site or with each store.
 
 ## Features
 
-- Native map with coupon markers: `A・B` (both coupons), `B` (B-only), and gray
-  **Location Group** markers for stores that share the same coordinates.
-- Search by store name / address and quick filter chips, plus a full filter sheet
-  (coupon type, payment medium, category, distance radius).
-- Store bottom sheet on the map and a full store detail page (address, phone,
-  walking distance, directions, official page, mini map).
-- Settings: dataset version/update check, foreground-only location toggle, and
-  language selection.
-- Multilingual UI: `ja`, `en`, `ko`, `zh-Hans`, `zh-Hant`. Official store names,
-  addresses, and facility names remain in their Japanese source text.
-- Offline-first: works on first launch from the bundled `seed.sqlite`; updates are
-  delivered as a `manifest.json` plus a raw `stores.sqlite` download.
+- **Map-first browsing** — edge-to-edge native map with teardrop coupon pins:
+  `A・B` (both coupons), `B` (B-only), and gray facility pins for stores that
+  share the same coordinates.
+- **Search & filters** — global store name / address search, inline coupon-type
+  chips, and a full filter sheet (coupon type, payment medium, category,
+  distance radius).
+- **Store details** — bottom sheet on the map plus a full detail view (address,
+  phone, walking distance, directions, official page, mini map).
+- **Offline-first** — works on first launch from the bundled `seed.sqlite`;
+  updates arrive as a `manifest.json` plus a raw `stores.sqlite` download.
+- **Multilingual UI** — `ja`, `en`, `ko`, `zh-Hans`, `zh-Hant`. Official store
+  names, addresses, and facility names stay in their Japanese source text.
+- **Private by design** — location is foreground-only, session-memory-only, and
+  never uploaded or persisted.
 
 ## Tech Stack
 
 - **App**: Expo (~56) + Expo Router, React Native 0.85, TypeScript (strict).
-- **Styling**: Uniwind (Tailwind v4) with design tokens in `docs/design-system.md`.
+- **Styling**: Uniwind (Tailwind v4) driven by design tokens
+  (`apps/mobile/src/theme/tokens.ts` + `apps/mobile/src/global.css`).
 - **State**: Zustand for UI/app state only (the full store list lives in SQLite).
 - **Data**: `expo-sqlite` for store data, AsyncStorage for small preferences.
 - **Map**: `react-native-maps` — Google Maps on Android, Apple Maps on iOS.
@@ -41,7 +54,24 @@ pnpm workspaces (`apps/*`, `packages/*`):
 | `packages/schema` | `@koto/schema` | `Store` schema, supported locales, shared types. |
 | `packages/dataset-cli` | `@koto/dataset-cli` | Build the dataset from official sources. |
 
-See `CONTEXT.md` for the canonical product glossary and `docs/adr/` for design decisions.
+See `CONTEXT.md` for the canonical product glossary.
+
+## Design
+
+The visual identity (「まちかどマルシェ」 — vermillion `#EA5F3F`, marigold
+`#F5A31C`, matcha teal `#3D9E83` on cream washi `#FBF6EF`) is derived 1:1 from
+the brand artwork in [`assets/brand/`](assets/brand/):
+
+| File | Role |
+|---|---|
+| `assets/brand/main.png` | Key visual / poster — source of the splash screen and this README's hero. |
+| `assets/brand/appicon.png` | App icon base artwork — source of `apps/mobile/assets/icon.png` and the adaptive/splash icons. |
+
+The app re-skins from two token files kept in sync by tests
+(`tokenParity.test.ts`, `spacing.test.ts`, `styleGuard.test.ts`):
+`apps/mobile/src/theme/tokens.ts` (JS constants) and
+`apps/mobile/src/global.css` (Tailwind `@theme` variables). Runtime
+illustrations live in [`assets/`](assets/) (see its README).
 
 ## Development
 
@@ -99,12 +129,6 @@ iOS uses Apple Maps by default and needs no map key.
 
 User location is foreground-only, held in session memory only, and never uploaded or
 persisted. It is used solely to search for nearby stores.
-
-## Design
-
-- Visual tokens and screen rules: `docs/design-system.md`.
-- Sample screens (source visual truth): `docs/wireframes/images/`.
-- Copy and flows: `docs/wireframes.md`.
 
 ## CI Local Check
 

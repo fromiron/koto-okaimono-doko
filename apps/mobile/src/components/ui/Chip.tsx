@@ -1,42 +1,29 @@
 import type { ReactNode } from 'react';
-import { Pressable, type PressableProps, View } from 'react-native';
+import type { PressableProps, StyleProp, ViewStyle } from 'react-native';
+import { View } from 'react-native';
 
+import { surfaceShadow } from '@/src/theme/tokens';
+
+import { PressableScale } from './PressableScale';
 import { Text } from './Text';
 
-type ChipProps = PressableProps & {
+type ChipProps = Omit<PressableProps, 'style'> & {
   children: ReactNode;
   selected?: boolean;
   leftIcon?: ReactNode;
   className?: string;
-  tone?: 'primary' | 'orange' | 'teal' | 'purple' | 'neutral';
+  style?: StyleProp<ViewStyle>;
+  tone?: 'primary' | 'orange' | 'purple' | 'neutral';
 };
 
+// Unselected chips are crisp white pills with a warm hairline and tone-tinted
+// text (a quiet hint of the category colour); selecting fills the pill with the
+// tone and lifts it, so the active filter is unmistakable on the cream header.
 const toneClass = {
-  primary: {
-    selected: 'border-primary bg-primary',
-    unselected: 'border-primary bg-surface',
-    text: 'text-primary',
-  },
-  orange: {
-    selected: 'border-coupon-b bg-coupon-b',
-    unselected: 'border-coupon-b bg-surface',
-    text: 'text-coupon-b',
-  },
-  teal: {
-    selected: 'border-teal bg-teal',
-    unselected: 'border-teal bg-surface',
-    text: 'text-teal',
-  },
-  purple: {
-    selected: 'border-purple bg-purple',
-    unselected: 'border-purple bg-surface',
-    text: 'text-purple',
-  },
-  neutral: {
-    selected: 'border-ink bg-ink',
-    unselected: 'border-line bg-surface',
-    text: 'text-ink',
-  },
+  primary: { selected: 'border-primary bg-primary', text: 'text-primary' },
+  orange: { selected: 'border-coupon-b bg-coupon-b', text: 'text-coupon-b' },
+  purple: { selected: 'border-purple bg-purple', text: 'text-purple' },
+  neutral: { selected: 'border-ink bg-ink', text: 'text-ink' },
 };
 
 export function Chip({
@@ -45,23 +32,26 @@ export function Chip({
   disabled,
   leftIcon,
   selected,
+  style,
   tone = 'primary',
   ...props
 }: ChipProps) {
   const classes = toneClass[tone];
 
   return (
-    <Pressable
+    <PressableScale
       className={`min-h-11 flex-row items-center gap-2 rounded-full border px-4 ${
-        selected ? classes.selected : classes.unselected
+        selected ? classes.selected : 'border-line bg-surface active:bg-neutral-soft'
       } ${disabled ? 'opacity-45' : 'opacity-100'} ${className}`}
       disabled={disabled}
+      pressedScale={0.94}
+      style={[selected && !disabled ? surfaceShadow : null, style]}
       {...props}
     >
       {leftIcon ? <View>{leftIcon}</View> : null}
       <Text className={selected ? '' : classes.text} variant="label" tone={selected ? 'inverse' : 'default'}>
         {children}
       </Text>
-    </Pressable>
+    </PressableScale>
   );
 }

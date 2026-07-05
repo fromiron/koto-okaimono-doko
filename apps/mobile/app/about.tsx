@@ -11,7 +11,7 @@ import { ScreenHeader } from '@/src/components/ui/ScreenHeader';
 import { Stack } from '@/src/components/ui/Stack';
 import { Text } from '@/src/components/ui/Text';
 import { UnofficialPill } from '@/src/components/ui/UnofficialPill';
-import { colors, iconSizes } from '@/src/theme/tokens';
+import { colors, iconSizes, surfaceShadow } from '@/src/theme/tokens';
 
 export default function AboutScreen() {
   const { t } = useTranslation();
@@ -26,17 +26,20 @@ export default function AboutScreen() {
           <Text className="text-center text-primary" variant="display">
             こうとうお買い物どこ
           </Text>
-          <Text className="text-center text-teal" variant="subtitle">
-            koto okaimono doko
+          <Text className="text-center" tone="muted" variant="label">
+            KOTO OKAIMONO DOKO
           </Text>
         </Stack>
       </Stack>
 
+      {/* One point per splash accent — vermillion, marigold, teal — matching
+          the tri-colour feature row on the launch artwork. */}
       <Stack className="py-6" gap="2xl">
         <AboutPoint
           body={t('about.body')}
-          icon={<Info color={colors.primary} size={iconSizes.xl} />}
+          icon={<Info color={colors.couponB} size={iconSizes.xl} />}
           title={t('about.unofficialTitle')}
+          tone="coupon"
         />
         <AboutPoint
           body={t('about.accuracyBody')}
@@ -84,25 +87,28 @@ export default function AboutScreen() {
 
 function AboutHero() {
   return (
-    <View
-      className="w-full items-center justify-center overflow-hidden rounded-sheet border border-line bg-primary-soft"
-      style={{ height: 168 }}
-    >
-      <View className="relative h-20 w-20 items-center justify-center">
-        <ShoppingBag color={colors.teal} size={60} strokeWidth={2.4} />
-        <View className="absolute inset-0 items-center justify-center" pointerEvents="none">
-          <Heart color={colors.teal} fill={colors.teal} size={18} style={{ marginTop: 7 }} />
+    <View className="w-full items-center overflow-hidden rounded-sheet bg-primary px-6 py-8" style={surfaceShadow}>
+      {/* Quiet oversized washes keep the solid banner from reading flat. */}
+      <View className="absolute -left-12 -top-16 h-44 w-44 rounded-full bg-surface/10" pointerEvents="none" />
+      <View className="absolute -bottom-20 -right-10 h-40 w-40 rounded-full bg-surface/10" pointerEvents="none" />
+      <View
+        className="relative h-20 w-20 items-center justify-center rounded-card bg-surface"
+        style={surfaceShadow}
+      >
+        <ShoppingBag color={colors.primary} size={44} strokeWidth={2.3} />
+        <View className="absolute -right-2 -top-2 h-8 w-8 items-center justify-center rounded-full border-2 border-primary bg-coupon-b">
+          <Heart color={colors.surface} fill={colors.surface} size={14} />
         </View>
       </View>
-      <Row className="mt-3" gap="sm">
-        <View className="rounded-full bg-primary px-3 py-1">
-          <Text tone="inverse" variant="label">
-            A・B
+      <Row className="mt-5" gap="sm">
+        <View className="rounded-full bg-surface px-4 py-1">
+          <Text className="text-primary" variant="label">
+            A・B券
           </Text>
         </View>
-        <View className="rounded-full bg-coupon-b px-3 py-1">
+        <View className="rounded-full bg-coupon-b px-4 py-1">
           <Text tone="inverse" variant="label">
-            B
+            B券
           </Text>
         </View>
       </Row>
@@ -119,7 +125,7 @@ function AboutPoint({
   body: string;
   icon: ReactNode;
   title: string;
-  tone?: 'primary' | 'teal';
+  tone?: 'primary' | 'teal' | 'coupon';
 }) {
   return (
     <Row align="start" gap="lg">

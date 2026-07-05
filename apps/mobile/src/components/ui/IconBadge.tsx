@@ -3,13 +3,14 @@ import { View } from 'react-native';
 
 type IconBadgeProps = {
   children: ReactNode;
-  tone?: 'primary' | 'teal' | 'neutral';
+  tone?: 'primary' | 'teal' | 'coupon' | 'neutral';
   className?: string;
 };
 
 const toneClass = {
   primary: 'bg-primary-soft',
   teal: 'bg-teal-soft',
+  coupon: 'bg-coupon-b-soft',
   neutral: 'bg-line',
 };
 

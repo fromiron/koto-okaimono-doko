@@ -60,22 +60,29 @@ export default function SettingsScreen() {
       <Stack gap="2xl">
         <Section title={t('settings.dataset')}>
           <SurfaceCard className="overflow-hidden p-4">
-            <Row align="start" gap="lg">
-              <View className="h-24 w-24 flex-shrink-0 items-center justify-center rounded-card bg-primary-soft">
-                <CloudCog color={colors.primary} size={48} />
-              </View>
-              <View className="min-w-0 flex-1">
-                <SettingRow label={t('settings.version')} value={meta?.version ?? '-'} />
-                <SettingRow label={t('settings.officialUpdatedAt')} value={meta?.officialUpdatedAt ?? '-'} />
-                <SettingRow divider={false} label={t('settings.lastCheckedAt')} value={formatTimestamp(lastCheckedAt)} />
-              </View>
+            <Row gap="md">
+              <IconBadge>
+                <CloudCog color={colors.primary} size={iconSizes.xl} />
+              </IconBadge>
+              <Stack className="min-w-0 flex-1" gap="xs">
+                <Text tone="muted" variant="caption">
+                  {t('settings.version')}
+                </Text>
+                <Text numberOfLines={1} variant="subtitle">
+                  {meta?.version ?? '-'}
+                </Text>
+              </Stack>
             </Row>
-            <Stack className="mt-4" gap="md">
+            <View className="mt-4 border-t border-line">
+              <SettingRow label={t('settings.officialUpdatedAt')} value={meta?.officialUpdatedAt ?? '-'} />
+              <SettingRow divider={false} label={t('settings.lastCheckedAt')} value={formatTimestamp(lastCheckedAt)} />
+            </View>
+            <Stack className="mt-2" gap="md">
               <Button
-                leftIcon={<RefreshCcw color={colors.teal} size={iconSizes.md} />}
+                leftIcon={<RefreshCcw color={colors.primary} size={iconSizes.md} />}
                 loading={updateStatus === 'checking' || updateStatus === 'downloading'}
                 onPress={checkUpdate}
-                variant="teal"
+                variant="secondary"
               >
                 {t('settings.checkUpdate')}
               </Button>
@@ -107,10 +114,14 @@ export default function SettingsScreen() {
             <Row className="justify-between border-t border-line py-4">
               <Text>{t('settings.locationToggle')}</Text>
               <Switch
+                ios_backgroundColor={colors.line}
                 onValueChange={(next) => {
                   setLocationEnabled(next);
                   void setStoredLocationEnabled(next);
                 }}
+                // Android's default thumb is the Material accent (green) — pin it
+                // to white so the toggle stays inside the marché palette.
+                thumbColor={colors.surface}
                 trackColor={{ false: colors.line, true: colors.primary }}
                 value={locationEnabled}
               />
@@ -160,7 +171,7 @@ export default function SettingsScreen() {
 
         <Stack className="items-center pb-2" gap="sm">
           <Row gap="sm">
-            <Heart color={colors.teal} fill={colors.teal} size={iconSizes.sm} />
+            <Heart color={colors.couponB} fill={colors.couponB} size={iconSizes.sm} />
             <Text className="text-center" tone="muted">
               {t('settings.footer')}
             </Text>

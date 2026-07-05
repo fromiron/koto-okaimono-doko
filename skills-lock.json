@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "uniwind": {
+      "source": "pproenca/dot-skills",
+      "sourceType": "github",
+      "skillPath": "skills/.experimental/uniwind/SKILL.md",
+      "computedHash": "20011723a1efe575b6a15db5b5807140ed09fd69e3320fe900a9f8cc5107ce3d"
+    }
+  }
+}

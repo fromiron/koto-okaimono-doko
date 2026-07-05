@@ -16,3 +16,13 @@ These raster files are the preferred app/documentation assets. They avoid SVG fo
 | `illustration-offline-cache.png` | Offline / cached dataset state |
 | `illustration-dataset-update.png` | Settings / dataset update state |
 
+## Brand base artwork (`brand/`)
+
+Source-of-truth artwork the identity is derived from — not bundled into the app
+directly; derived assets live in `apps/mobile/assets/`.
+
+| File | Use |
+|---|---|
+| `brand/main.png` | Key visual / poster (README hero; splash artwork source) |
+| `brand/appicon.png` | App icon base (source of `icon.png` and adaptive/splash icons) |
+

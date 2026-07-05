@@ -4,7 +4,7 @@ import BottomSheet, {
   BottomSheetScrollView,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
-import { ChevronRight } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, SearchX } from 'lucide-react-native';
 import { useEffect, useMemo, useRef } from 'react';
 import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 
 import { Button } from '@/src/components/ui/Button';
+import { PressableScale } from '@/src/components/ui/PressableScale';
 import { SegmentedToggle } from '@/src/components/ui/SegmentedToggle';
 import { Text } from '@/src/components/ui/Text';
 import type { LatLng } from '@/src/features/map/mapStore';
@@ -21,7 +22,7 @@ import { StoreDetailContent } from './StoreDetailContent';
 import { getCategoryText, getDistanceValueText } from './storeDisplay';
 
 /** Visible height of the collapsed peek (excluding the bottom safe-area inset). */
-export const SHEET_PEEK_HEIGHT = 168;
+export const SHEET_PEEK_HEIGHT = 208;
 
 export type MapViewMode = 'map' | 'list';
 
@@ -32,15 +33,20 @@ type StoreBottomSheetProps = {
   sourceDate?: string | null;
   userLocation?: LatLng | null;
   viewMode: MapViewMode;
+  /** True while a global keyword search is active — the sheet opens to show results. */
+  searching?: boolean;
   onChangeViewMode: (mode: MapViewMode) => void;
   onSelectStore: (id: string) => void;
+  onClearSelection: () => void;
   onResetFilters: () => void;
 };
 
 export function StoreBottomSheet({
   onChangeViewMode,
+  onClearSelection,
   onResetFilters,
   onSelectStore,
+  searching = false,
   sourceDate,
   stores,
   userLocation,
@@ -53,9 +59,13 @@ export function StoreBottomSheet({
   const sheetRef = useRef<BottomSheet>(null);
   const snapPoints = useMemo(() => [SHEET_PEEK_HEIGHT + insets.bottom, '58%', '92%'], [insets.bottom]);
   const hasSelection = stores.length > 0;
-  const listMode = !hasSelection && viewMode === 'list' && visibleStoreCount > 0;
+  // The 地図/リスト toggle just controls how far the sheet opens; the browse
+  // surface is always the same vertical list, so it scans cleanly at any size.
+  const expandList = !hasSelection && viewMode === 'list' && visibleStoreCount > 0;
 
-  const targetIndex = hasSelection ? 1 : listMode ? 2 : 0;
+  // Search results open to half height (map + list both visible); tapping a
+  // result then shows that store's detail at the same height.
+  const targetIndex = hasSelection ? 1 : expandList ? 2 : searching ? 1 : 0;
   useEffect(() => {
     sheetRef.current?.snapToIndex(targetIndex);
   }, [targetIndex]);
@@ -70,11 +80,18 @@ export function StoreBottomSheet({
     return [...visibleStores].sort((a, b) => distance(a) - distance(b));
   }, [visibleStores, userLocation]);
 
+  const abCount = useMemo(
+    () => visibleStores.filter((store) => store.couponType !== 'b_only').length,
+    [visibleStores],
+  );
+
   const header = (
     <NearbyHeader
+      abCount={abCount}
       count={visibleStoreCount}
       hasLocation={!!userLocation}
       onChangeViewMode={onChangeViewMode}
+      searching={searching}
       t={t}
       viewMode={viewMode}
     />
@@ -91,13 +108,41 @@ export function StoreBottomSheet({
       style={bottomSheetShadow}
     >
       {hasSelection ? (
-        <BottomSheetScrollView
-          contentContainerStyle={{ paddingBottom: insets.bottom }}
-          showsVerticalScrollIndicator={false}
-        >
-          <StoreDetailContent sourceDate={sourceDate} stores={stores} userLocation={userLocation} />
-        </BottomSheetScrollView>
-      ) : listMode ? (
+        <>
+          <View className="flex-row items-center px-4 pb-2 pt-1">
+            <PressableScale
+              accessibilityRole="button"
+              className="h-10 flex-row items-center gap-1 rounded-full border border-line bg-surface pl-2 pr-4 active:bg-neutral-soft"
+              onPress={onClearSelection}
+            >
+              <ChevronLeft color={colors.ink} size={20} />
+              <Text variant="label">{t('map.backToList')}</Text>
+            </PressableScale>
+          </View>
+          <BottomSheetScrollView
+            contentContainerStyle={{ paddingBottom: insets.bottom }}
+            showsVerticalScrollIndicator={false}
+          >
+            <StoreDetailContent sourceDate={sourceDate} stores={stores} userLocation={userLocation} />
+          </BottomSheetScrollView>
+        </>
+      ) : visibleStoreCount === 0 ? (
+        <BottomSheetView style={{ paddingBottom: insets.bottom }}>
+          {header}
+          <View className="items-center gap-3 px-6 pb-8 pt-2">
+            <View className="h-16 w-16 items-center justify-center rounded-full bg-neutral-soft">
+              <SearchX color={colors.muted} size={28} />
+            </View>
+            <Text className="text-center" variant="subtitle">
+              {t('map.noStores')}
+            </Text>
+            <Text className="text-center" tone="muted">
+              {t('map.emptyHint')}
+            </Text>
+            <Button onPress={onResetFilters}>{t('map.resetFilters')}</Button>
+          </View>
+        </BottomSheetView>
+      ) : (
         <BottomSheetFlatList
           ListHeaderComponent={header}
           contentContainerStyle={{ paddingBottom: insets.bottom + 8 }}
@@ -109,61 +154,89 @@ export function StoreBottomSheet({
           )}
           showsVerticalScrollIndicator={false}
         />
-      ) : (
-        <BottomSheetView style={{ paddingBottom: insets.bottom }}>
-          {header}
-          {visibleStoreCount === 0 ? (
-            <View className="items-center gap-3 px-6 pb-8 pt-2">
-              <Text className="text-center" variant="subtitle">
-                {t('map.noStores')}
-              </Text>
-              <Text className="text-center" tone="muted">
-                {t('map.emptyHint')}
-              </Text>
-              <Button onPress={onResetFilters}>{t('map.resetFilters')}</Button>
-            </View>
-          ) : (
-            <Text className="px-5 pb-6" tone="muted">
-              {t('map.selectPin')}
-            </Text>
-          )}
-        </BottomSheetView>
       )}
     </BottomSheet>
   );
 }
 
 function NearbyHeader({
+  abCount,
   count,
   hasLocation,
   onChangeViewMode,
+  searching,
   t,
   viewMode,
 }: {
+  abCount: number;
   count: number;
   hasLocation: boolean;
+  searching: boolean;
   viewMode: MapViewMode;
   onChangeViewMode: (mode: MapViewMode) => void;
   t: TFunction;
 }) {
+  const bCount = Math.max(count - abCount, 0);
+
   return (
-    <View className="flex-row items-center justify-between gap-3 px-5 pb-3 pt-1">
-      <View className="min-w-0 flex-1">
-        <Text tone="muted" variant="caption">
-          {hasLocation ? t('map.nearby') : t('map.inThisArea')}
-        </Text>
-        <Text numberOfLines={1} variant="subtitle">
-          {t('map.visibleStores', { count })}
-        </Text>
+    <View className="gap-3 px-5 pb-3 pt-1">
+      <View className="flex-row items-center justify-between gap-3">
+        <View className="min-w-0 flex-1">
+          <Text tone="muted" variant="caption">
+            {searching ? t('map.searchResults') : hasLocation ? t('map.nearby') : t('map.inThisArea')}
+          </Text>
+          <Text numberOfLines={1} variant="title">
+            {t('map.visibleStores', { count })}
+          </Text>
+        </View>
+        <SegmentedToggle
+          onChange={onChangeViewMode}
+          options={[
+            { label: t('map.viewMap'), value: 'map' },
+            { label: t('map.viewList'), value: 'list' },
+          ]}
+          value={viewMode}
+        />
       </View>
-      <SegmentedToggle
-        onChange={onChangeViewMode}
-        options={[
-          { label: t('map.viewMap'), value: 'map' },
-          { label: t('map.viewList'), value: 'list' },
-        ]}
-        value={viewMode}
-      />
+      {count > 0 ? (
+        <View className="flex-row gap-2">
+          <CountPill
+            dotColor={colors.primary}
+            label={t('filters.ab')}
+            tint="bg-primary-soft"
+            value={abCount}
+          />
+          <CountPill
+            dotColor={colors.couponB}
+            label={t('filters.bOnly')}
+            tint="bg-coupon-b-soft"
+            value={bCount}
+          />
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+/** A tiny legend chip on the coupon's soft wash: dot + label + count. */
+function CountPill({
+  dotColor,
+  label,
+  tint,
+  value,
+}: {
+  dotColor: string;
+  label: string;
+  tint: string;
+  value: number;
+}) {
+  return (
+    <View className={`flex-row items-center gap-2 rounded-full px-3 py-1 ${tint}`}>
+      <View className="h-2 w-2 rounded-full" style={{ backgroundColor: dotColor }} />
+      <Text tone="muted" variant="caption">
+        {label}
+      </Text>
+      <Text variant="label">{value}</Text>
     </View>
   );
 }
@@ -184,7 +257,7 @@ function StoreListRow({
   const distanceText = userLocation && raw !== t('store.distanceUnavailable') ? raw : null;
 
   return (
-    <Pressable className="flex-row items-center gap-3 px-5 py-3" onPress={onPress}>
+    <Pressable className="flex-row items-center gap-3 px-5 py-3 active:bg-neutral-soft" onPress={onPress}>
       <View
         className="items-center justify-center rounded-thumb px-2 py-1"
         style={{ backgroundColor: isAb ? colors.primary : colors.couponB, minWidth: 46 }}

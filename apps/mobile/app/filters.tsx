@@ -3,12 +3,14 @@ import { useRouter } from 'expo-router';
 import { X } from 'lucide-react-native';
 import type { ReactNode } from 'react';
 import { Dimensions, Pressable, ScrollView, View } from 'react-native';
+import Animated, { SlideInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/src/components/ui/Button';
 import { Chip } from '@/src/components/ui/Chip';
 import { IconButton } from '@/src/components/ui/IconButton';
+import { PressableScale } from '@/src/components/ui/PressableScale';
 import { Text } from '@/src/components/ui/Text';
 import { Wrap } from '@/src/components/ui/Wrap';
 import { useFilterStore } from '@/src/features/filters/filterStore';
@@ -30,10 +32,11 @@ export default function FiltersScreen() {
   const sheetHeight = Math.round(Dimensions.get('window').height * 0.82);
 
   return (
-    <View className="flex-1 bg-black/40" style={{ justifyContent: 'flex-end' }}>
+    <View className="flex-1" style={{ backgroundColor: colors.overlay, justifyContent: 'flex-end' }}>
       <Pressable className="absolute inset-0" onPress={() => router.back()} />
-      <View
+      <Animated.View
         className="rounded-t-sheet bg-surface px-6 pt-3"
+        entering={SlideInDown.springify().damping(26).stiffness(300)}
         style={[bottomSheetShadow, { height: sheetHeight, paddingBottom: Math.max(insets.bottom, 18) }]}
       >
         <View className="mb-4 items-center pt-1">
@@ -118,17 +121,20 @@ export default function FiltersScreen() {
           ) : null}
         </ScrollView>
 
-        <View className="gap-4 pt-4">
+        <View className="gap-3 pt-4">
           <Button size="lg" onPress={() => router.back()}>
             {t('filters.applyConditions')}
           </Button>
-          <Pressable className="items-center py-1" onPress={filters.reset}>
+          <PressableScale
+            className="items-center self-center rounded-full px-5 py-2 active:bg-neutral-soft"
+            onPress={filters.reset}
+          >
             <Text className="text-primary" variant="label">
               {t('filters.resetConditions')}
             </Text>
-          </Pressable>
+          </PressableScale>
         </View>
-      </View>
+      </Animated.View>
     </View>
   );
 }
