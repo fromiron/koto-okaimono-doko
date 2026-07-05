@@ -185,7 +185,7 @@ function NearbyHeader({
           <Text tone="muted" variant="caption">
             {searching ? t('map.searchResults') : hasLocation ? t('map.nearby') : t('map.inThisArea')}
           </Text>
-          <Text numberOfLines={1} variant="title">
+          <Text numberOfLines={1} tabularNums variant="title">
             {t('map.visibleStores', { count })}
           </Text>
         </View>
@@ -236,7 +236,9 @@ function CountPill({
       <Text tone="muted" variant="caption">
         {label}
       </Text>
-      <Text variant="label">{value}</Text>
+      <Text tabularNums variant="label">
+        {value}
+      </Text>
     </View>
   );
 }

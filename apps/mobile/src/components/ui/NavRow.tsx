@@ -45,7 +45,7 @@ export function NavRow({
 
   if (surface) {
     return (
-      <PressableScale onPress={onPress} pressedScale={0.98}>
+      <PressableScale onPress={onPress} pressedScale={0.96}>
         <SurfaceCard className="flex-row items-center gap-4 px-4 py-4">{content}</SurfaceCard>
       </PressableScale>
     );

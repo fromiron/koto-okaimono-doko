@@ -64,6 +64,7 @@ export function SegmentedToggle<T extends string>({ onChange, options, value }: 
             accessibilityRole="button"
             accessibilityState={{ selected }}
             className="min-h-9 items-center justify-center rounded-full px-4 active:opacity-70"
+            hitSlop={{ bottom: 4, top: 4 }}
             key={option.value}
             onLayout={(event) => {
               const { width, x } = event.nativeEvent.layout;

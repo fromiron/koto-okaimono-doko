@@ -65,7 +65,7 @@ export function Button({
     <PressableScale
       className={`flex-row items-center justify-center gap-2 rounded-full ${sizeClass[size]} ${variantClass[variant]} ${isDisabled ? 'opacity-45' : 'opacity-100'} ${className}`}
       disabled={isDisabled}
-      pressedScale={0.97}
+      pressedScale={0.96}
       style={[shadow, style]}
       {...props}
     >

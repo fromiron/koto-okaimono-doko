@@ -44,7 +44,7 @@ export function Chip({
         selected ? classes.selected : 'border-line bg-surface active:bg-neutral-soft'
       } ${disabled ? 'opacity-45' : 'opacity-100'} ${className}`}
       disabled={disabled}
-      pressedScale={0.94}
+      pressedScale={0.96}
       style={[selected && !disabled ? surfaceShadow : null, style]}
       {...props}
     >

@@ -34,7 +34,7 @@ export function ActionTile({
       className={`min-h-20 flex-1 items-center justify-center gap-2 rounded-card px-2 py-3 ${
         filled ? 'bg-primary active:opacity-90' : 'border border-line bg-surface active:bg-neutral-soft'
       } ${className}`}
-      pressedScale={0.95}
+      pressedScale={0.96}
       style={[filled ? primaryButtonShadow : surfaceShadow, style]}
       {...props}
     >

@@ -28,7 +28,7 @@ export function IconButton({
         selected ? 'border-primary bg-primary' : 'border-line bg-surface active:bg-neutral-soft'
       } ${disabled ? 'opacity-45' : 'opacity-100'} ${className}`}
       disabled={disabled}
-      pressedScale={0.9}
+      pressedScale={0.96}
       style={[shadow ? floatingButtonShadow : null, style]}
       {...props}
     >

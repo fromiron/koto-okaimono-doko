@@ -11,6 +11,7 @@ type TextProps = NativeTextProps & {
   variant?: TextVariant;
   tone?: TextTone;
   className?: string;
+  tabularNums?: boolean;
 };
 
 const variantStyle: Record<TextVariant, TextStyle> = {
@@ -34,12 +35,21 @@ export function Text({
   children,
   className = '',
   style,
+  tabularNums,
   tone = 'default',
   variant = 'body',
   ...props
 }: TextProps) {
   return (
-    <NativeText className={`${toneClass[tone]} ${className}`} style={[variantStyle[variant], style]} {...props}>
+    <NativeText
+      className={`${toneClass[tone]} ${className}`}
+      style={[
+        variantStyle[variant],
+        tabularNums ? { fontVariant: ['tabular-nums'] } : null,
+        style,
+      ]}
+      {...props}
+    >
       {children}
     </NativeText>
   );
