@@ -20,14 +20,12 @@ const plugins: NonNullable<ExpoConfig['plugins']> = [
   ],
 ];
 
-if (googleMapsApiKey) {
-  plugins.push([
-    'react-native-maps',
-    {
-      androidGoogleMapsApiKey: googleMapsApiKey,
-    },
-  ]);
-}
+plugins.push([
+  'react-native-maps',
+  {
+    androidGoogleMapsApiKey: googleMapsApiKey || 'MISSING_API_KEY',
+  },
+]);
 
 const config: ExpoConfig = {
   name: 'こうとうお買い物どこ',
