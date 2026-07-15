@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Marker } from 'react-native-maps';
+import { useTranslation } from 'react-i18next';
 
 import { Text } from '@/src/components/ui/Text';
 import { colors } from '@/src/theme/tokens';
@@ -13,7 +14,14 @@ type ClusterMarkerProps = {
   onPress: () => void;
 };
 
-export function ClusterMarker({ count, id, lat, lng, onPress }: ClusterMarkerProps) {
+export function ClusterMarker({
+  count,
+  id,
+  lat,
+  lng,
+  onPress,
+}: ClusterMarkerProps) {
+  const { t } = useTranslation();
   const size = count >= 100 ? 50 : count >= 25 ? 44 : 38;
   // react-native-maps needs an initial render pass to capture custom marker views on Android.
   const [tracks, setTracks] = useState(true);
@@ -24,6 +32,8 @@ export function ClusterMarker({ count, id, lat, lng, onPress }: ClusterMarkerPro
 
   return (
     <Marker
+      accessibilityLabel={t('map.groupedStores', { count })}
+      accessibilityRole="button"
       anchor={{ x: 0.5, y: 0.5 }}
       coordinate={{ latitude: lat, longitude: lng }}
       identifier={id}
@@ -34,8 +44,18 @@ export function ClusterMarker({ count, id, lat, lng, onPress }: ClusterMarkerPro
       {/* collapsable={false}: keep the padded ring as the real captured view so
           the bubble's border/shadow isn't clipped by Android view flattening. */}
       <View collapsable={false} style={styles.ring}>
-        <View style={[styles.bubble, { borderRadius: size / 2, height: size, width: size }]}>
-          <Text allowFontScaling={false} className="text-center" tone="inverse" variant="label">
+        <View
+          style={[
+            styles.bubble,
+            { borderRadius: size / 2, height: size, width: size },
+          ]}
+        >
+          <Text
+            allowFontScaling={false}
+            className="text-center"
+            tone="inverse"
+            variant="label"
+          >
             {count}
           </Text>
         </View>

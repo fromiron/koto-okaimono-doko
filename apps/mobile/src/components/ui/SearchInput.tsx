@@ -7,17 +7,27 @@ type SearchInputProps = {
   value: string;
   onChangeText: (value: string) => void;
   placeholder: string;
+  accessibilityLabel: string;
+  clearAccessibilityLabel: string;
   elevated?: boolean;
 };
 
-export function SearchInput({ elevated = false, onChangeText, placeholder, value }: SearchInputProps) {
+export function SearchInput({
+  accessibilityLabel,
+  clearAccessibilityLabel,
+  elevated = false,
+  onChangeText,
+  placeholder,
+  value,
+}: SearchInputProps) {
   return (
     <View
-      className="min-h-14 flex-row items-center gap-3 rounded-full border border-line bg-surface px-5"
+      className="min-h-14 flex-row items-center gap-3 rounded-card border border-control-line bg-surface px-4"
       style={elevated ? surfaceShadow : undefined}
     >
       <Search color={colors.muted} size={24} />
       <TextInput
+        accessibilityLabel={accessibilityLabel}
         className="min-w-0 flex-1 text-base text-ink"
         onChangeText={onChangeText}
         placeholder={placeholder}
@@ -25,7 +35,13 @@ export function SearchInput({ elevated = false, onChangeText, placeholder, value
         value={value}
       />
       {value.length > 0 ? (
-        <Pressable onPress={() => onChangeText('')}>
+        <Pressable
+          accessibilityLabel={clearAccessibilityLabel}
+          accessibilityRole="button"
+          className="h-11 w-11 items-center justify-center rounded-full active:bg-neutral-soft"
+          hitSlop={2}
+          onPress={() => onChangeText('')}
+        >
           <X color={colors.muted} size={20} />
         </Pressable>
       ) : null}

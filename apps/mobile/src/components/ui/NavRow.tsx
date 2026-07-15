@@ -1,23 +1,19 @@
 import { ChevronRight } from 'lucide-react-native';
 import type { ReactNode } from 'react';
-import { Pressable } from 'react-native';
+import { Pressable, View } from 'react-native';
+import type { AccessibilityRole } from 'react-native';
 
 import { colors } from '@/src/theme/tokens';
 
-import { IconBadge } from './IconBadge';
-import { PressableScale } from './PressableScale';
-import { SurfaceCard } from './SurfaceCard';
 import { Text } from './Text';
 
 type NavRowProps = {
   icon: ReactNode;
   label: string;
   onPress: () => void;
-  iconTone?: 'primary' | 'teal' | 'coupon' | 'neutral';
   labelVariant?: 'body' | 'subtitle';
-  /** Render the row inside its own elevated card instead of a divided list row. */
-  surface?: boolean;
   divider?: boolean;
+  role?: AccessibilityRole;
 };
 
 /**
@@ -27,36 +23,23 @@ type NavRowProps = {
 export function NavRow({
   divider = true,
   icon,
-  iconTone = 'primary',
   label,
   labelVariant = 'body',
   onPress,
-  surface = false,
+  role = 'button',
 }: NavRowProps) {
-  const content = (
-    <>
-      <IconBadge tone={iconTone}>{icon}</IconBadge>
+  return (
+    <Pressable
+      accessibilityLabel={label}
+      accessibilityRole={role}
+      className={`min-h-14 flex-row items-center gap-3 py-3 active:bg-neutral-soft ${divider ? 'border-b border-line' : ''}`}
+      onPress={onPress}
+    >
+      <View className="w-8 items-center">{icon}</View>
       <Text className="min-w-0 flex-1" variant={labelVariant}>
         {label}
       </Text>
-      <ChevronRight color={colors.muted} size={28} />
-    </>
-  );
-
-  if (surface) {
-    return (
-      <PressableScale onPress={onPress} pressedScale={0.96}>
-        <SurfaceCard className="flex-row items-center gap-4 px-4 py-4">{content}</SurfaceCard>
-      </PressableScale>
-    );
-  }
-
-  return (
-    <Pressable
-      className={`flex-row items-center gap-4 py-5 active:bg-neutral-soft ${divider ? 'border-b border-line' : ''}`}
-      onPress={onPress}
-    >
-      {content}
+      <ChevronRight color={colors.muted} size={22} />
     </Pressable>
   );
 }

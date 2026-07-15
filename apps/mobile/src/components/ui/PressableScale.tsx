@@ -1,11 +1,20 @@
 import type { ReactNode } from 'react';
-import { Pressable, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import {
+  Pressable,
+  type PressableProps,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-// One spring for every tap target in the app — quick to sink, gently bouncy on
-// release — so all controls share the same tactile signature.
+// One restrained press response is shared by all tappable controls.
 const PRESS_SPRING = { damping: 20, mass: 0.6, stiffness: 320 } as const;
 
 type PressableScaleProps = PressableProps & {
@@ -31,6 +40,7 @@ export function PressableScale({
   ...props
 }: PressableScaleProps) {
   const pressed = useSharedValue(0);
+  const reduceMotion = useReducedMotion();
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: 1 - pressed.value * (1 - pressedScale) }],
@@ -39,11 +49,11 @@ export function PressableScale({
   return (
     <AnimatedPressable
       onPressIn={(event) => {
-        pressed.value = withSpring(1, PRESS_SPRING);
+        pressed.value = reduceMotion ? 0 : withSpring(1, PRESS_SPRING);
         onPressIn?.(event);
       }}
       onPressOut={(event) => {
-        pressed.value = withSpring(0, PRESS_SPRING);
+        pressed.value = reduceMotion ? 0 : withSpring(0, PRESS_SPRING);
         onPressOut?.(event);
       }}
       style={[style, animatedStyle]}

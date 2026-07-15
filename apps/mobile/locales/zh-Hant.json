@@ -1,0 +1,9 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "江東購物券地圖",
+    "NSLocationWhenInUseUsageDescription": "用於顯示目前位置、計算距離和附近搜尋。本應用程式自身不會儲存或上傳位置資訊。"
+  },
+  "android": {
+    "app_name": "江東購物券地圖"
+  }
+}

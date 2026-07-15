@@ -1,5 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { defaultLocale, isSupportedLocale, type SupportedLocale } from '@koto/schema';
+import {
+  defaultLocale,
+  isSupportedLocale,
+  type SupportedLocale,
+} from '@koto/schema';
 import { getLocales } from 'expo-localization';
 import i18next from 'i18next';
 import { initReactI18next } from 'react-i18next';
@@ -33,22 +37,33 @@ export async function getStoredLanguage(): Promise<SupportedLocale> {
   return resolveDeviceLocale();
 }
 
-export async function setStoredLanguage(locale: SupportedLocale): Promise<void> {
+export async function setStoredLanguage(
+  locale: SupportedLocale,
+): Promise<void> {
   await AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, locale);
   await i18next.changeLanguage(locale);
 }
 
-i18next.use(initReactI18next).init({
+const initialization = i18next.use(initReactI18next).init({
   compatibilityJSON: 'v4',
   fallbackLng: defaultLocale,
   interpolation: {
     escapeValue: false,
   },
-  lng: defaultLocale,
+  lng: resolveDeviceLocale(),
   resources,
   returnNull: false,
 });
 
-void getStoredLanguage().then((locale) => i18next.changeLanguage(locale));
+export const i18nReady = initialization.then(async () => {
+  let locale = resolveDeviceLocale();
+  try {
+    locale = await getStoredLanguage();
+  } catch {
+    // AsyncStorage must not prevent the offline app from starting. The device
+    // locale is a safe fallback when a stored preference cannot be read.
+  }
+  await i18next.changeLanguage(locale);
+});
 
 export { i18next };

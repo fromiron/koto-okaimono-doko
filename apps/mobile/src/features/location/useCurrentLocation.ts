@@ -7,25 +7,34 @@ import { usePreferencesStore } from '@/src/features/preferences/preferencesStore
 export function useCurrentLocation() {
   const setUserLocation = useMapStore((state) => state.setUserLocation);
   const locationEnabled = usePreferencesStore((state) => state.locationEnabled);
-  const [status, setStatus] = useState<'idle' | 'requesting' | 'granted' | 'denied' | 'failed' | 'disabled'>('idle');
+  const [status, setStatus] = useState<
+    'idle' | 'requesting' | 'granted' | 'denied' | 'failed' | 'disabled'
+  >('idle');
 
   const requestCurrentLocation = useCallback(async () => {
     if (!locationEnabled) {
       setStatus('disabled');
       setUserLocation(null);
-      return null;
+      return { location: null, status: 'disabled' as const };
     }
 
     setStatus('requesting');
-    const permission = await Location.requestForegroundPermissionsAsync();
-    if (permission.status !== Location.PermissionStatus.GRANTED) {
-      setStatus('denied');
-      setUserLocation(null);
-      return null;
-    }
-
     try {
-      const lastKnown = await Location.getLastKnownPositionAsync();
+      const permission = await Location.requestForegroundPermissionsAsync();
+      if (permission.status !== Location.PermissionStatus.GRANTED) {
+        setStatus('denied');
+        setUserLocation(null);
+        return {
+          canAskAgain: permission.canAskAgain,
+          location: null,
+          status: 'denied' as const,
+        };
+      }
+
+      const lastKnown = await Location.getLastKnownPositionAsync({
+        maxAge: 60_000,
+        requiredAccuracy: 200,
+      });
       const position =
         lastKnown ??
         (await Location.getCurrentPositionAsync({
@@ -37,11 +46,15 @@ export function useCurrentLocation() {
       };
       setUserLocation(location);
       setStatus('granted');
-      return location;
+      return { canAskAgain: true, location, status: 'granted' as const };
     } catch {
       setStatus('failed');
       setUserLocation(null);
-      return null;
+      return {
+        canAskAgain: true,
+        location: null,
+        status: 'failed' as const,
+      };
     }
   }, [locationEnabled, setUserLocation]);
 

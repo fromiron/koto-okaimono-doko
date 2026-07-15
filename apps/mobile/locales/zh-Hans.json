@@ -1,0 +1,9 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "江东购物券地图",
+    "NSLocationWhenInUseUsageDescription": "用于显示当前位置、计算距离和附近搜索。本应用自身不会保存或上传位置信息。"
+  },
+  "android": {
+    "app_name": "江东购物券地图"
+  }
+}

@@ -1,8 +1,13 @@
 import type { ReactNode } from 'react';
-import { ActivityIndicator, type StyleProp, View, type ViewStyle } from 'react-native';
+import {
+  ActivityIndicator,
+  type StyleProp,
+  View,
+  type ViewStyle,
+} from 'react-native';
 import type { PressableProps } from 'react-native';
 
-import { colors, primaryButtonShadow, surfaceShadow } from '@/src/theme/tokens';
+import { colors } from '@/src/theme/tokens';
 
 import { PressableScale } from './PressableScale';
 import { Text } from './Text';
@@ -21,15 +26,18 @@ type ButtonProps = Omit<PressableProps, 'style'> & {
 };
 
 const variantClass: Record<ButtonVariant, string> = {
-  primary: 'bg-primary active:opacity-90',
-  secondary: 'border border-primary bg-surface active:bg-primary-soft',
+  primary: 'bg-primary-strong active:opacity-90',
+  secondary: 'border border-control-line bg-surface active:bg-primary-soft',
   ghost: 'bg-transparent active:bg-neutral-soft',
   danger: 'bg-danger active:opacity-90',
 };
 
-const textTone: Record<ButtonVariant, 'default' | 'inverse' | 'danger'> = {
+const textTone: Record<
+  ButtonVariant,
+  'default' | 'inverse' | 'danger' | 'accent'
+> = {
   primary: 'inverse',
-  secondary: 'default',
+  secondary: 'accent',
   ghost: 'default',
   danger: 'inverse',
 };
@@ -38,13 +46,6 @@ const sizeClass: Record<ButtonSize, string> = {
   sm: 'min-h-9 px-3',
   md: 'min-h-11 px-4',
   lg: 'min-h-14 px-5',
-};
-
-// Filled CTAs get a soft lift; the primary action carries a faint cobalt glow so
-// it reads as the warmest tappable thing on screen.
-const shadowFor: Partial<Record<ButtonVariant, typeof surfaceShadow>> = {
-  primary: primaryButtonShadow,
-  danger: surfaceShadow,
 };
 
 export function Button({
@@ -59,18 +60,25 @@ export function Button({
   ...props
 }: ButtonProps) {
   const isDisabled = disabled || loading;
-  const shadow = !isDisabled ? shadowFor[variant] : null;
 
   return (
     <PressableScale
-      className={`flex-row items-center justify-center gap-2 rounded-full ${sizeClass[size]} ${variantClass[variant]} ${isDisabled ? 'opacity-45' : 'opacity-100'} ${className}`}
+      accessibilityRole="button"
+      accessibilityState={{ busy: loading, disabled: isDisabled }}
+      className={`flex-row items-center justify-center gap-2 rounded-card ${sizeClass[size]} ${variantClass[variant]} ${isDisabled ? 'opacity-45' : 'opacity-100'} ${className}`}
       disabled={isDisabled}
       pressedScale={0.96}
-      style={[shadow, style]}
+      style={style}
       {...props}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'secondary' || variant === 'ghost' ? colors.primary : '#ffffff'} />
+        <ActivityIndicator
+          color={
+            variant === 'secondary' || variant === 'ghost'
+              ? colors.primary
+              : '#ffffff'
+          }
+        />
       ) : null}
       {!loading && leftIcon ? <View>{leftIcon}</View> : null}
       <Text variant="label" tone={textTone[variant]}>

@@ -32,16 +32,24 @@ const config: ExpoConfig = {
   slug: 'koto-okaimono-doko',
   version: '1.0.0',
   platforms: ['ios', 'android'],
-  orientation: 'portrait',
+  orientation: 'default',
   icon: './assets/icon.png',
   userInterfaceStyle: 'light',
   scheme: 'koto-okaimono-doko',
+  locales: {
+    en: './locales/en.json',
+    ja: './locales/ja.json',
+    ko: './locales/ko.json',
+    'zh-Hans': './locales/zh-Hans.json',
+    'zh-Hant': './locales/zh-Hant.json',
+  },
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'app.koto.okaimono.doko',
     infoPlist: {
+      CFBundleAllowMixedLocalizations: true,
       NSLocationWhenInUseUsageDescription:
-        '現在地周辺の取扱店を表示するために使用します。位置情報は保存・送信しません。',
+        '現在地の表示、距離計算、周辺検索に使用します。このアプリ自体は位置情報を保存・アップロードしません。',
     },
   },
   android: {

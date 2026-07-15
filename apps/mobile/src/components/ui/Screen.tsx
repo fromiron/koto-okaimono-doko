@@ -12,12 +12,14 @@ type ScreenProps = {
 export function Screen({ children, scroll = true }: ScreenProps) {
   const insets = useSafeAreaInsets();
   const paddingTop = Math.max(insets.top, space.lg);
+  const paddingLeft = Math.max(insets.left, layout.screenGutter);
+  const paddingRight = Math.max(insets.right, layout.screenGutter);
 
   if (!scroll) {
     return (
       <View
         className="flex-1 bg-page"
-        style={{ paddingHorizontal: layout.screenGutter, paddingTop }}
+        style={{ paddingLeft, paddingRight, paddingTop }}
       >
         {children}
       </View>
@@ -29,7 +31,8 @@ export function Screen({ children, scroll = true }: ScreenProps) {
       className="flex-1 bg-page"
       contentContainerStyle={{
         paddingBottom: space['4xl'],
-        paddingHorizontal: layout.screenGutter,
+        paddingLeft,
+        paddingRight,
         paddingTop,
       }}
     >

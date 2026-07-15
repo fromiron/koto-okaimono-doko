@@ -13,6 +13,21 @@ afterEach(() => {
 });
 
 describe('Expo app config', () => {
+  it('supports rotation and localizes native permission prompts', async () => {
+    const { default: config } = await import('../app.config');
+
+    expect(config.orientation).toBe('default');
+    expect(config.userInterfaceStyle).toBe('light');
+    expect(config.locales).toEqual({
+      en: './locales/en.json',
+      ja: './locales/ja.json',
+      ko: './locales/ko.json',
+      'zh-Hans': './locales/zh-Hans.json',
+      'zh-Hant': './locales/zh-Hant.json',
+    });
+    expect(config.ios?.infoPlist?.CFBundleAllowMixedLocalizations).toBe(true);
+  });
+
   it('adds the Android Google Maps plugin when a key is configured', async () => {
     process.env.GOOGLE_MAPS_API_KEY = 'test-google-maps-key';
     vi.resetModules();
@@ -27,16 +42,17 @@ describe('Expo app config', () => {
     ]);
   });
 
-  it('omits the Android Google Maps plugin when the key is blank', async () => {
+  it('keeps the maps plugin buildable with an explicit placeholder when the key is blank', async () => {
     process.env.GOOGLE_MAPS_API_KEY = '   ';
     vi.resetModules();
 
     const { default: config } = await import('../app.config');
 
-    const hasMapsPlugin = config.plugins?.some(
-      (plugin) => Array.isArray(plugin) && plugin[0] === 'react-native-maps',
-    );
-
-    expect(hasMapsPlugin).toBe(false);
+    expect(config.plugins).toContainEqual([
+      'react-native-maps',
+      {
+        androidGoogleMapsApiKey: 'MISSING_API_KEY',
+      },
+    ]);
   });
 });

@@ -30,12 +30,20 @@ export default function StoreDetailScreen() {
     if (!id) return;
     let cancelled = false;
     setLoading(true);
-    void repository.getStoreById(id).then((result) => {
-      if (!cancelled) {
-        setStore(result);
-        setLoading(false);
-      }
-    });
+    void repository
+      .getStoreById(id)
+      .then((result) => {
+        if (!cancelled) {
+          setStore(result);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setStore(null);
+          setLoading(false);
+        }
+      });
     return () => {
       cancelled = true;
     };
@@ -50,19 +58,27 @@ export default function StoreDetailScreen() {
       <ScreenHeader title={t('store.detailTitle')} />
 
       {store ? (
-        <StoreDetailContent mode="page" sourceDate={sourceDate} stores={[store]} userLocation={userLocation} />
+        <StoreDetailContent
+          mode="page"
+          sourceDate={sourceDate}
+          stores={[store]}
+          userLocation={userLocation}
+        />
       ) : (
-        <View className="items-center gap-4 pt-10">
-          <View className="h-16 w-16 items-center justify-center rounded-full bg-danger-soft">
-            <AlertCircle color={colors.danger} size={28} />
-          </View>
+        <View
+          accessibilityLiveRegion="polite"
+          className="items-center gap-4 pt-10"
+        >
+          <AlertCircle color={colors.danger} size={28} />
           <Text className="text-center" variant="subtitle">
             {t('store.missingTitle')}
           </Text>
           <Text className="text-center" tone="muted">
             {t('store.missingBody')}
           </Text>
-          <Button onPress={() => router.replace('/')}>{t('store.backToMap')}</Button>
+          <Button onPress={() => router.replace('/')}>
+            {t('store.backToMap')}
+          </Button>
         </View>
       )}
     </Screen>

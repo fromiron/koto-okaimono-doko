@@ -6,7 +6,10 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-const mobileRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const mobileRoot = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '..',
+);
 
 function collectTsx(dir: string): string[] {
   const out: string[] = [];
@@ -21,20 +24,28 @@ function collectTsx(dir: string): string[] {
   return out;
 }
 
-const files = [...collectTsx(path.join(mobileRoot, 'app')), ...collectTsx(path.join(mobileRoot, 'src'))];
+const files = [
+  ...collectTsx(path.join(mobileRoot, 'app')),
+  ...collectTsx(path.join(mobileRoot, 'src')),
+];
 const rel = (f: string) => path.relative(mobileRoot, f);
 
 const RAW_RADIUS = /rounded-\[/;
-const FRACTIONAL_SPACING = /\b(?:p|px|py|pt|pb|pl|pr|m|mx|my|mt|mb|ml|mr|gap|gap-x|gap-y)-\d+\.5\b/;
+const FRACTIONAL_SPACING =
+  /\b(?:p|px|py|pt|pb|pl|pr|m|mx|my|mt|mb|ml|mr|gap|gap-x|gap-y)-\d+\.5\b/;
 
 describe('style guard (design-token discipline)', () => {
-  it('uses radius tokens (rounded-card/sheet/thumb/input), never raw rounded-[Npx]', () => {
-    const offenders = files.filter((f) => RAW_RADIUS.test(readFileSync(f, 'utf8'))).map(rel);
+  it('uses radius tokens (rounded-card/sheet/thumb), never raw rounded-[Npx]', () => {
+    const offenders = files
+      .filter((f) => RAW_RADIUS.test(readFileSync(f, 'utf8')))
+      .map(rel);
     expect(offenders).toEqual([]);
   });
 
   it('uses the 4pt spacing scale, no fractional spacing utilities', () => {
-    const offenders = files.filter((f) => FRACTIONAL_SPACING.test(readFileSync(f, 'utf8'))).map(rel);
+    const offenders = files
+      .filter((f) => FRACTIONAL_SPACING.test(readFileSync(f, 'utf8')))
+      .map(rel);
     expect(offenders).toEqual([]);
   });
 });

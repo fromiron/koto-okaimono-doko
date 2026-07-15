@@ -1,7 +1,16 @@
 import type { DatasetMeta, DatasetManifest } from '@koto/schema';
 import { create } from 'zustand';
 
-export type UpdateStatus = 'idle' | 'checking' | 'downloading' | 'verifying' | 'updated' | 'upToDate' | 'failed';
+export type UpdateStatus =
+  | 'idle'
+  | 'checking'
+  | 'available'
+  | 'downloading'
+  | 'verifying'
+  | 'updated'
+  | 'upToDate'
+  | 'notConfigured'
+  | 'failed';
 
 type DatasetState = {
   meta: DatasetMeta | null;
@@ -9,6 +18,7 @@ type DatasetState = {
   lastCheckedAt: string | null;
   updateStatus: UpdateStatus;
   error: string | null;
+  markUpdateChecked: () => void;
   setDatasetMeta: (meta: DatasetMeta) => void;
   setPendingManifest: (manifest: DatasetManifest | null) => void;
   setUpdateStatus: (status: UpdateStatus, error?: string | null) => void;
@@ -20,12 +30,8 @@ export const useDatasetStore = create<DatasetState>((set) => ({
   lastCheckedAt: null,
   updateStatus: 'idle',
   error: null,
+  markUpdateChecked: () => set({ lastCheckedAt: new Date().toISOString() }),
   setDatasetMeta: (meta) => set({ meta }),
   setPendingManifest: (pendingManifest) => set({ pendingManifest }),
-  setUpdateStatus: (updateStatus, error = null) =>
-    set({
-      updateStatus,
-      error,
-      lastCheckedAt: new Date().toISOString(),
-    }),
+  setUpdateStatus: (updateStatus, error = null) => set({ updateStatus, error }),
 }));
