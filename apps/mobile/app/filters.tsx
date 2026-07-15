@@ -20,6 +20,11 @@ import { PressableScale } from '@/src/components/ui/PressableScale';
 import { Text } from '@/src/components/ui/Text';
 import { Wrap } from '@/src/components/ui/Wrap';
 import { useFilterStore } from '@/src/features/filters/filterStore';
+import {
+  selectRadiusWithLocation,
+  type DistanceRadius,
+} from '@/src/features/filters/selectRadius';
+import { useCurrentLocationWithFeedback } from '@/src/features/location/useCurrentLocationWithFeedback';
 import { useMapStore } from '@/src/features/map/mapStore';
 import { usePreferencesStore } from '@/src/features/preferences/preferencesStore';
 import { bottomSheetShadow, colors, space } from '@/src/theme/tokens';
@@ -33,7 +38,18 @@ export default function FiltersScreen() {
   const filters = useFilterStore();
   const userLocation = useMapStore((state) => state.userLocation);
   const locationEnabled = usePreferencesStore((state) => state.locationEnabled);
+  const { requestLocation, status: locationStatus } =
+    useCurrentLocationWithFeedback();
   const radiusAvailable = locationEnabled && userLocation != null;
+  const radiusRequesting = locationStatus === 'requesting';
+  const handleRadiusPress = (radius: DistanceRadius) => {
+    void selectRadiusWithLocation({
+      currentLocation: userLocation,
+      radius,
+      requestLocation,
+      selectRadius: filters.setRadiusMeters,
+    });
+  };
   // A definite height + bottom anchor makes this a real bottom sheet. The
   // justify-end utility is not honoured on this overlay, so the anchor is set
   // inline; the inner list scrolls and the action footer stays pinned.
@@ -177,10 +193,15 @@ export default function FiltersScreen() {
               ).map(([value, label]) => (
                 <Chip
                   key={value}
-                  disabled={!radiusAvailable}
+                  accessibilityHint={
+                    radiusAvailable
+                      ? undefined
+                      : t('filters.radiusNeedsLocation')
+                  }
+                  disabled={!locationEnabled || radiusRequesting}
                   selected={filters.radiusMeters === value}
                   tone="neutral"
-                  onPress={() => filters.setRadiusMeters(value)}
+                  onPress={() => handleRadiusPress(value)}
                 >
                   {t(label)}
                 </Chip>
@@ -188,7 +209,11 @@ export default function FiltersScreen() {
             </FilterSection>
             {!radiusAvailable ? (
               <Text className="pb-2" tone="muted" variant="caption">
-                {t('filters.radiusNeedsLocation')}
+                {t(
+                  locationEnabled
+                    ? 'filters.radiusNeedsLocation'
+                    : 'filters.radiusLocationDisabled',
+                )}
               </Text>
             ) : null}
           </ScrollView>

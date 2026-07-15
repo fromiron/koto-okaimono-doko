@@ -27,4 +27,21 @@ describe('map selection behavior', () => {
     expect(storeMap).toContain('onPress={onMapPress}');
     expect(storeMap).not.toContain('onPanDrag');
   });
+
+  it('keeps the current-location control available for search and empty results', () => {
+    const mapScreen = readFileSync(
+      path.join(mobileRoot, 'app/index.tsx'),
+      'utf8',
+    );
+    const controlStart = mapScreen.indexOf(
+      "{selectedStoreIds.length === 0 && viewMode === 'map' ? (",
+    );
+    const controlEnd = mapScreen.indexOf('<StoreBottomSheet', controlStart);
+    const controlSource = mapScreen.slice(controlStart, controlEnd);
+
+    expect(controlStart).toBeGreaterThan(-1);
+    expect(controlSource).toContain('<UserLocationButton');
+    expect(controlSource).not.toContain('!searching');
+    expect(controlSource).not.toContain('visibleStoreCount > 0');
+  });
 });
