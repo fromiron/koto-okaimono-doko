@@ -3,6 +3,7 @@ import { Users } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Marker } from 'react-native-maps';
+import { useTranslation } from 'react-i18next';
 
 import { Text } from '@/src/components/ui/Text';
 import { colors } from '@/src/theme/tokens';
@@ -40,9 +41,20 @@ const TIP_Y = Math.round(DROP_TOP + HEAD / 2 + (HEAD / 2) * Math.SQRT2) - 2;
 const CANVAS_H = TIP_Y + 7;
 const TIP_ANCHOR_Y = TIP_Y / CANVAS_H;
 
-export function StoreMarker({ id, lat, lng, onPress, selected = false, stores }: StoreMarkerProps) {
+export function StoreMarker({
+  id,
+  lat,
+  lng,
+  onPress,
+  selected = false,
+  stores,
+}: StoreMarkerProps) {
+  const { t } = useTranslation();
   const descriptor = getStoreMarkerDescriptor(stores);
   const isFacility = descriptor.kind === 'facility';
+  const accessibilityLabel = isFacility
+    ? t('map.groupedStores', { count: stores.length })
+    : `${stores[0]?.name ?? ''}, ${descriptor.label}`;
 
   // react-native-maps captures custom marker views to a bitmap on Android. Keep
   // tracking OFF for performance, re-enabling briefly after mount and on any
@@ -60,6 +72,9 @@ export function StoreMarker({ id, lat, lng, onPress, selected = false, stores }:
 
   return (
     <Marker
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
       anchor={{ x: 0.5, y: TIP_ANCHOR_Y }}
       coordinate={{ latitude: lat, longitude: lng }}
       identifier={id}
@@ -74,13 +89,24 @@ export function StoreMarker({ id, lat, lng, onPress, selected = false, stores }:
       <View collapsable={false} style={styles.canvas}>
         <View collapsable={false} style={styles.dropWrap}>
           {selected ? <View pointerEvents="none" style={styles.halo} /> : null}
-          <View style={[styles.drop, { backgroundColor: descriptor.color }, selected && styles.lifted]}>
+          <View
+            style={[
+              styles.drop,
+              { backgroundColor: descriptor.color },
+              selected && styles.lifted,
+            ]}
+          >
             {/* Counter-rotate the glyph back upright inside the rotated drop. */}
             <View collapsable={false} style={styles.content}>
               {isFacility ? (
                 <Users color={colors.surface} size={20} strokeWidth={2.4} />
               ) : (
-                <Text allowFontScaling={false} style={styles.label} tone="inverse" variant="micro">
+                <Text
+                  allowFontScaling={false}
+                  style={styles.label}
+                  tone={descriptor.kind === 'b_only' ? 'default' : 'inverse'}
+                  variant="micro"
+                >
                   {descriptor.label}
                 </Text>
               )}
@@ -109,10 +135,19 @@ const liftedShadow = {
 };
 
 const styles = StyleSheet.create({
-  canvas: { width: CANVAS_W, height: CANVAS_H, alignItems: 'center', justifyContent: 'flex-start' },
+  canvas: {
+    width: CANVAS_W,
+    height: CANVAS_H,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
   // The halo pad is carved out of DROP_TOP so the head (and the tip) sit at the
   // same canvas y whether or not the halo is present.
-  dropWrap: { position: 'relative', padding: HALO_PAD, marginTop: DROP_TOP - HALO_PAD },
+  dropWrap: {
+    position: 'relative',
+    padding: HALO_PAD,
+    marginTop: DROP_TOP - HALO_PAD,
+  },
   halo: {
     position: 'absolute',
     top: 0,

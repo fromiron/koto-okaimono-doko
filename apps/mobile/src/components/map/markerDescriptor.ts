@@ -20,5 +20,5 @@ export function getStoreMarkerDescriptor(
     return { color: colors.couponB, kind: 'b_only', label: 'B' };
   }
 
-  return { color: colors.primary, kind: 'ab', label: 'A・B' };
+  return { color: colors.primaryStrong, kind: 'ab', label: 'A・B' };
 }

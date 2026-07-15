@@ -35,5 +35,5 @@ export type DatasetMeta = {
 export type DatasetUpdateResult =
   | { status: 'up-to-date'; version: string }
   | { status: 'updated'; previousVersion: string | null; nextVersion: string }
-  | { status: 'skipped'; reason: 'offline' | 'same-version' }
+  | { status: 'skipped'; reason: 'not-configured' | 'offline' | 'same-version' }
   | { status: 'failed'; reason: string };

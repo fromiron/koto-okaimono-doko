@@ -2,6 +2,7 @@ import { ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { colors, iconSizes } from '@/src/theme/tokens';
 
@@ -21,13 +22,21 @@ type ScreenHeaderProps = {
  */
 export function ScreenHeader({ right, title }: ScreenHeaderProps) {
   const router = useRouter();
+  const { t } = useTranslation();
 
   return (
     <View className="mb-6 min-h-12 flex-row items-center justify-between gap-3">
-      <IconButton shadow={false} onPress={() => router.back()}>
+      <IconButton
+        accessibilityLabel={t('common.back')}
+        onPress={() => router.back()}
+      >
         <ChevronLeft color={colors.ink} size={iconSizes.lg} />
       </IconButton>
-      <Text className="min-w-0 flex-1 text-center" numberOfLines={1} variant="title">
+      <Text
+        accessibilityRole="header"
+        className="min-w-0 flex-1 text-center"
+        variant="title"
+      >
         {title}
       </Text>
       {right ?? <View className="h-12 w-12" />}

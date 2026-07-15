@@ -1,6 +1,6 @@
 import type { Store } from '@koto/schema';
 import type { RefObject } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 
 import type { MapRegion } from '@/src/features/map/mapStore';
@@ -48,7 +48,7 @@ export function StoreMap({
         initialRegion={initialRegion}
         onPress={onMapPress}
         onRegionChangeComplete={onRegionChangeComplete}
-        provider={PROVIDER_GOOGLE}
+        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
         showsCompass={false}
         showsMyLocationButton={false}
         showsUserLocation={showsUserLocation}

@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
+import { Check } from 'lucide-react-native';
 import type { PressableProps, StyleProp, ViewStyle } from 'react-native';
 import { View } from 'react-native';
 
-import { surfaceShadow } from '@/src/theme/tokens';
+import { colors } from '@/src/theme/tokens';
 
 import { PressableScale } from './PressableScale';
 import { Text } from './Text';
@@ -13,17 +14,29 @@ type ChipProps = Omit<PressableProps, 'style'> & {
   leftIcon?: ReactNode;
   className?: string;
   style?: StyleProp<ViewStyle>;
-  tone?: 'primary' | 'orange' | 'purple' | 'neutral';
+  tone?: 'primary' | 'orange' | 'neutral';
 };
 
-// Unselected chips are crisp white pills with a warm hairline and tone-tinted
-// text (a quiet hint of the category colour); selecting fills the pill with the
-// tone and lifts it, so the active filter is unmistakable on the cream header.
+// Selection uses fill plus a checkmark so it does not rely on color alone.
 const toneClass = {
-  primary: { selected: 'border-primary bg-primary', text: 'text-primary' },
-  orange: { selected: 'border-coupon-b bg-coupon-b', text: 'text-coupon-b' },
-  purple: { selected: 'border-purple bg-purple', text: 'text-purple' },
-  neutral: { selected: 'border-ink bg-ink', text: 'text-ink' },
+  primary: {
+    selected: 'border-primary-strong bg-primary-strong',
+    selectedTone: 'inverse' as const,
+    tone: 'accent' as const,
+    check: colors.surface,
+  },
+  orange: {
+    selected: 'border-coupon-b bg-coupon-b',
+    selectedTone: 'default' as const,
+    tone: 'default' as const,
+    check: colors.ink,
+  },
+  neutral: {
+    selected: 'border-control-line bg-neutral-soft',
+    selectedTone: 'default' as const,
+    tone: 'default' as const,
+    check: colors.ink,
+  },
 };
 
 export function Chip({
@@ -40,16 +53,26 @@ export function Chip({
 
   return (
     <PressableScale
+      accessibilityRole="button"
+      accessibilityState={{ disabled: !!disabled, selected: !!selected }}
       className={`min-h-11 flex-row items-center gap-2 rounded-full border px-4 ${
-        selected ? classes.selected : 'border-line bg-surface active:bg-neutral-soft'
+        selected
+          ? classes.selected
+          : 'border-control-line bg-surface active:bg-neutral-soft'
       } ${disabled ? 'opacity-45' : 'opacity-100'} ${className}`}
       disabled={disabled}
       pressedScale={0.96}
-      style={[selected && !disabled ? surfaceShadow : null, style]}
+      style={style}
       {...props}
     >
+      {selected ? (
+        <Check color={classes.check} size={16} strokeWidth={2.5} />
+      ) : null}
       {leftIcon ? <View>{leftIcon}</View> : null}
-      <Text className={selected ? '' : classes.text} variant="label" tone={selected ? 'inverse' : 'default'}>
+      <Text
+        variant="label"
+        tone={selected ? classes.selectedTone : classes.tone}
+      >
         {children}
       </Text>
     </PressableScale>

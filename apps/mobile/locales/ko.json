@@ -1,0 +1,9 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "고토 오카이모노 도코",
+    "NSLocationWhenInUseUsageDescription": "현재 위치 표시, 거리 계산, 주변 검색에 사용합니다. 앱 자체는 위치정보를 저장하거나 업로드하지 않습니다."
+  },
+  "android": {
+    "app_name": "고토 오카이모노 도코"
+  }
+}

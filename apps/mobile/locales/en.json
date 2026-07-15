@@ -1,0 +1,9 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "Koto Okaimono Doko",
+    "NSLocationWhenInUseUsageDescription": "Used to show your position, calculate distances, and search nearby. The app itself does not store or upload your location."
+  },
+  "android": {
+    "app_name": "Koto Okaimono Doko"
+  }
+}

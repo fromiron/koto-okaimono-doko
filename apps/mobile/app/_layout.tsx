@@ -22,7 +22,10 @@ export default function RootLayout() {
             <Stack.Screen name="index" />
             <Stack.Screen
               name="filters"
-              options={{ animation: 'fade', presentation: 'transparentModal' }}
+              options={{
+                animation: 'none',
+                presentation: 'transparentModal',
+              }}
             />
             <Stack.Screen name="settings" />
             <Stack.Screen name="about" />

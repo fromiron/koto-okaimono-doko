@@ -1,10 +1,14 @@
 import type { ReactNode } from 'react';
-import { Text as NativeText, type TextProps as NativeTextProps, type TextStyle } from 'react-native';
+import {
+  Text as NativeText,
+  type TextProps as NativeTextProps,
+  type TextStyle,
+} from 'react-native';
 
 import { typography, type TypographyToken } from '@/src/theme/tokens';
 
 type TextVariant = TypographyToken;
-type TextTone = 'default' | 'muted' | 'danger' | 'inverse';
+type TextTone = 'default' | 'muted' | 'danger' | 'inverse' | 'accent';
 
 type TextProps = NativeTextProps & {
   children: ReactNode;
@@ -15,7 +19,6 @@ type TextProps = NativeTextProps & {
 };
 
 const variantStyle: Record<TextVariant, TextStyle> = {
-  display: typography.display,
   title: typography.title,
   subtitle: typography.subtitle,
   body: typography.body,
@@ -29,6 +32,7 @@ const toneClass: Record<TextTone, string> = {
   muted: 'text-muted',
   danger: 'text-danger',
   inverse: 'text-white',
+  accent: 'text-primary-strong',
 };
 
 export function Text({

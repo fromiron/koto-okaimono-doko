@@ -1,0 +1,9 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "こうとうお買い物どこ",
+    "NSLocationWhenInUseUsageDescription": "現在地の表示、距離計算、周辺検索に使用します。このアプリ自体は位置情報を保存・アップロードしません。"
+  },
+  "android": {
+    "app_name": "こうとうお買い物どこ"
+  }
+}

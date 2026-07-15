@@ -7,15 +7,18 @@ import type { ViewStyle } from 'react-native';
  */
 export const colors = {
   primary: '#EA5F3F',
+  /** Darker action tone: 4.89:1 against white for small button text. */
+  primaryStrong: '#C7442B',
   primarySoft: '#FDECE6',
   couponB: '#F5A31C',
   couponBSoft: '#FEF2D9',
   teal: '#3D9E83',
   tealSoft: '#E4F3ED',
-  purple: '#6C4CB0',
   ink: '#33302B',
   muted: '#6E6459',
   line: '#EEE3D3',
+  /** 3.11:1 against white for essential control boundaries. */
+  controlLine: '#A18F7E',
   surface: '#FFFFFF',
   page: '#FBF6EF',
   neutralSoft: '#F4ECDF',
@@ -51,8 +54,6 @@ export const radii = {
   thumb: 12,
   card: 16,
   sheet: 32,
-  input: 28,
-  pill: 999,
 } as const;
 
 /** Icon size scale. sm=inline, md=body, lg=nav/header, xl=badges. */
@@ -69,7 +70,6 @@ export type IconSizeToken = keyof typeof iconSizes;
  * weight. The `Text` component maps each variant straight to these values so
  * every heading shares one rhythm instead of ad-hoc per-screen sizes.
  *
- * display  hero wordmark (About)            30 / 36 · 700
  * title    screen titles (設定 etc.)         24 / 30 · 700
  * subtitle section + card + store names     18 / 24 · 700
  * body     default reading text             16 / 24 · 400
@@ -78,18 +78,36 @@ export type IconSizeToken = keyof typeof iconSizes;
  * micro    map marker glyphs                12 / 14 · 700
  */
 export const typography = {
-  display: { fontSize: 30, lineHeight: 36, fontWeight: '800', letterSpacing: -0.4 },
-  title: { fontSize: 24, lineHeight: 30, fontWeight: '700', letterSpacing: -0.3 },
-  subtitle: { fontSize: 18, lineHeight: 24, fontWeight: '700', letterSpacing: -0.2 },
+  title: {
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+  },
+  subtitle: {
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+  },
   body: { fontSize: 16, lineHeight: 24, fontWeight: '400' },
-  label: { fontSize: 14, lineHeight: 20, fontWeight: '700', letterSpacing: 0.1 },
+  label: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '700',
+    letterSpacing: 0.1,
+  },
   caption: { fontSize: 12, lineHeight: 16, fontWeight: '400' },
-  micro: { fontSize: 12, lineHeight: 14, fontWeight: '700', letterSpacing: 0.3 },
+  micro: {
+    fontSize: 12,
+    lineHeight: 14,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
 } as const;
 export type TypographyToken = keyof typeof typography;
 
-// Shadows use a warm-ink tone (never a colored glow) with a soft, wide blur so
-// surfaces read as gently lifted off the washi paper — quiet, not AI-halo.
+// One low elevation is reserved for controls floating directly over the map.
 export const surfaceShadow: ViewStyle = {
   elevation: 3,
   shadowColor: '#241C12',
@@ -104,16 +122,6 @@ export const floatingButtonShadow: ViewStyle = {
   shadowOffset: { width: 0, height: 4 },
   shadowOpacity: 0.14,
   shadowRadius: 12,
-};
-
-// A soft, coloured lift for filled primary CTAs so the main action reads as the
-// warmest, most tappable thing on screen.
-export const primaryButtonShadow: ViewStyle = {
-  elevation: 6,
-  shadowColor: '#EA5F3F',
-  shadowOffset: { width: 0, height: 6 },
-  shadowOpacity: 0.26,
-  shadowRadius: 14,
 };
 
 export const bottomSheetShadow: ViewStyle = {

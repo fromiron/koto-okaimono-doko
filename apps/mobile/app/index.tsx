@@ -2,16 +2,26 @@ import { boundsFromRegion } from '@koto/core';
 import { Filter, Settings } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Dimensions, View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
 import type MapView from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { useReducedMotion } from 'react-native-reanimated';
 
-import { BrandMark } from '@/src/components/brand/BrandMark';
-import { clusterByGrid, type MarkerCluster } from '@/src/components/map/clusterGroups';
-import { StoreMap, type StoreLocationGroup } from '@/src/components/map/StoreMap';
+import {
+  clusterByGrid,
+  type MarkerCluster,
+} from '@/src/components/map/clusterGroups';
+import {
+  StoreMap,
+  type StoreLocationGroup,
+} from '@/src/components/map/StoreMap';
 import { UserLocationButton } from '@/src/components/map/UserLocationButton';
-import { SHEET_PEEK_HEIGHT, StoreBottomSheet, type MapViewMode } from '@/src/components/store/StoreBottomSheet';
+import {
+  SHEET_PEEK_HEIGHT,
+  StoreBottomSheet,
+  type MapViewMode,
+} from '@/src/components/store/StoreBottomSheet';
 import { Chip } from '@/src/components/ui/Chip';
 import { IconButton } from '@/src/components/ui/IconButton';
 import { SearchInput } from '@/src/components/ui/SearchInput';
@@ -25,10 +35,14 @@ import { usePreferencesStore } from '@/src/features/preferences/preferencesStore
 import { useSelectedStoreStore } from '@/src/features/selected-store/selectedStoreStore';
 import { colors, space } from '@/src/theme/tokens';
 
+const QUERY_LIMIT = 2_000;
+
 export default function MapScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const reduceMotion = useReducedMotion();
+  const { width: screenWidth } = useWindowDimensions();
   const mapRef = useRef<MapView | null>(null);
   const repository = useStoreRepository();
   const region = useMapStore((state) => state.region);
@@ -37,17 +51,28 @@ export default function MapScreen() {
   const setUserLocation = useMapStore((state) => state.setUserLocation);
   const locationEnabled = usePreferencesStore((state) => state.locationEnabled);
   const filters = useFilterStore();
-  const selectedStoreIds = useSelectedStoreStore((state) => state.selectedStoreIds);
+  const selectedStoreIds = useSelectedStoreStore(
+    (state) => state.selectedStoreIds,
+  );
   const selectStores = useSelectedStoreStore((state) => state.selectStores);
-  const clearSelectedStore = useSelectedStoreStore((state) => state.clearSelectedStore);
+  const clearSelectedStore = useSelectedStoreStore(
+    (state) => state.clearSelectedStore,
+  );
   const meta = useDatasetStore((state) => state.meta);
   const setDatasetMeta = useDatasetStore((state) => state.setDatasetMeta);
   const { checkUpdate } = useDatasetUpdate();
   const [groups, setGroups] = useState<StoreLocationGroup[]>([]);
+  const [queryAttempt, setQueryAttempt] = useState(0);
+  const [queryFailed, setQueryFailed] = useState(false);
   const [viewMode, setViewMode] = useState<MapViewMode>('map');
 
   const visibleGroups = useMemo(
-    () => filterGroupsByRadius(groups, locationEnabled ? userLocation : null, filters.radiusMeters),
+    () =>
+      filterGroupsByRadius(
+        groups,
+        locationEnabled ? userLocation : null,
+        filters.radiusMeters,
+      ),
     [groups, locationEnabled, userLocation, filters.radiusMeters],
   );
 
@@ -57,7 +82,10 @@ export default function MapScreen() {
   );
 
   useEffect(() => {
-    void repository.getDatasetMeta().then(setDatasetMeta);
+    void repository
+      .getDatasetMeta()
+      .then(setDatasetMeta)
+      .catch(() => {});
   }, [repository, setDatasetMeta]);
 
   useEffect(() => {
@@ -74,7 +102,9 @@ export default function MapScreen() {
   const searching = filters.keyword.trim().length > 0;
 
   useEffect(() => {
+    let cancelled = false;
     const handle = setTimeout(() => {
+      setQueryFailed(false);
       void repository
         .getLocationGroups({
           keyword: filters.keyword,
@@ -82,12 +112,23 @@ export default function MapScreen() {
           payment: filters.payment,
           categoryMajorId: filters.categoryMajorId,
           bounds: searching ? undefined : boundsFromRegion(region),
-          limit: 500,
+          limit: QUERY_LIMIT,
         })
-        .then(setGroups);
+        .then((nextGroups) => {
+          if (!cancelled) setGroups(nextGroups);
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setGroups([]);
+            setQueryFailed(true);
+          }
+        });
     }, 220);
 
-    return () => clearTimeout(handle);
+    return () => {
+      cancelled = true;
+      clearTimeout(handle);
+    };
   }, [
     repository,
     region,
@@ -96,12 +137,21 @@ export default function MapScreen() {
     filters.couponType,
     filters.payment,
     filters.categoryMajorId,
+    queryAttempt,
   ]);
 
   const selectedStores = useMemo(() => {
     const selected = new Set(selectedStoreIds);
-    return visibleGroups.flatMap((group) => group.stores).filter((store) => selected.has(store.id));
+    return visibleGroups
+      .flatMap((group) => group.stores)
+      .filter((store) => selected.has(store.id));
   }, [visibleGroups, selectedStoreIds]);
+
+  useEffect(() => {
+    if (selectedStoreIds.length > 0 && selectedStores.length === 0) {
+      clearSelectedStore();
+    }
+  }, [clearSelectedStore, selectedStoreIds.length, selectedStores.length]);
 
   const visibleStoreCount = useMemo(
     () => visibleGroups.reduce((sum, group) => sum + group.stores.length, 0),
@@ -116,15 +166,13 @@ export default function MapScreen() {
   const top = Math.max(insets.top, space.lg);
   // Concrete width for the absolutely-positioned deck so its flex-1 children
   // (search + chip row) always get a firm width instead of collapsing to 0.
-  const screenWidth = Dimensions.get('window').width;
-  const allSelected =
-    filters.couponType === 'all' &&
-    filters.payment === 'all' &&
-    filters.categoryMajorId === null;
+  const allSelected = filters.couponType === 'all';
   // Only the coupon filter lives inline; payment / category / radius are set in
   // the filter sheet, so the filter button lights up when any of them is active.
   const advancedActive =
-    filters.payment !== 'all' || filters.categoryMajorId !== null || filters.radiusMeters !== 'all';
+    filters.payment !== 'all' ||
+    filters.categoryMajorId !== null ||
+    filters.radiusMeters !== 'all';
 
   const handleRegionChange = useCallback(
     (nextRegion: typeof region) => {
@@ -143,12 +191,17 @@ export default function MapScreen() {
         // Bias the centre south so the marker lands in the map area left
         // visible above the half-open detail sheet.
         mapRef.current?.animateToRegion(
-          { latitude: store.lat - 0.002, longitude: store.lng, latitudeDelta: 0.008, longitudeDelta: 0.008 },
-          400,
+          {
+            latitude: store.lat - 0.002,
+            longitude: store.lng,
+            latitudeDelta: 0.008,
+            longitudeDelta: 0.008,
+          },
+          reduceMotion ? 0 : 400,
         );
       }
     },
-    [selectStores, visibleStores],
+    [reduceMotion, selectStores, visibleStores],
   );
 
   const handleClusterPress = useCallback(
@@ -160,10 +213,10 @@ export default function MapScreen() {
           latitudeDelta: Math.max(region.latitudeDelta / 2.5, 0.004),
           longitudeDelta: Math.max(region.longitudeDelta / 2.5, 0.004),
         },
-        320,
+        reduceMotion ? 0 : 320,
       );
     },
-    [region.latitudeDelta, region.longitudeDelta],
+    [reduceMotion, region.latitudeDelta, region.longitudeDelta],
   );
 
   return (
@@ -177,18 +230,30 @@ export default function MapScreen() {
         onClusterPress={handleClusterPress}
         onMapPress={clearSelectedStore}
         onRegionChangeComplete={handleRegionChange}
-        onSelectStores={(stores) => selectStores(stores.map((store) => store.id))}
+        onSelectStores={(stores) =>
+          selectStores(stores.map((store) => store.id))
+        }
         selectedStoreIds={selectedStoreIds}
         showsUserLocation={locationEnabled}
       />
 
-      {/* Floating glass command deck — search + filters hover over the map. */}
-      <View className="absolute left-0 top-0" pointerEvents="box-none" style={{ paddingTop: top, width: screenWidth }}>
-        <View className="px-4" pointerEvents="box-none">
+      {/* Search and task controls stay compact so the map remains readable. */}
+      <View
+        className="absolute left-0 top-0"
+        pointerEvents="box-none"
+        style={{
+          paddingLeft: Math.max(insets.left, space.lg),
+          paddingRight: Math.max(insets.right, space.lg),
+          paddingTop: top,
+          width: screenWidth,
+        }}
+      >
+        <View pointerEvents="box-none">
           <View className="flex-row items-center gap-2">
-            <BrandMark compact />
             <View className="min-w-0 flex-1">
               <SearchInput
+                accessibilityLabel={t('map.searchLabel')}
+                clearAccessibilityLabel={t('map.clearSearch')}
                 elevated
                 onChangeText={filters.setKeyword}
                 placeholder={t('map.searchPlaceholder')}
@@ -200,9 +265,15 @@ export default function MapScreen() {
               onPress={() => router.push('/filters')}
               selected={advancedActive}
             >
-              <Filter color={advancedActive ? colors.surface : colors.primary} size={22} />
+              <Filter
+                color={advancedActive ? colors.surface : colors.primary}
+                size={22}
+              />
             </IconButton>
-            <IconButton onPress={() => router.push('/settings')}>
+            <IconButton
+              accessibilityLabel={t('settings.title')}
+              onPress={() => router.push('/settings')}
+            >
               <Settings color={colors.muted} size={22} />
             </IconButton>
           </View>
@@ -211,19 +282,30 @@ export default function MapScreen() {
               user makes constantly. Payment / genre / distance live behind the
               filter button so the map stays uncluttered. */}
           <View className="mt-3 flex-row flex-wrap" style={{ gap: space.sm }}>
-            <Chip selected={allSelected} onPress={filters.reset}>
+            <Chip
+              selected={allSelected}
+              onPress={() => filters.setCouponType('all')}
+            >
               {t('common.all')}
             </Chip>
             <Chip
               selected={filters.couponType === 'ab'}
-              onPress={() => filters.setCouponType(filters.couponType === 'ab' ? 'all' : 'ab')}
+              onPress={() =>
+                filters.setCouponType(
+                  filters.couponType === 'ab' ? 'all' : 'ab',
+                )
+              }
             >
               {t('filters.ab')}
             </Chip>
             <Chip
               selected={filters.couponType === 'b_only'}
               tone="orange"
-              onPress={() => filters.setCouponType(filters.couponType === 'b_only' ? 'all' : 'b_only')}
+              onPress={() =>
+                filters.setCouponType(
+                  filters.couponType === 'b_only' ? 'all' : 'b_only',
+                )
+              }
             >
               {t('filters.bOnly')}
             </Chip>
@@ -231,9 +313,17 @@ export default function MapScreen() {
         </View>
       </View>
 
-      {selectedStoreIds.length === 0 ? (
+      {selectedStoreIds.length === 0 &&
+      viewMode === 'map' &&
+      !searching &&
+      visibleStoreCount > 0 ? (
         <View
-          style={{ bottom: SHEET_PEEK_HEIGHT + insets.bottom + 12, elevation: 18, position: 'absolute', right: 20, zIndex: 18 }}
+          style={{
+            bottom: SHEET_PEEK_HEIGHT + insets.bottom + 12,
+            position: 'absolute',
+            right: 20,
+            zIndex: 18,
+          }}
         >
           <UserLocationButton mapRef={mapRef} />
         </View>
@@ -242,6 +332,8 @@ export default function MapScreen() {
         onChangeViewMode={setViewMode}
         onClearSelection={clearSelectedStore}
         onResetFilters={filters.reset}
+        onRetryQuery={() => setQueryAttempt((attempt) => attempt + 1)}
+        queryFailed={queryFailed}
         onSelectStore={handleSelectStore}
         searching={searching}
         sourceDate={meta?.officialUpdatedAt}

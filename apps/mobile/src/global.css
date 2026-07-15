@@ -1,5 +1,5 @@
-@import 'tailwindcss';
-@import 'uniwind';
+@import "tailwindcss";
+@import "uniwind";
 
 /*
  * Tailwind 4 auto-detects sources relative to THIS file (src/), so the expo-router
@@ -21,15 +21,16 @@
  */
 @theme {
   --color-primary: #ea5f3f;
+  --color-primary-strong: #c7442b;
   --color-primary-soft: #fdece6;
   --color-coupon-b: #f5a31c;
   --color-coupon-b-soft: #fef2d9;
   --color-teal: #3d9e83;
   --color-teal-soft: #e4f3ed;
-  --color-purple: #6c4cb0;
   --color-ink: #33302b;
   --color-muted: #6e6459;
   --color-line: #eee3d3;
+  --color-control-line: #a18f7e;
   --color-surface: #ffffff;
   --color-page: #fbf6ef;
   --color-neutral-soft: #f4ecdf;
@@ -40,5 +41,4 @@
   --radius-thumb: 12px;
   --radius-card: 16px;
   --radius-sheet: 32px;
-  --radius-input: 28px;
 }

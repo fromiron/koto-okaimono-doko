@@ -1,18 +1,16 @@
 import type { SupportedLocale } from '@koto/schema';
 import { supportedLocales } from '@koto/schema';
 import { useRouter } from 'expo-router';
-import { CloudCog, FileText, Github, Heart, Info, LocateFixed, RefreshCcw } from 'lucide-react-native';
+import { Github, Info, RefreshCcw } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Linking, Switch, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { AppHeader } from '@/src/components/brand/AppHeader';
 import { Button } from '@/src/components/ui/Button';
 import { Chip } from '@/src/components/ui/Chip';
-import { IconBadge } from '@/src/components/ui/IconBadge';
 import { NavRow } from '@/src/components/ui/NavRow';
-import { Row } from '@/src/components/ui/Row';
 import { Screen } from '@/src/components/ui/Screen';
+import { ScreenHeader } from '@/src/components/ui/ScreenHeader';
 import { Section } from '@/src/components/ui/Section';
 import { Stack } from '@/src/components/ui/Stack';
 import { SurfaceCard } from '@/src/components/ui/SurfaceCard';
@@ -21,6 +19,7 @@ import { Wrap } from '@/src/components/ui/Wrap';
 import { useDatasetStore } from '@/src/features/dataset/datasetStore';
 import { useDatasetUpdate } from '@/src/features/dataset/useDatasetUpdate';
 import { useStoreRepository } from '@/src/features/db/useStoreRepository';
+import { useFilterStore } from '@/src/features/filters/filterStore';
 import { setStoredLocationEnabled } from '@/src/features/preferences/locationPreference';
 import { usePreferencesStore } from '@/src/features/preferences/preferencesStore';
 import { getStoredLanguage, setStoredLanguage } from '@/src/i18n';
@@ -45,8 +44,14 @@ export default function SettingsScreen() {
   const lastCheckedAt = useDatasetStore((state) => state.lastCheckedAt);
   const setDatasetMeta = useDatasetStore((state) => state.setDatasetMeta);
   const locationEnabled = usePreferencesStore((state) => state.locationEnabled);
-  const setLocationEnabled = usePreferencesStore((state) => state.setLocationEnabled);
+  const setLocationEnabled = usePreferencesStore(
+    (state) => state.setLocationEnabled,
+  );
   const [language, setLanguage] = useState<SupportedLocale>('ja');
+  const updateBusy =
+    updateStatus === 'checking' ||
+    updateStatus === 'downloading' ||
+    updateStatus === 'verifying';
 
   useEffect(() => {
     void getStoredLanguage().then(setLanguage);
@@ -55,44 +60,64 @@ export default function SettingsScreen() {
 
   return (
     <Screen>
-      <AppHeader centeredBrand showBack title={t('settings.title')} />
+      <ScreenHeader title={t('settings.title')} />
 
       <Stack gap="2xl">
         <Section title={t('settings.dataset')}>
           <SurfaceCard className="overflow-hidden p-4">
-            <Row gap="md">
-              <IconBadge>
-                <CloudCog color={colors.primary} size={iconSizes.xl} />
-              </IconBadge>
-              <Stack className="min-w-0 flex-1" gap="xs">
-                <Text tone="muted" variant="caption">
-                  {t('settings.version')}
-                </Text>
-                <Text numberOfLines={1} variant="subtitle">
-                  {meta?.version ?? '-'}
-                </Text>
-              </Stack>
-            </Row>
-            <View className="mt-4 border-t border-line">
-              <SettingRow label={t('settings.officialUpdatedAt')} value={meta?.officialUpdatedAt ?? '-'} />
-              <SettingRow divider={false} label={t('settings.lastCheckedAt')} value={formatTimestamp(lastCheckedAt)} />
+            <Stack className="pb-3" gap="xs">
+              <Text tone="muted" variant="caption">
+                {t('settings.version')}
+              </Text>
+              <Text numberOfLines={1} variant="subtitle">
+                {meta?.version ?? '-'}
+              </Text>
+            </Stack>
+            <View className="border-t border-line">
+              <SettingRow
+                label={t('settings.officialUpdatedAt')}
+                value={meta?.officialUpdatedAt ?? '-'}
+              />
+              <SettingRow
+                divider={false}
+                label={t('settings.lastCheckedAt')}
+                value={formatTimestamp(lastCheckedAt, language)}
+              />
             </View>
             <Stack className="mt-2" gap="md">
               <Button
-                leftIcon={<RefreshCcw color={colors.primary} size={iconSizes.md} />}
-                loading={updateStatus === 'checking' || updateStatus === 'downloading'}
+                disabled={updateBusy}
+                leftIcon={
+                  <RefreshCcw
+                    color={colors.primaryStrong}
+                    size={iconSizes.md}
+                  />
+                }
+                loading={updateStatus === 'checking'}
                 onPress={checkUpdate}
                 variant="secondary"
               >
                 {t('settings.checkUpdate')}
               </Button>
               {updateStatus !== 'idle' ? (
-                <Text className="text-center" tone="muted" variant="caption">
+                <Text
+                  accessibilityLiveRegion="polite"
+                  className="text-center"
+                  tone="muted"
+                  variant="caption"
+                >
                   {t(`update.${updateStatus}`)}
                 </Text>
               ) : null}
               {pendingManifest ? (
-                <Button onPress={applyUpdate}>
+                <Button
+                  disabled={updateBusy}
+                  loading={
+                    updateStatus === 'downloading' ||
+                    updateStatus === 'verifying'
+                  }
+                  onPress={applyUpdate}
+                >
                   {t('settings.applyUpdate')} {pendingManifest.version}
                 </Button>
               ) : null}
@@ -102,50 +127,51 @@ export default function SettingsScreen() {
 
         <Section title={t('settings.locationTitle')}>
           <SurfaceCard className="px-4">
-            <Row className="py-4" gap="md">
-              <IconBadge>
-                <LocateFixed color={colors.primary} size={iconSizes.xl} />
-              </IconBadge>
-              <Stack className="min-w-0 flex-1" gap="xs">
-                <Text>{t('settings.locationUse')}</Text>
-                <Text tone="muted">{t('settings.locationDetail')}</Text>
-              </Stack>
-            </Row>
-            <Row className="justify-between border-t border-line py-4">
+            <Stack className="py-4" gap="xs">
+              <Text>{t('settings.locationUse')}</Text>
+              <Text tone="muted">{t('settings.locationDetail')}</Text>
+            </Stack>
+            <View className="flex-row items-center justify-between border-t border-line py-4">
               <Text>{t('settings.locationToggle')}</Text>
               <Switch
-                ios_backgroundColor={colors.line}
+                accessibilityLabel={t('settings.locationToggle')}
+                ios_backgroundColor={colors.controlLine}
                 onValueChange={(next) => {
                   setLocationEnabled(next);
+                  if (!next) {
+                    useFilterStore.getState().setRadiusMeters('all');
+                  }
                   void setStoredLocationEnabled(next);
                 }}
-                // Android's default thumb is the Material accent (green) — pin it
-                // to white so the toggle stays inside the marché palette.
+                // Keep the thumb visible against both track states.
                 thumbColor={colors.surface}
-                trackColor={{ false: colors.line, true: colors.primary }}
+                trackColor={{
+                  false: colors.controlLine,
+                  true: colors.primaryStrong,
+                }}
                 value={locationEnabled}
               />
-            </Row>
+            </View>
           </SurfaceCard>
         </Section>
 
         <Section title={t('settings.appInfo')}>
           <SurfaceCard className="px-4">
             <NavRow
-              icon={<Info color={colors.primary} size={iconSizes.xl} />}
+              icon={<Info color={colors.primaryStrong} size={iconSizes.lg} />}
               label={t('settings.aboutApp')}
               onPress={() => router.push('/about')}
             />
             <NavRow
-              icon={<Github color={colors.primary} size={iconSizes.xl} />}
-              label={t('settings.github')}
-              onPress={() => Linking.openURL('https://github.com/fromiron/koto-okaimono-doko')}
-            />
-            <NavRow
               divider={false}
-              icon={<FileText color={colors.primary} size={iconSizes.xl} />}
-              label={t('settings.license')}
-              onPress={() => Linking.openURL('https://github.com/fromiron/koto-okaimono-doko/blob/main/apps/mobile/LICENSE')}
+              icon={<Github color={colors.primaryStrong} size={iconSizes.lg} />}
+              label={t('settings.github')}
+              onPress={() =>
+                Linking.openURL(
+                  'https://github.com/fromiron/koto-okaimono-doko',
+                )
+              }
+              role="link"
             />
           </SurfaceCard>
         </Section>
@@ -168,30 +194,35 @@ export default function SettingsScreen() {
             </Wrap>
           </SurfaceCard>
         </Section>
-
-        <Stack className="items-center pb-2" gap="sm">
-          <Row gap="sm">
-            <Heart color={colors.couponB} fill={colors.couponB} size={iconSizes.sm} />
-            <Text className="text-center" tone="muted">
-              {t('settings.footer')}
-            </Text>
-          </Row>
-          <Text tone="muted" variant="caption">
-            © 2026 koto okaimono doko
-          </Text>
-        </Stack>
       </Stack>
     </Screen>
   );
 }
 
-function formatTimestamp(value: string | null) {
-  return value ? value.replace('T', ' ').slice(0, 16) : '-';
+function formatTimestamp(value: string | null, locale: SupportedLocale) {
+  if (!value) return '-';
+  return new Date(value).toLocaleString(locale, {
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
 }
 
-function SettingRow({ divider = true, label, value }: { divider?: boolean; label: string; value: string }) {
+function SettingRow({
+  divider = true,
+  label,
+  value,
+}: {
+  divider?: boolean;
+  label: string;
+  value: string;
+}) {
   return (
-    <View className={`flex-row items-center justify-between gap-3 py-3 ${divider ? 'border-b border-line' : ''}`}>
+    <View
+      className={`flex-row items-center justify-between gap-3 py-3 ${divider ? 'border-b border-line' : ''}`}
+    >
       <Text className="min-w-0 flex-1 pr-2" tone="muted">
         {label}
       </Text>

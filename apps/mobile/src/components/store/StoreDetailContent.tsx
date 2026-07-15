@@ -1,12 +1,19 @@
 import { isAllowedOfficialDetailUrl, type Store } from '@koto/schema';
-import { Building2, ExternalLink, Footprints, MapPin, Navigation, Phone } from 'lucide-react-native';
-import { Linking, View } from 'react-native';
+import {
+  Building2,
+  ChevronRight,
+  ExternalLink,
+  Footprints,
+  MapPin,
+  Navigation,
+  Phone,
+} from 'lucide-react-native';
+import { Linking, Platform, Pressable, View } from 'react-native';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 
 import { StoreMarker } from '@/src/components/map/StoreMarker';
-import { ActionTile } from '@/src/components/ui/ActionTile';
 import { Button } from '@/src/components/ui/Button';
 import { InfoRow } from '@/src/components/ui/InfoRow';
 import { SurfaceCard } from '@/src/components/ui/SurfaceCard';
@@ -17,7 +24,6 @@ import { colors } from '@/src/theme/tokens';
 import { CouponBadge } from './CouponBadge';
 import { PaymentBadge } from './PaymentBadge';
 import { SourceDateNote } from './SourceDateNote';
-import { StoreAvatar } from './StoreAvatar';
 import {
   getAddressText,
   getCategoryText,
@@ -34,10 +40,12 @@ type StoreDetailContentProps = {
   sourceDate?: string | null;
   userLocation?: LatLng | null;
   mode?: Mode;
+  onSelectStore?: (id: string) => void;
 };
 
 export function StoreDetailContent({
   mode = 'sheet',
+  onSelectStore,
   sourceDate,
   stores,
   userLocation,
@@ -47,7 +55,14 @@ export function StoreDetailContent({
   }
 
   if (stores.length > 1) {
-    return <LocationGroupContent mode={mode} sourceDate={sourceDate} stores={stores} />;
+    return (
+      <LocationGroupContent
+        mode={mode}
+        onSelectStore={onSelectStore}
+        sourceDate={sourceDate}
+        stores={stores}
+      />
+    );
   }
 
   return (
@@ -75,13 +90,15 @@ function SingleStoreContent({
 
   return (
     <View className={mode === 'page' ? 'gap-5 pb-8' : 'gap-5 px-5 pb-8 pt-1'}>
-      <StoreHero store={store} />
+      <StoreSummary store={store} />
 
       <StoreQuickActions store={store} t={t} />
 
-      <SurfaceCard className="px-4" shadow={mode === 'page'}>
+      <View className="border-y border-line px-1">
         <InfoRow
-          icon={<MapPin color={colors.primary} fill={colors.primary} size={24} />}
+          icon={
+            <MapPin color={colors.primary} fill={colors.primary} size={24} />
+          }
           label={t('store.address')}
           value={getAddressText(store)}
         />
@@ -91,130 +108,147 @@ function SingleStoreContent({
           label={t('store.currentDistance')}
           value={getDistanceValueText(store, userLocation, t)}
         />
-      </SurfaceCard>
+      </View>
 
-      {mode === 'page' ? (
-        <MapPreview store={store} />
-      ) : sourceDate ? (
-        <SourceDateNote sourceDate={sourceDate} />
-      ) : null}
+      {mode === 'page' ? <MapPreview store={store} /> : null}
+      {sourceDate ? <SourceDateNote sourceDate={sourceDate} /> : null}
     </View>
   );
 }
 
 function LocationGroupContent({
   mode,
+  onSelectStore,
   sourceDate,
   stores,
 }: {
   stores: Store[];
   sourceDate?: string | null;
   mode: Mode;
+  onSelectStore?: (id: string) => void;
 }) {
   const { t } = useTranslation();
-  const title = getFacilityName(stores) ?? t('map.groupedStores', { count: stores.length });
+  const title =
+    getFacilityName(stores) ?? t('map.groupedStores', { count: stores.length });
   const first = stores[0];
 
   return (
     <View className={mode === 'page' ? 'gap-5 pb-8' : 'gap-4 px-5 pb-8 pt-1'}>
-      <View className="flex-row items-center gap-4 overflow-hidden rounded-card border border-line bg-neutral-soft px-4 py-5">
-        <View className="absolute -right-10 -top-12 h-32 w-32 rounded-full bg-surface/60" pointerEvents="none" />
-        <View className="h-24 w-24 items-center justify-center rounded-full border border-line bg-surface">
-          <Building2 color={colors.facility} size={36} />
+      <View className="border-b border-line pb-4">
+        <View className="mb-2 flex-row items-center gap-3">
+          <Building2 color={colors.facility} size={24} />
+          <Text
+            accessibilityRole="header"
+            className="min-w-0 flex-1"
+            variant="subtitle"
+          >
+            {title}
+          </Text>
         </View>
-        <View className="min-w-0 flex-1 gap-2">
-          <Text variant="subtitle">{title}</Text>
-          <View className="self-start rounded-full bg-facility px-3 py-1">
-            <Text className="text-white" variant="caption">
-              {t('store.facilityStoreCount', { count: stores.length })}
-            </Text>
-          </View>
-          <Text tone="muted">{getFacilityAddress(stores)}</Text>
-        </View>
+        <Text variant="label">
+          {t('store.facilityStoreCount', { count: stores.length })}
+        </Text>
+        <Text className="mt-1" tone="muted">
+          {getFacilityAddress(stores)}
+        </Text>
       </View>
 
-      <SurfaceCard className="px-4" shadow={mode === 'page'}>
+      <SurfaceCard className="px-4">
         {stores.map((store, index) => (
-          <View
-            className={`py-4 ${index < stores.length - 1 ? 'border-b border-line' : ''}`}
+          <Pressable
+            accessibilityLabel={`${store.name}, ${getCategoryText(store, t)}`}
+            accessibilityRole={onSelectStore ? 'button' : undefined}
+            className={`flex-row items-center gap-3 py-4 ${index < stores.length - 1 ? 'border-b border-line' : ''}`}
+            disabled={!onSelectStore}
             key={store.id}
+            onPress={() => onSelectStore?.(store.id)}
           >
-            <View className="mb-2 flex-row items-start justify-between gap-3">
-              <Text className="min-w-0 flex-1" variant="label">
-                {store.name}
+            <View className="min-w-0 flex-1 gap-1">
+              <Text variant="label">{store.name}</Text>
+              <Text tone="muted">
+                {[store.floor, getCategoryText(store, t)]
+                  .filter(Boolean)
+                  .join(' / ')}
               </Text>
-              <CouponBadge couponType={store.couponType} />
             </View>
-            <Text tone="muted">
-              {[store.floor, getCategoryText(store, t)].filter(Boolean).join(' / ')}
-            </Text>
-          </View>
+            <CouponBadge couponType={store.couponType} />
+            {onSelectStore ? (
+              <ChevronRight color={colors.muted} size={20} />
+            ) : null}
+          </Pressable>
         ))}
       </SurfaceCard>
 
       {first ? (
-        <Button leftIcon={<Navigation color="#ffffff" size={20} />} onPress={() => openDirections(first)} size="lg">
+        <Button
+          leftIcon={<Navigation color="#ffffff" size={20} />}
+          onPress={() => openDirections(first)}
+          size="lg"
+        >
           {t('store.routeToFacility')}
         </Button>
       ) : null}
 
-      {sourceDate && mode === 'sheet' ? <SourceDateNote sourceDate={sourceDate} /> : null}
-
       {mode === 'page' && first ? <MapPreview store={first} /> : null}
+      {sourceDate ? <SourceDateNote sourceDate={sourceDate} /> : null}
     </View>
   );
 }
 
-/** Tinted place-card banner: monogram, name, coupon + payment badges, category. */
-function StoreHero({ store }: { store: Store }) {
+function StoreSummary({ store }: { store: Store }) {
   const { t } = useTranslation();
 
   return (
-    <View className="items-center gap-3 overflow-hidden rounded-card border border-line bg-primary-soft px-5 py-6">
-      {/* Quiet oversized washes give the flat tint card a sense of depth. */}
-      <View className="absolute -right-10 -top-12 h-36 w-36 rounded-full bg-primary/10" pointerEvents="none" />
-      <View className="absolute -bottom-14 -left-12 h-32 w-32 rounded-full bg-surface/60" pointerEvents="none" />
-      <StoreAvatar name={store.name} size={80} />
-      <Text className="text-center" variant="subtitle">
+    <View className="gap-2 border-b border-line pb-4">
+      <Text accessibilityRole="header" variant="title">
         {store.name}
       </Text>
+      <Text tone="muted">{getCategoryText(store, t)}</Text>
       <BadgeRow store={store} />
-      <Text className="text-center" tone="muted">
-        {getCategoryText(store, t)}
-      </Text>
     </View>
   );
 }
 
-/** Route / call / official as an even row of icon tiles. */
 function StoreQuickActions({ store, t }: { store: Store; t: TFunction }) {
   const officialDetailUrl =
-    store.officialDetailUrl && isAllowedOfficialDetailUrl(store.officialDetailUrl)
+    store.officialDetailUrl &&
+    isAllowedOfficialDetailUrl(store.officialDetailUrl)
       ? store.officialDetailUrl
       : null;
   const phone = store.phone ? store.phone.replace(/[^0-9+]/g, '') : null;
 
   return (
-    <View className="flex-row gap-3">
-      <ActionTile
-        icon={<Navigation color={colors.surface} size={22} />}
-        label={t('store.directions')}
+    <View className="gap-3">
+      <Button
+        leftIcon={<Navigation color={colors.surface} size={20} />}
         onPress={() => openDirections(store)}
-        variant="primary"
-      />
-      {phone ? (
-        <ActionTile
-          icon={<Phone color={colors.primary} size={22} />}
-          label={t('store.phone')}
-          onPress={() => Linking.openURL(`tel:${phone}`)}
-        />
-      ) : null}
-      {officialDetailUrl ? (
-        <ActionTile
-          icon={<ExternalLink color={colors.primary} size={22} />}
-          label={t('store.officialPage')}
-          onPress={() => Linking.openURL(officialDetailUrl)}
-        />
+        size="lg"
+      >
+        {t('store.directions')}
+      </Button>
+      {phone || officialDetailUrl ? (
+        <View className="flex-row gap-3">
+          {phone ? (
+            <Button
+              className="flex-1"
+              leftIcon={<Phone color={colors.primaryStrong} size={20} />}
+              onPress={() => Linking.openURL(`tel:${phone}`)}
+              variant="secondary"
+            >
+              {t('store.phone')}
+            </Button>
+          ) : null}
+          {officialDetailUrl ? (
+            <Button
+              className="flex-1"
+              leftIcon={<ExternalLink color={colors.primaryStrong} size={20} />}
+              onPress={() => Linking.openURL(officialDetailUrl)}
+              variant="secondary"
+            >
+              {t('store.officialPage')}
+            </Button>
+          ) : null}
+        </View>
       ) : null}
     </View>
   );
@@ -224,10 +258,12 @@ function BadgeRow({ store }: { store: Store }) {
   const { t } = useTranslation();
 
   return (
-    <View className="flex-row flex-wrap items-center justify-center gap-2">
+    <View className="flex-row flex-wrap items-center gap-2">
       <CouponBadge couponType={store.couponType} />
       {store.acceptsPaper ? <PaymentBadge label={t('filters.paper')} /> : null}
-      {store.acceptsDigital ? <PaymentBadge label={t('filters.digital')} /> : null}
+      {store.acceptsDigital ? (
+        <PaymentBadge label={t('filters.digital')} />
+      ) : null}
     </View>
   );
 }
@@ -241,7 +277,11 @@ function MapPreview({ store }: { store: Store }) {
 
   return (
     <View className="gap-2">
-      <View className="h-56 overflow-hidden rounded-card border border-line">
+      <View
+        accessibilityElementsHidden
+        className="h-56 overflow-hidden rounded-card border border-line"
+        importantForAccessibility="no-hide-descendants"
+      >
         <MapView
           initialRegion={{
             latitude: store.lat,
@@ -249,14 +289,21 @@ function MapPreview({ store }: { store: Store }) {
             longitude: store.lng,
             longitudeDelta: 0.012,
           }}
-          provider={PROVIDER_GOOGLE}
+          provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+          pointerEvents="none"
           scrollEnabled={false}
           showsCompass={false}
           showsMyLocationButton={false}
           style={{ flex: 1 }}
           zoomEnabled={false}
         >
-          <StoreMarker id={`preview-${store.id}`} lat={store.lat} lng={store.lng} onPress={() => {}} stores={[store]} />
+          <StoreMarker
+            id={`preview-${store.id}`}
+            lat={store.lat}
+            lng={store.lng}
+            onPress={() => {}}
+            stores={[store]}
+          />
         </MapView>
       </View>
       <Text variant="caption" tone="muted">
