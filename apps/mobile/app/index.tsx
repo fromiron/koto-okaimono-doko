@@ -42,7 +42,7 @@ export default function MapScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const reduceMotion = useReducedMotion();
-  const { width: screenWidth } = useWindowDimensions();
+  const { height: screenHeight, width: screenWidth } = useWindowDimensions();
   const mapRef = useRef<MapView | null>(null);
   const repository = useStoreRepository();
   const region = useMapStore((state) => state.region);
@@ -173,6 +173,10 @@ export default function MapScreen() {
     filters.payment !== 'all' ||
     filters.categoryMajorId !== null ||
     filters.radiusMeters !== 'all';
+  const locationButtonBottom =
+    searching || visibleStoreCount === 0
+      ? screenHeight * 0.58 + 12
+      : SHEET_PEEK_HEIGHT + insets.bottom + 12;
 
   const handleRegionChange = useCallback(
     (nextRegion: typeof region) => {
@@ -313,13 +317,11 @@ export default function MapScreen() {
         </View>
       </View>
 
-      {selectedStoreIds.length === 0 &&
-      viewMode === 'map' &&
-      !searching &&
-      visibleStoreCount > 0 ? (
+      {selectedStoreIds.length === 0 && viewMode === 'map' ? (
         <View
           style={{
-            bottom: SHEET_PEEK_HEIGHT + insets.bottom + 12,
+            bottom: locationButtonBottom,
+            elevation: 18,
             position: 'absolute',
             right: 20,
             zIndex: 18,

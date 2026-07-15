@@ -85,7 +85,10 @@ export const resources: Record<
         meters2000: '2km',
         applyConditions: 'この条件で表示',
         resetConditions: '条件をリセット',
-        radiusNeedsLocation: '現在地を取得すると、距離で絞り込めます。',
+        radiusNeedsLocation:
+          '距離を選ぶと、現在地を取得して周辺の店舗を絞り込みます。',
+        radiusLocationDisabled:
+          '距離で絞り込むには、設定で位置情報をオンにしてください。',
       },
       store: {
         detailTitle: '店舗詳細',
@@ -243,7 +246,10 @@ export const resources: Record<
         meters2000: '2 km',
         applyConditions: 'Show these results',
         resetConditions: 'Reset filters',
-        radiusNeedsLocation: 'Get your current location to filter by distance.',
+        radiusNeedsLocation:
+          'Choose a distance to get your current location and filter nearby stores.',
+        radiusLocationDisabled:
+          'Turn on location in Settings to filter by distance.',
       },
       store: {
         detailTitle: 'Store details',
@@ -405,7 +411,9 @@ export const resources: Record<
         applyConditions: '이 조건으로 표시',
         resetConditions: '조건 초기화',
         radiusNeedsLocation:
-          '현재 위치를 가져오면 거리로 필터링할 수 있습니다.',
+          '거리를 선택하면 현재 위치를 가져와 주변 매장을 필터링합니다.',
+        radiusLocationDisabled:
+          '거리로 필터링하려면 설정에서 위치정보를 켜 주세요.',
       },
       store: {
         detailTitle: '가맹점 상세',
@@ -563,7 +571,8 @@ export const resources: Record<
         meters2000: '2公里',
         applyConditions: '按此条件显示',
         resetConditions: '重置条件',
-        radiusNeedsLocation: '获取当前位置后即可按距离筛选。',
+        radiusNeedsLocation: '选择距离后，将获取当前位置并筛选附近店铺。',
+        radiusLocationDisabled: '要按距离筛选，请在设置中开启定位。',
       },
       store: {
         detailTitle: '店铺详情',
@@ -713,7 +722,8 @@ export const resources: Record<
         meters2000: '2公里',
         applyConditions: '按此條件顯示',
         resetConditions: '重設條件',
-        radiusNeedsLocation: '取得目前位置後即可依距離篩選。',
+        radiusNeedsLocation: '選擇距離後，將取得目前位置並篩選附近店鋪。',
+        radiusLocationDisabled: '若要依距離篩選，請在設定中開啟定位。',
       },
       store: {
         detailTitle: '店鋪詳情',
