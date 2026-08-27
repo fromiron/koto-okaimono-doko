@@ -1,149 +1,125 @@
-<div align="center">
+<p align="center">
+  <strong>English</strong> ·
+  <a href="README.ja.md">日本語</a> ·
+  <a href="README.ko.md">한국어</a> ·
+  <a href="README.zh-Hans.md">简体中文</a> ·
+  <a href="README.zh-Hant.md">繁體中文</a>
+</p>
 
-<img src="assets/brand/main.png" alt="こうとうお買い物どこ — 2026年 江東区 プレミアム付商品券 対応店舗マップ" width="420" />
+<p align="center">
+  <img src="assets/readme-hero.webp" alt="Illustrated riverside neighborhood with shops and map pins" width="100%" />
+</p>
 
-# こうとうお買い物どこ
+<h1 align="center">Koto Okaimono Doko</h1>
 
-**Koto Okaimono Doko** — unofficial, offline-first map app for finding stores that
-accept the 2026 Koto City premium shopping coupon
-(`こうとう商店街DEお買い物券＋2026`).
+<p align="center">
+  An unofficial map app for finding stores that accept<br />
+  <strong>こうとう商店街DEお買い物券＋2026</strong>
+</p>
 
-Unofficial · Open Source · JA / EN / 한국어 / 简体 / 繁體
+<p align="center">
+  <a href="https://github.com/fromiron/koto-okaimono-doko/actions/workflows/mobile-ci.yml"><img src="https://github.com/fromiron/koto-okaimono-doko/actions/workflows/mobile-ci.yml/badge.svg" alt="Mobile CI" /></a>
+  <a href="https://github.com/fromiron/koto-okaimono-doko/releases/latest"><img src="https://img.shields.io/github/v/release/fromiron/koto-okaimono-doko?label=release" alt="Latest release" /></a>
+</p>
 
-</div>
+<p align="center">
+  <strong><a href="https://github.com/fromiron/koto-okaimono-doko/releases/latest">Get the latest Android APK →</a></strong>
+</p>
 
-> [!NOTE]
-> This is an unofficial service and is not affiliated with any municipality or
-> company. Always confirm the latest information on the official site or with each store.
+> [!IMPORTANT]
+> This is an independent, unofficial project. It is not affiliated with Koto City or any participating company. Always confirm current coupon terms and store availability on the [official website](https://koto-okaimono-premium.jp/) or with the store.
 
-## Features
+## Download
 
-- **Map-first browsing** — edge-to-edge native map with circular coupon pins:
-  `A・B` (both coupons), `B` (B-only), and gray facility pins for stores that
-  share the same coordinates.
-- **Search & filters** — global store name / address search, inline coupon-type
-  chips, and a full filter sheet (coupon type, payment medium, category,
-  distance radius).
-- **Store details** — bottom sheet on the map plus a full detail view (address,
-  phone, walking distance, directions, official page, mini map).
-- **Offline-first** — works on first launch from the bundled `seed.sqlite`;
-  updates arrive as a `manifest.json` plus a raw `stores.sqlite` download.
-- **Multilingual UI** — `ja`, `en`, `ko`, `zh-Hans`, `zh-Hant`. Official store
-  names, addresses, and facility names stay in their Japanese source text.
-- **Private by design** — location is foreground-only, session-memory-only, and
-  never uploaded or persisted.
+| Platform | Availability                                                                                                             |
+| -------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Android  | The [latest GitHub Release](https://github.com/fromiron/koto-okaimono-doko/releases/latest) includes an `arm64-v8a` APK. |
+| iOS      | Build from source on macOS. No public iOS binary is published.                                                           |
 
-## Tech Stack
+## What you can do
 
-- **App**: Expo (~56) + Expo Router, React Native 0.85, TypeScript (strict).
-- **Styling**: Uniwind (Tailwind v4) driven by design tokens
-  (`apps/mobile/src/theme/tokens.ts` + `apps/mobile/src/global.css`).
-- **State**: Zustand for UI/app state only (the full store list lives in SQLite).
-- **Data**: `expo-sqlite` for store data, AsyncStorage for small preferences.
-- **Map**: `react-native-maps` — Google Maps on Android, Apple Maps on iOS.
-- **i18n**: `i18next` / `react-i18next`. Validation with `zod`.
+- **Browse by map or list** — pins distinguish stores that accept both `A・B` coupons, `B`-only stores, and facilities containing multiple stores.
+- **Search the complete Store Dataset** — find matches by store name, address, facility name, or shopping street, not only inside the visible map area.
+- **Filter for the right store** — narrow results by coupon type, payment medium (paper or digital), official category, and straight-line distance radius.
+- **Open useful details** — view the Japanese source address, optional phone and official-page links, approximate straight-line distance, and directions in the platform map app.
+- **Use essential store data offline** — the initial Store Dataset is bundled with the app, so search and details do not require an initial download. Map tiles may still need a network connection.
+- **Choose from five UI languages** — Japanese, English, Korean, Simplified Chinese, and Traditional Chinese. Official store names, addresses, and facility names stay in Japanese.
 
-## Monorepo Layout
+## Data and privacy
 
-pnpm workspaces (`apps/*`, `packages/*`):
-
-| Path | Package | Role |
-|---|---|---|
-| `apps/mobile` | `@koto/mobile` | Expo app (screens, UI, map, dataset runtime). |
-| `packages/core` | `@koto/core` | Shared domain helpers (categories, distance, geo). |
-| `packages/schema` | `@koto/schema` | `Store` schema, supported locales, shared types. |
-| `packages/dataset-cli` | `@koto/dataset-cli` | Build the dataset from official sources. |
-
-See `CONTEXT.md` for the canonical product glossary.
-
-## Design
-
-The visual identity (「まちかどマルシェ」 — vermillion `#EA5F3F`, marigold
-`#F5A31C`, matcha teal `#3D9E83` on cream washi `#FBF6EF`) is derived 1:1 from
-the brand artwork in [`assets/brand/`](assets/brand/):
-
-| File | Role |
-|---|---|
-| `assets/brand/main.png` | Key visual / poster — source of the splash screen and this README's hero. |
-| `assets/brand/appicon.png` | App icon base artwork — source of `apps/mobile/assets/icon.png` and the adaptive/splash icons. |
-
-The app re-skins from two token files kept in sync by tests
-(`tokenParity.test.ts`, `spacing.test.ts`, `styleGuard.test.ts`):
-`apps/mobile/src/theme/tokens.ts` (JS constants) and
-`apps/mobile/src/global.css` (Tailwind `@theme` variables). Runtime
-illustrations live in [`assets/`](assets/) (see its README).
+- Store data is built from the program's [Official Source](https://koto-okaimono-premium.jp/). The app shows the source date in Settings; the official website and each store remain authoritative.
+- A complete Seed Dataset ships as `seed.sqlite`. When a Dataset Manifest URL is configured, Settings can check for and apply a verified `stores.sqlite` update.
+- Location access is optional and foreground-only. Coordinates are held in session memory for the current-position display, nearby search, and distance calculation; they are not uploaded or persisted. Only the location on/off preference is stored.
+- Distances shown by the app are approximate straight-line distances, not walking-route distances.
 
 ## Development
 
+This repository is a pnpm workspace for an Expo Router app and its shared packages.
+
 ```bash
 pnpm install
-pnpm dataset:build   # build the dataset (see "Dataset Pipeline")
 pnpm typecheck
 pnpm lint
 pnpm test
 pnpm mobile:start
 ```
 
-Use Expo Go only for layout, navigation, and local data smoke checks. Validate the
-Android map in a development or production build created with `GOOGLE_MAPS_API_KEY`,
-because the app's native Google Maps configuration is applied at build time.
+Expo Go is suitable for layout, navigation, and bundled-data smoke checks. Validate the Android map in a native development or release build because the Google Maps key is applied at build time.
 
-Create local mobile environment settings from the example before native Android map checks:
+### Native maps
+
+For Android, copy `apps/mobile/.env.example` to `apps/mobile/.env.local`, set `GOOGLE_MAPS_API_KEY`, then run:
 
 ```bash
-cp apps/mobile/.env.example apps/mobile/.env.local
-$EDITOR apps/mobile/.env.local
 pnpm --dir apps/mobile exec expo run:android
 ```
 
-## Dataset Pipeline
-
-The dataset is generated in CI (never on device) from the Official Source. Individual
-stages are available as scripts and `dataset:build` runs the full pipeline:
+For iOS, use macOS with Xcode. Apple Maps is the default provider, so no Google Maps key is required:
 
 ```bash
-pnpm dataset:fetch            # download official HTML/PDF sources
-pnpm dataset:parse            # parse raw sources into structured records
-pnpm dataset:normalize        # normalize addresses and fields
-pnpm dataset:validate         # validate against the schema
-pnpm dataset:build-sqlite     # build stores.sqlite
-pnpm dataset:export-manifest  # write manifest.json
-pnpm dataset:build            # run the whole pipeline
-pnpm dataset:test             # dataset-cli unit tests
+pnpm mobile:ios
 ```
 
-Coordinates are produced during the build via address normalization, geocoding, and
-manual correction CSVs. PDFs are never parsed on device.
+## Dataset pipeline
 
-## Environment Variables
-
-| Variable | Where | Purpose |
-|---|---|---|
-| `GOOGLE_MAPS_API_KEY` | `apps/mobile/.env.local` | Android Google Maps key, applied at native build time. |
-| `EXPO_PUBLIC_DATASET_MANIFEST_URL` | mobile (public in JS bundle) | Optional runtime dataset manifest URL. |
-| `DATASET_BASE_URL` | dataset CLI | Base URL for manifest asset links. |
-
-iOS uses Apple Maps by default and needs no map key.
-
-## Privacy
-
-User location is foreground-only, held in session memory only, and never uploaded or
-persisted. It is used solely to search for nearby stores.
-
-## CI Local Check
-
-Run GitHub Actions locally before pushing workflow changes:
+Dataset generation runs outside the app. It downloads the Official Source, normalizes and validates Store records, then writes the SQLite Dataset and manifest used by the mobile app.
 
 ```bash
-act -W .github/workflows/mobile-ci.yml -j quality
+pnpm dataset:build
+pnpm dataset:test
 ```
 
-The dataset workflow can be smoke-checked with:
+The build requires network access and Poppler. PDFs are never parsed on the device.
+
+## Project layout
+
+| Path                   | Role                                              |
+| ---------------------- | ------------------------------------------------- |
+| `apps/mobile`          | Expo app, screens, map, and Dataset runtime       |
+| `packages/core`        | Shared category, distance, and geographic helpers |
+| `packages/schema`      | Store schema, supported locales, and shared types |
+| `packages/dataset-cli` | Official-source ingestion and Dataset build       |
+| `data/corrections`     | Reviewed manual geocode corrections               |
+
+See [`CONTEXT.md`](CONTEXT.md) for the canonical product glossary.
+
+## Environment variables
+
+| Variable                           | Used by             | Purpose                                              |
+| ---------------------------------- | ------------------- | ---------------------------------------------------- |
+| `GOOGLE_MAPS_API_KEY`              | Mobile native build | Android Google Maps key, applied at build time       |
+| `EXPO_PUBLIC_DATASET_MANIFEST_URL` | Mobile app          | Public URL for optional Dataset update checks        |
+| `DATASET_BASE_URL`                 | Dataset CLI         | Base URL written into generated manifest asset links |
+
+## Checks and feedback
+
+Before opening a pull request, run:
 
 ```bash
-act -W .github/workflows/build-dataset.yml -j build-dataset
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm --dir apps/mobile exec expo install --check
 ```
 
-Pages deployment is intended for GitHub-hosted CI, not local `act`.
-Artifact upload and Pages upload are skipped under `act` because local runs do not
-provide GitHub's artifact runtime token.
+When changing GitHub Actions, also run the affected workflow with the repository's `act` configuration. Report app bugs or data corrections in [GitHub Issues](https://github.com/fromiron/koto-okaimono-doko/issues).
