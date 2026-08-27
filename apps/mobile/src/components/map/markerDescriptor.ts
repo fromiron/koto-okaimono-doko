@@ -4,7 +4,7 @@ import { colors } from '../../theme/tokens';
 
 export type StoreMarkerDescriptor = {
   kind: 'ab' | 'b_only' | 'facility';
-  label: 'A・B' | 'B' | 'M';
+  label: string;
   color: string;
 };
 
@@ -12,7 +12,11 @@ export function getStoreMarkerDescriptor(
   stores: Array<Pick<Store, 'couponType'>>,
 ): StoreMarkerDescriptor {
   if (stores.length > 1) {
-    return { color: colors.facility, kind: 'facility', label: 'M' };
+    return {
+      color: colors.facility,
+      kind: 'facility',
+      label: String(stores.length),
+    };
   }
 
   const store = stores[0];

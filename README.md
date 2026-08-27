@@ -18,7 +18,7 @@ Unofficial · Open Source · JA / EN / 한국어 / 简体 / 繁體
 
 ## Features
 
-- **Map-first browsing** — edge-to-edge native map with teardrop coupon pins:
+- **Map-first browsing** — edge-to-edge native map with circular coupon pins:
   `A・B` (both coupons), `B` (B-only), and gray facility pins for stores that
   share the same coordinates.
 - **Search & filters** — global store name / address search, inline coupon-type

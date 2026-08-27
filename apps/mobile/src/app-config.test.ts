@@ -18,6 +18,9 @@ describe('Expo app config', () => {
 
     expect(config.orientation).toBe('default');
     expect(config.userInterfaceStyle).toBe('light');
+    expect(config.version).toBe('1.0.4');
+    expect(config.ios?.buildNumber).toBe('4');
+    expect(config.android?.versionCode).toBe(4);
     expect(config.locales).toEqual({
       en: './locales/en.json',
       ja: './locales/ja.json',
