@@ -12,7 +12,12 @@ import {
   SearchX,
 } from 'lucide-react-native';
 import { useEffect, useMemo, useRef } from 'react';
-import { Pressable, useWindowDimensions, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
@@ -25,10 +30,14 @@ import type { LatLng } from '@/src/features/map/mapStore';
 import { bottomSheetShadow, colors, radii } from '@/src/theme/tokens';
 
 import { StoreDetailContent } from './StoreDetailContent';
+import {
+  SHEET_FULL_RATIO,
+  SHEET_MID_RATIO,
+  SHEET_PEEK_HEIGHT,
+} from './sheetLayout';
 import { getCategoryText, getDistanceValueText } from './storeDisplay';
 
-/** Visible height of the collapsed peek (excluding the bottom safe-area inset). */
-export const SHEET_PEEK_HEIGHT = 208;
+export { SHEET_PEEK_HEIGHT };
 
 export type MapViewMode = 'map' | 'list';
 
@@ -47,6 +56,8 @@ type StoreBottomSheetProps = {
   onResetFilters: () => void;
   onRetryQuery: () => void;
   queryFailed?: boolean;
+  queryLoading?: boolean;
+  onSheetIndexChange?: (index: number) => void;
 };
 
 export function StoreBottomSheet({
@@ -55,7 +66,9 @@ export function StoreBottomSheet({
   onResetFilters,
   onRetryQuery,
   onSelectStore,
+  onSheetIndexChange,
   queryFailed = false,
+  queryLoading = false,
   searching = false,
   sourceDate,
   stores,
@@ -68,11 +81,16 @@ export function StoreBottomSheet({
   const { t } = useTranslation();
   const sheetRef = useRef<BottomSheet>(null);
   const snapPoints = useMemo(
-    () => [SHEET_PEEK_HEIGHT + insets.bottom, '58%', '92%'],
+    () => [
+      SHEET_PEEK_HEIGHT + insets.bottom,
+      `${SHEET_MID_RATIO * 100}%`,
+      `${SHEET_FULL_RATIO * 100}%`,
+    ],
     [insets.bottom],
   );
   const hasSelection = stores.length > 0;
-  const hasEmptyState = !hasSelection && visibleStoreCount === 0;
+  const hasEmptyState =
+    !hasSelection && visibleStoreCount === 0 && !queryLoading;
   // The 地図/リスト toggle just controls how far the sheet opens; the browse
   // surface is always the same vertical list, so it scans cleanly at any size.
   const expandList =
@@ -80,15 +98,8 @@ export function StoreBottomSheet({
 
   // Search results open to half height (map + list both visible); tapping a
   // result then shows that store's detail at the same height.
-  const targetIndex = hasSelection
-    ? 1
-    : hasEmptyState
-      ? 1
-      : expandList
-        ? 2
-        : searching
-          ? 1
-          : 0;
+  const targetIndex =
+    hasSelection || hasEmptyState ? 1 : expandList ? 2 : searching ? 1 : 0;
   useEffect(() => {
     sheetRef.current?.snapToIndex(targetIndex);
   }, [targetIndex]);
@@ -115,6 +126,8 @@ export function StoreBottomSheet({
       count={visibleStoreCount}
       hasLocation={!!userLocation}
       onChangeViewMode={onChangeViewMode}
+      queryFailed={queryFailed}
+      queryLoading={queryLoading}
       searching={searching}
       t={t}
       viewMode={viewMode}
@@ -135,6 +148,8 @@ export function StoreBottomSheet({
       enableDynamicSizing={false}
       handleComponent={SheetHandle}
       index={targetIndex}
+      onAnimate={(_fromIndex, toIndex) => onSheetIndexChange?.(toIndex)}
+      onChange={onSheetIndexChange}
       snapPoints={snapPoints}
       style={bottomSheetShadow}
     >
@@ -172,6 +187,26 @@ export function StoreBottomSheet({
             />
           </BottomSheetScrollView>
         </>
+      ) : queryLoading && visibleStoreCount === 0 ? (
+        <BottomSheetScrollView
+          contentContainerStyle={{
+            paddingBottom: insets.bottom,
+            paddingLeft: insets.left,
+            paddingRight: insets.right,
+          }}
+          showsVerticalScrollIndicator={false}
+        >
+          {header}
+          <View
+            accessibilityLabel={t('common.loading')}
+            accessibilityLiveRegion="polite"
+            accessibilityRole="progressbar"
+            accessibilityState={{ busy: true }}
+            className="items-center gap-3 px-6 pb-8 pt-2"
+          >
+            <ActivityIndicator color={colors.primary} />
+          </View>
+        </BottomSheetScrollView>
       ) : visibleStoreCount === 0 ? (
         <BottomSheetScrollView
           contentContainerStyle={{
@@ -230,6 +265,7 @@ export function StoreBottomSheet({
               style={{ height: 1, marginHorizontal: 20 }}
             />
           )}
+          keyboardShouldPersistTaps="handled"
           keyExtractor={(store) => store.id}
           renderItem={({ item }) => (
             <StoreListRow
@@ -251,6 +287,8 @@ function NearbyHeader({
   count,
   hasLocation,
   onChangeViewMode,
+  queryFailed,
+  queryLoading,
   searching,
   t,
   viewMode,
@@ -258,6 +296,8 @@ function NearbyHeader({
   abCount: number;
   count: number;
   hasLocation: boolean;
+  queryFailed: boolean;
+  queryLoading: boolean;
   searching: boolean;
   viewMode: MapViewMode;
   onChangeViewMode: (mode: MapViewMode) => void;
@@ -268,12 +308,13 @@ function NearbyHeader({
   const bCount = Math.max(count - abCount, 0);
 
   return (
-    <View className="gap-3 px-5 pb-3 pt-1">
+    <View
+      accessibilityState={{ busy: queryLoading }}
+      className="gap-3 px-5 pb-3 pt-1"
+    >
       <View
         className={
-          stackHeader
-            ? 'gap-3'
-            : 'flex-row items-center justify-between gap-3'
+          stackHeader ? 'gap-3' : 'flex-row items-center justify-between gap-3'
         }
       >
         <View className="min-w-0 flex-1">
@@ -284,9 +325,30 @@ function NearbyHeader({
                 ? t('map.nearby')
                 : t('map.inThisArea')}
           </Text>
-          <Text accessibilityLiveRegion="polite" tabularNums variant="title">
-            {t('map.visibleStores', { count })}
-          </Text>
+          <View className="flex-row items-center gap-2">
+            <Text accessibilityLiveRegion="polite" tabularNums variant="title">
+              {queryLoading && count === 0
+                ? t('common.loading')
+                : t('map.visibleStores', { count })}
+            </Text>
+            {queryLoading && count > 0 ? (
+              <ActivityIndicator
+                accessibilityLabel={t('common.loading')}
+                accessibilityRole="progressbar"
+                color={colors.primary}
+                size="small"
+              />
+            ) : null}
+          </View>
+          {queryFailed && count > 0 ? (
+            <Text
+              accessibilityLiveRegion="assertive"
+              tone="danger"
+              variant="caption"
+            >
+              {t('map.dataErrorTitle')}
+            </Text>
+          ) : null}
         </View>
         <View className={stackHeader ? 'self-start' : ''}>
           <SegmentedToggle
@@ -325,10 +387,7 @@ function NearbyHeader({
   );
 }
 
-function SheetBackground({
-  pointerEvents,
-  style,
-}: BottomSheetBackgroundProps) {
+function SheetBackground({ pointerEvents, style }: BottomSheetBackgroundProps) {
   return (
     <View
       accessible={false}

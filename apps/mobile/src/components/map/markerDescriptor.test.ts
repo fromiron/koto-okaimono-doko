@@ -8,13 +8,20 @@ describe('getStoreMarkerDescriptor', () => {
   });
 
   it('labels B-only coupon stores with B', () => {
-    expect(getStoreMarkerDescriptor([{ couponType: 'b_only' }]).label).toBe('B');
+    expect(getStoreMarkerDescriptor([{ couponType: 'b_only' }]).label).toBe(
+      'B',
+    );
   });
 
-  it('labels same-coordinate Location Groups with M', () => {
-    expect(getStoreMarkerDescriptor([{ couponType: 'ab' }, { couponType: 'b_only' }])).toMatchObject({
+  it('labels same-coordinate Location Groups with the store count', () => {
+    expect(
+      getStoreMarkerDescriptor([
+        { couponType: 'ab' },
+        { couponType: 'b_only' },
+      ]),
+    ).toMatchObject({
       kind: 'facility',
-      label: 'M',
+      label: '2',
     });
   });
 });

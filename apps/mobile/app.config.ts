@@ -30,7 +30,7 @@ plugins.push([
 const config: ExpoConfig = {
   name: 'こうとうお買い物どこ',
   slug: 'koto-okaimono-doko',
-  version: '1.0.0',
+  version: '1.0.4',
   platforms: ['ios', 'android'],
   orientation: 'default',
   icon: './assets/icon.png',
@@ -44,6 +44,7 @@ const config: ExpoConfig = {
     'zh-Hant': './locales/zh-Hant.json',
   },
   ios: {
+    buildNumber: '4',
     supportsTablet: true,
     bundleIdentifier: 'app.koto.okaimono.doko',
     infoPlist: {
@@ -53,6 +54,7 @@ const config: ExpoConfig = {
     },
   },
   android: {
+    versionCode: 4,
     package: 'app.koto.okaimono.doko',
     adaptiveIcon: {
       backgroundColor: '#FBF6EF',

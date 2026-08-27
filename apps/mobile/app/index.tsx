@@ -2,7 +2,7 @@ import { boundsFromRegion } from '@koto/core';
 import { Filter, Settings } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useWindowDimensions, View } from 'react-native';
+import { Keyboard, useWindowDimensions, View } from 'react-native';
 import type MapView from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -18,10 +18,13 @@ import {
 } from '@/src/components/map/StoreMap';
 import { UserLocationButton } from '@/src/components/map/UserLocationButton';
 import {
-  SHEET_PEEK_HEIGHT,
   StoreBottomSheet,
   type MapViewMode,
 } from '@/src/components/store/StoreBottomSheet';
+import {
+  getMapCameraLatitude,
+  getSheetHeightAtIndex,
+} from '@/src/components/store/sheetLayout';
 import { Chip } from '@/src/components/ui/Chip';
 import { IconButton } from '@/src/components/ui/IconButton';
 import { SearchInput } from '@/src/components/ui/SearchInput';
@@ -30,12 +33,17 @@ import { useDatasetUpdate } from '@/src/features/dataset/useDatasetUpdate';
 import { useStoreRepository } from '@/src/features/db/useStoreRepository';
 import { filterGroupsByRadius } from '@/src/features/filters/filterByRadius';
 import { useFilterStore } from '@/src/features/filters/filterStore';
-import { KOTO_INITIAL_REGION, useMapStore } from '@/src/features/map/mapStore';
+import {
+  KOTO_INITIAL_REGION,
+  type MapRegion,
+  useMapStore,
+} from '@/src/features/map/mapStore';
 import { usePreferencesStore } from '@/src/features/preferences/preferencesStore';
 import { useSelectedStoreStore } from '@/src/features/selected-store/selectedStoreStore';
 import { colors, space } from '@/src/theme/tokens';
 
 const QUERY_LIMIT = 2_000;
+type QueryStatus = 'loading' | 'success' | 'error';
 
 export default function MapScreen() {
   const { t } = useTranslation();
@@ -44,6 +52,7 @@ export default function MapScreen() {
   const reduceMotion = useReducedMotion();
   const { height: screenHeight, width: screenWidth } = useWindowDimensions();
   const mapRef = useRef<MapView | null>(null);
+  const pendingCameraRef = useRef<MapRegion | null>(null);
   const repository = useStoreRepository();
   const region = useMapStore((state) => state.region);
   const setRegion = useMapStore((state) => state.setRegion);
@@ -63,8 +72,26 @@ export default function MapScreen() {
   const { checkUpdate } = useDatasetUpdate();
   const [groups, setGroups] = useState<StoreLocationGroup[]>([]);
   const [queryAttempt, setQueryAttempt] = useState(0);
-  const [queryFailed, setQueryFailed] = useState(false);
+  const [queryStatus, setQueryStatus] = useState<QueryStatus>('loading');
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [viewMode, setViewMode] = useState<MapViewMode>('map');
+  const [sheetIndex, setSheetIndex] = useState(0);
+  const estimatedDeckHeight =
+    Math.max(insets.top, space.lg) + 56 + space.md + 44;
+  const [deckHeight, setDeckHeight] = useState(estimatedDeckHeight);
+
+  useEffect(() => {
+    const show = Keyboard.addListener('keyboardDidShow', () =>
+      setKeyboardVisible(true),
+    );
+    const hide = Keyboard.addListener('keyboardDidHide', () =>
+      setKeyboardVisible(false),
+    );
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
 
   const visibleGroups = useMemo(
     () =>
@@ -76,9 +103,20 @@ export default function MapScreen() {
     [groups, locationEnabled, userLocation, filters.radiusMeters],
   );
 
+  const pinnedGroupIds = useMemo(() => {
+    if (selectedStoreIds.length === 0) return undefined;
+    const selected = new Set(selectedStoreIds);
+    return new Set(
+      visibleGroups
+        .filter((group) => group.stores.some((store) => selected.has(store.id)))
+        .map((group) => group.id),
+    );
+  }, [visibleGroups, selectedStoreIds]);
+
   const clusters = useMemo(
-    () => clusterByGrid(visibleGroups, region.longitudeDelta),
-    [visibleGroups, region.longitudeDelta],
+    () =>
+      clusterByGrid(visibleGroups, region.longitudeDelta, 5, pinnedGroupIds),
+    [visibleGroups, region.longitudeDelta, pinnedGroupIds],
   );
 
   useEffect(() => {
@@ -102,9 +140,13 @@ export default function MapScreen() {
   const searching = filters.keyword.trim().length > 0;
 
   useEffect(() => {
+    // Keep the selected store's query result stable while its detail is open.
+    // Closing the detail reruns this effect for the map's latest region.
+    if (selectedStoreIds.length > 0) return;
+
     let cancelled = false;
     const handle = setTimeout(() => {
-      setQueryFailed(false);
+      setQueryStatus('loading');
       void repository
         .getLocationGroups({
           keyword: filters.keyword,
@@ -115,13 +157,12 @@ export default function MapScreen() {
           limit: QUERY_LIMIT,
         })
         .then((nextGroups) => {
-          if (!cancelled) setGroups(nextGroups);
+          if (cancelled) return;
+          setGroups(nextGroups);
+          setQueryStatus('success');
         })
         .catch(() => {
-          if (!cancelled) {
-            setGroups([]);
-            setQueryFailed(true);
-          }
+          if (!cancelled) setQueryStatus('error');
         });
     }, 220);
 
@@ -137,6 +178,7 @@ export default function MapScreen() {
     filters.couponType,
     filters.payment,
     filters.categoryMajorId,
+    selectedStoreIds.length,
     queryAttempt,
   ]);
 
@@ -163,6 +205,13 @@ export default function MapScreen() {
     [visibleGroups],
   );
 
+  const queryLoading = queryStatus === 'loading';
+  const queryFailed = queryStatus === 'error';
+  const sheetHeight = getSheetHeightAtIndex(
+    sheetIndex,
+    screenHeight,
+    insets.bottom,
+  );
   const top = Math.max(insets.top, space.lg);
   // Concrete width for the absolutely-positioned deck so its flex-1 children
   // (search + chip row) always get a firm width instead of collapsing to 0.
@@ -173,10 +222,7 @@ export default function MapScreen() {
     filters.payment !== 'all' ||
     filters.categoryMajorId !== null ||
     filters.radiusMeters !== 'all';
-  const locationButtonBottom =
-    searching || visibleStoreCount === 0
-      ? screenHeight * 0.58 + 12
-      : SHEET_PEEK_HEIGHT + insets.bottom + 12;
+  const locationButtonBottom = sheetHeight + space.md;
 
   const handleRegionChange = useCallback(
     (nextRegion: typeof region) => {
@@ -185,27 +231,74 @@ export default function MapScreen() {
     [setRegion],
   );
 
+  const queueCameraToStore = useCallback(
+    (lat: number, lng: number, zoomIn: boolean) => {
+      pendingCameraRef.current = {
+        latitude: lat,
+        longitude: lng,
+        latitudeDelta: zoomIn ? 0.008 : region.latitudeDelta,
+        longitudeDelta: zoomIn ? 0.008 : region.longitudeDelta,
+      };
+    },
+    [region.latitudeDelta, region.longitudeDelta],
+  );
+
+  useEffect(() => {
+    const pending = pendingCameraRef.current;
+    if (!pending) return;
+    if (selectedStoreIds.length === 0) {
+      pendingCameraRef.current = null;
+      return;
+    }
+    if (sheetIndex !== 1) return;
+    pendingCameraRef.current = null;
+    // react-native-maps can crash Android while applying mapPadding to a
+    // recreated map. Offset only the selection camera instead.
+    mapRef.current?.animateToRegion(
+      {
+        ...pending,
+        latitude: getMapCameraLatitude(
+          pending.latitude,
+          pending.latitudeDelta,
+          screenHeight,
+          deckHeight,
+          sheetHeight,
+        ),
+      },
+      reduceMotion ? 0 : 400,
+    );
+  }, [
+    deckHeight,
+    reduceMotion,
+    screenHeight,
+    selectedStoreIds,
+    sheetHeight,
+    sheetIndex,
+  ]);
+
   // Selecting a store from the list (e.g. a global search result) flies the map
   // to it, so picking a far-away match lands the user on the right block.
   const handleSelectStore = useCallback(
     (id: string) => {
-      selectStores([id]);
+      Keyboard.dismiss();
       const store = visibleStores.find((candidate) => candidate.id === id);
       if (store?.lat != null && store.lng != null) {
-        // Bias the centre south so the marker lands in the map area left
-        // visible above the half-open detail sheet.
-        mapRef.current?.animateToRegion(
-          {
-            latitude: store.lat - 0.002,
-            longitude: store.lng,
-            latitudeDelta: 0.008,
-            longitudeDelta: 0.008,
-          },
-          reduceMotion ? 0 : 400,
-        );
+        queueCameraToStore(store.lat, store.lng, true);
       }
+      selectStores([id]);
     },
-    [reduceMotion, selectStores, visibleStores],
+    [queueCameraToStore, selectStores, visibleStores],
+  );
+
+  const handleSelectStores = useCallback(
+    (stores: StoreLocationGroup['stores']) => {
+      const store = stores[0];
+      if (store?.lat != null && store.lng != null) {
+        queueCameraToStore(store.lat, store.lng, false);
+      }
+      selectStores(stores.map((item) => item.id));
+    },
+    [queueCameraToStore, selectStores],
   );
 
   const handleClusterPress = useCallback(
@@ -234,9 +327,7 @@ export default function MapScreen() {
         onClusterPress={handleClusterPress}
         onMapPress={clearSelectedStore}
         onRegionChangeComplete={handleRegionChange}
-        onSelectStores={(stores) =>
-          selectStores(stores.map((store) => store.id))
-        }
+        onSelectStores={handleSelectStores}
         selectedStoreIds={selectedStoreIds}
         showsUserLocation={locationEnabled}
       />
@@ -244,6 +335,12 @@ export default function MapScreen() {
       {/* Search and task controls stay compact so the map remains readable. */}
       <View
         className="absolute left-0 top-0"
+        onLayout={(event) => {
+          const nextHeight = event.nativeEvent.layout.height;
+          setDeckHeight((current) =>
+            current === nextHeight ? current : nextHeight,
+          );
+        }}
         pointerEvents="box-none"
         style={{
           paddingLeft: Math.max(insets.left, space.lg),
@@ -266,6 +363,7 @@ export default function MapScreen() {
             </View>
             <IconButton
               accessibilityLabel={t('filters.title')}
+              className="h-11 w-11"
               onPress={() => router.push('/filters')}
               selected={advancedActive}
             >
@@ -276,6 +374,7 @@ export default function MapScreen() {
             </IconButton>
             <IconButton
               accessibilityLabel={t('settings.title')}
+              className="h-11 w-11"
               onPress={() => router.push('/settings')}
             >
               <Settings color={colors.muted} size={22} />
@@ -317,13 +416,16 @@ export default function MapScreen() {
         </View>
       </View>
 
-      {selectedStoreIds.length === 0 && viewMode === 'map' ? (
+      {selectedStoreIds.length === 0 &&
+      viewMode === 'map' &&
+      sheetIndex < 2 &&
+      !keyboardVisible ? (
         <View
           style={{
             bottom: locationButtonBottom,
             elevation: 18,
             position: 'absolute',
-            right: 20,
+            right: space.xl,
             zIndex: 18,
           }}
         >
@@ -335,7 +437,9 @@ export default function MapScreen() {
         onClearSelection={clearSelectedStore}
         onResetFilters={filters.reset}
         onRetryQuery={() => setQueryAttempt((attempt) => attempt + 1)}
+        onSheetIndexChange={setSheetIndex}
         queryFailed={queryFailed}
+        queryLoading={queryLoading}
         onSelectStore={handleSelectStore}
         searching={searching}
         sourceDate={meta?.officialUpdatedAt}

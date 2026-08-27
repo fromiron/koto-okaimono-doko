@@ -22,13 +22,13 @@ export function SearchInput({
 }: SearchInputProps) {
   return (
     <View
-      className="min-h-14 flex-row items-center gap-3 rounded-card border border-control-line bg-surface px-4"
+      className="min-h-12 flex-row items-center gap-2 rounded-card border border-control-line bg-surface px-4"
       style={elevated ? surfaceShadow : undefined}
     >
-      <Search color={colors.muted} size={24} />
+      <Search color={colors.muted} size={20} />
       <TextInput
         accessibilityLabel={accessibilityLabel}
-        className="min-w-0 flex-1 text-base text-ink"
+        className="min-w-0 flex-1 text-sm text-ink"
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={colors.muted}
