@@ -1,5 +1,15 @@
-import { ensureSeedDatabase } from './ensureSeedDatabase';
+import {
+  ensureSeedDatabase,
+  type BootDatabaseResult,
+} from './ensureSeedDatabase';
 
-export async function bootApp(): Promise<void> {
-  await ensureSeedDatabase();
+let boot: Promise<BootDatabaseResult> | undefined;
+
+export function bootApp(): Promise<BootDatabaseResult> {
+  // StrictMode/retries must not run file transitions alongside a mounted provider.
+  boot ??= ensureSeedDatabase().catch((error) => {
+    boot = undefined;
+    throw error;
+  });
+  return boot;
 }

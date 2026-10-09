@@ -30,6 +30,8 @@ import { IconButton } from '@/src/components/ui/IconButton';
 import { SearchInput } from '@/src/components/ui/SearchInput';
 import { useDatasetStore } from '@/src/features/dataset/datasetStore';
 import { useDatasetUpdate } from '@/src/features/dataset/useDatasetUpdate';
+import { groupStoresByLocation } from '@/src/features/db/StoreRepository';
+import { useStoreSearch } from '@/src/features/db/useStoreSearch';
 import { useStoreRepository } from '@/src/features/db/useStoreRepository';
 import { filterGroupsByRadius } from '@/src/features/filters/filterByRadius';
 import { useFilterStore } from '@/src/features/filters/filterStore';
@@ -43,7 +45,6 @@ import { useSelectedStoreStore } from '@/src/features/selected-store/selectedSto
 import { colors, space } from '@/src/theme/tokens';
 
 const QUERY_LIMIT = 2_000;
-type QueryStatus = 'loading' | 'success' | 'error';
 
 export default function MapScreen() {
   const { t } = useTranslation();
@@ -70,9 +71,7 @@ export default function MapScreen() {
   const meta = useDatasetStore((state) => state.meta);
   const setDatasetMeta = useDatasetStore((state) => state.setDatasetMeta);
   const { checkUpdate } = useDatasetUpdate();
-  const [groups, setGroups] = useState<StoreLocationGroup[]>([]);
   const [queryAttempt, setQueryAttempt] = useState(0);
-  const [queryStatus, setQueryStatus] = useState<QueryStatus>('loading');
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [viewMode, setViewMode] = useState<MapViewMode>('map');
   const [sheetIndex, setSheetIndex] = useState(0);
@@ -93,15 +92,41 @@ export default function MapScreen() {
     };
   }, []);
 
-  const visibleGroups = useMemo(
+  const searching = filters.keyword.trim().length > 0;
+  const searchParams = useMemo(
+    () => ({
+      keyword: filters.keyword,
+      couponType: filters.couponType,
+      payment: filters.payment,
+      categoryMajorId: filters.categoryMajorId,
+      bounds: searching ? undefined : boundsFromRegion(region),
+      limit: QUERY_LIMIT,
+    }),
+    [
+      filters.keyword,
+      filters.couponType,
+      filters.payment,
+      filters.categoryMajorId,
+      searching,
+      region,
+    ],
+  );
+  const { stores, selectedStores, queryStatus, selectionFailed } =
+    useStoreSearch(repository, searchParams, selectedStoreIds, queryAttempt);
+  const visibleStores = useMemo(
     () =>
       filterGroupsByRadius(
-        groups,
+        stores,
         locationEnabled ? userLocation : null,
         filters.radiusMeters,
       ),
-    [groups, locationEnabled, userLocation, filters.radiusMeters],
+    [stores, locationEnabled, userLocation, filters.radiusMeters],
   );
+  const visibleGroups = useMemo(
+    () => groupStoresByLocation(visibleStores),
+    [visibleStores],
+  );
+  const visibleStoreCount = visibleStores.length;
 
   const pinnedGroupIds = useMemo(() => {
     if (selectedStoreIds.length === 0) return undefined;
@@ -135,78 +160,8 @@ export default function MapScreen() {
     if (!locationEnabled) setUserLocation(null);
   }, [locationEnabled, setUserLocation]);
 
-  // Typing a keyword searches the WHOLE dataset (no viewport bounds) — users
-  // expect global search; the visible-area constraint only applies to browsing.
-  const searching = filters.keyword.trim().length > 0;
-
-  useEffect(() => {
-    // Keep the selected store's query result stable while its detail is open.
-    // Closing the detail reruns this effect for the map's latest region.
-    if (selectedStoreIds.length > 0) return;
-
-    let cancelled = false;
-    const handle = setTimeout(() => {
-      setQueryStatus('loading');
-      void repository
-        .getLocationGroups({
-          keyword: filters.keyword,
-          couponType: filters.couponType,
-          payment: filters.payment,
-          categoryMajorId: filters.categoryMajorId,
-          bounds: searching ? undefined : boundsFromRegion(region),
-          limit: QUERY_LIMIT,
-        })
-        .then((nextGroups) => {
-          if (cancelled) return;
-          setGroups(nextGroups);
-          setQueryStatus('success');
-        })
-        .catch(() => {
-          if (!cancelled) setQueryStatus('error');
-        });
-    }, 220);
-
-    return () => {
-      cancelled = true;
-      clearTimeout(handle);
-    };
-  }, [
-    repository,
-    region,
-    searching,
-    filters.keyword,
-    filters.couponType,
-    filters.payment,
-    filters.categoryMajorId,
-    selectedStoreIds.length,
-    queryAttempt,
-  ]);
-
-  const selectedStores = useMemo(() => {
-    const selected = new Set(selectedStoreIds);
-    return visibleGroups
-      .flatMap((group) => group.stores)
-      .filter((store) => selected.has(store.id));
-  }, [visibleGroups, selectedStoreIds]);
-
-  useEffect(() => {
-    if (selectedStoreIds.length > 0 && selectedStores.length === 0) {
-      clearSelectedStore();
-    }
-  }, [clearSelectedStore, selectedStoreIds.length, selectedStores.length]);
-
-  const visibleStoreCount = useMemo(
-    () => visibleGroups.reduce((sum, group) => sum + group.stores.length, 0),
-    [visibleGroups],
-  );
-
-  const visibleStores = useMemo(
-    () => visibleGroups.flatMap((group) => group.stores),
-    [visibleGroups],
-  );
-
   const queryLoading = queryStatus === 'loading';
-  const queryFailed = queryStatus === 'error';
+  const queryFailed = queryStatus === 'error' || selectionFailed;
   const sheetHeight = getSheetHeightAtIndex(
     sheetIndex,
     screenHeight,

@@ -7,6 +7,7 @@ export type UpdateStatus =
   | 'available'
   | 'downloading'
   | 'verifying'
+  | 'restartRequired'
   | 'updated'
   | 'upToDate'
   | 'notConfigured'

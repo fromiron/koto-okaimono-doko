@@ -8,7 +8,9 @@ import type { LatLng } from '@/src/features/map/mapStore';
  * Returns the input unchanged when radius is 'all' or the user location is unknown,
  * so the map falls back to viewport-based results.
  */
-export function filterGroupsByRadius<T extends { lat: number; lng: number }>(
+export function filterGroupsByRadius<
+  T extends { lat: number | null; lng: number | null },
+>(
   groups: T[],
   userLocation: LatLng | null | undefined,
   radius: RadiusMeters,
@@ -19,6 +21,8 @@ export function filterGroupsByRadius<T extends { lat: number; lng: number }>(
 
   return groups.filter(
     (group) =>
+      group.lat !== null &&
+      group.lng !== null &&
       distanceMeters(
         { lat: userLocation.latitude, lng: userLocation.longitude },
         { lat: group.lat, lng: group.lng },

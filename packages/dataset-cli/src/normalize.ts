@@ -6,9 +6,15 @@ import { loadLocationCorrections } from './corrections';
 
 const NOW = new Date().toISOString();
 
-export async function normalizeRows(rows: ParsedStoreRow[]): Promise<Store[]> {
+export async function normalizeRows(
+  rows: ParsedStoreRow[],
+  offline = false,
+): Promise<Store[]> {
   const corrections = await loadLocationCorrections();
-  const geocodeCache = new Map<string, Awaited<ReturnType<typeof geocodeAddress>>>();
+  const geocodeCache = new Map<
+    string,
+    Awaited<ReturnType<typeof geocodeAddress>>
+  >();
   const stores: Store[] = [];
 
   for (const row of rows) {
@@ -16,7 +22,15 @@ export async function normalizeRows(rows: ParsedStoreRow[]): Promise<Store[]> {
     const geocodeKey = normalizeAddressForGeocoder(row.address);
     const geocode =
       correction === undefined
-        ? await cachedGeocode(geocodeKey, geocodeCache)
+        ? offline
+          ? {
+              lat: null,
+              lng: null,
+              source: 'unknown',
+              confidence: 'unknown' as const,
+              normalizedAddress: row.normalizedAddress,
+            }
+          : await cachedGeocode(geocodeKey, geocodeCache)
         : {
             lat: correction.lat,
             lng: correction.lng,
@@ -75,7 +89,10 @@ async function geocodeAddress(address: string): Promise<{
       lng: point?.lng ?? null,
       source: 'geolonia-normalize-japanese-addresses',
       confidence: confidenceFromLevel(pointLevel),
-      normalizedAddress: [result.pref, result.city, result.town, result.addr].filter(Boolean).join('') || null,
+      normalizedAddress:
+        [result.pref, result.city, result.town, result.addr]
+          .filter(Boolean)
+          .join('') || null,
     };
   } catch {
     return {
@@ -103,11 +120,18 @@ function confidenceFromLevel(level: number): LocationConfidence {
 }
 
 function inferMallName(address: string): string | null {
-  const mallNames = ['アトレ亀戸', 'アーバンドック ららぽーと豊洲', 'カメイドクロック', '有明ガーデン'];
+  const mallNames = [
+    'アトレ亀戸',
+    'アーバンドック ららぽーと豊洲',
+    'カメイドクロック',
+    '有明ガーデン',
+  ];
   return mallNames.find((mallName) => address.includes(mallName)) ?? null;
 }
 
 function inferFloor(address: string): string | null {
-  const match = address.match(/(地下\d+階|[0-9０-９]+階|[A-ZＡ-Ｚ]?[0-9０-９]+F)/i);
+  const match = address.match(
+    /(地下\d+階|[0-9０-９]+階|[A-ZＡ-Ｚ]?[0-9０-９]+F)/i,
+  );
   return match?.[1] ?? null;
 }

@@ -17,13 +17,20 @@
     "dataset:build-sqlite": "tsx packages/dataset-cli/src/buildSqlite.ts",
     "dataset:export-manifest": "tsx packages/dataset-cli/src/exportManifest.ts",
     "dataset:build": "tsx packages/dataset-cli/src/index.ts",
-    "dataset:test": "vitest run packages/dataset-cli"
+    "dataset:test": "vitest run packages/dataset-cli",
+    "dataset:fixture": "tsx packages/dataset-cli/src/index.ts --fixture",
+    "dataset:verify-seed": "tsx scripts/verify-seed.mts"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
+    "@testing-library/react": "16.3.2",
     "@types/node": "^25.0.3",
+    "@types/react-dom": "19.2.3",
     "eslint": "^9.39.2",
+    "jsdom": "27.4.0",
     "prettier": "^3.7.4",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
     "tsx": "^4.21.0",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.49.0",

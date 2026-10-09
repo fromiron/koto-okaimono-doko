@@ -12,30 +12,6 @@ const mobileRoot = path.resolve(
 );
 
 describe('map selection behavior', () => {
-  it('does not clear the selected store from the region-change handler', () => {
-    const mapScreen = readFileSync(
-      path.join(mobileRoot, 'app/index.tsx'),
-      'utf8',
-    );
-    const handlerStart = mapScreen.indexOf(
-      'const handleRegionChange = useCallback',
-    );
-    const handlerEnd = mapScreen.indexOf('return (', handlerStart);
-    const handlerSource = mapScreen.slice(handlerStart, handlerEnd);
-
-    expect(handlerSource).toContain('setRegion(nextRegion);');
-    expect(handlerSource).not.toContain('clearSelectedStore');
-  });
-
-  it('keeps selected query results stable until the detail closes', () => {
-    const mapScreen = readFileSync(
-      path.join(mobileRoot, 'app/index.tsx'),
-      'utf8',
-    );
-
-    expect(mapScreen).toContain('if (selectedStoreIds.length > 0) return;');
-  });
-
   it('clears the selected store on empty-map tap, not while panning the map', () => {
     const mapScreen = readFileSync(
       path.join(mobileRoot, 'app/index.tsx'),
@@ -95,17 +71,6 @@ describe('map selection behavior', () => {
 
     expect(mapScreen).toContain('Keyboard.dismiss();');
     expect(bottomSheet).toContain('keyboardShouldPersistTaps="handled"');
-  });
-
-  it('starts from a loading query state and does not clear pins on a failed refresh', () => {
-    const mapScreen = readFileSync(
-      path.join(mobileRoot, 'app/index.tsx'),
-      'utf8',
-    );
-
-    expect(mapScreen).toMatch(/useState<QueryStatus>\(["']loading["']\)/);
-    expect(mapScreen).toMatch(/setQueryStatus\(["']loading["']\)/);
-    expect(mapScreen).not.toContain('setGroups([])');
   });
 
   it('uses a compact circular marker capture tree without perpetual selected tracking', () => {

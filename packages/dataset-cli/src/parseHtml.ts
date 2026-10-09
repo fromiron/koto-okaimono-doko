@@ -1,11 +1,17 @@
-import { readdir, readFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { normalizePostalCode, normalizeSearchText, parseOfficialCategory, stripPostalCode } from '@koto/core';
+import {
+  normalizePostalCode,
+  normalizeSearchText,
+  parseOfficialCategory,
+  stripPostalCode,
+} from '@koto/core';
 import { normalizeOfficialDetailUrl, type CouponType } from '@koto/schema';
 import { load } from 'cheerio';
 
-import { rawDir } from './paths';
+import { officialStoreCount, type SourceSnapshot } from './fetchOfficial';
+import { parseUpdatedDate } from './dates';
 
 export type ParsedStoreRow = {
   id: string;
@@ -26,22 +32,41 @@ export type ParsedStoreRow = {
   sourceUpdatedAt: string | null;
 };
 
-export async function parseHtmlPages(): Promise<ParsedStoreRow[]> {
-  const rows: ParsedStoreRow[] = [];
-  const files = (await readdir(rawDir))
-    .filter((file) => /^list-page-\d+\.html$/.test(file))
-    .sort((a, b) => pageNumber(a) - pageNumber(b));
-
-  for (const file of files) {
-    const html = await readFile(path.join(rawDir, file), 'utf8');
-    rows.push(...parseListPage(html));
+export async function parseHtmlPages(
+  snapshot: SourceSnapshot,
+): Promise<ParsedStoreRow[]> {
+  if (
+    snapshot.files.length !== snapshot.pageCount ||
+    snapshot.files.some((file, i) => file !== `list-page-${i + 1}.html`)
+  ) {
+    throw new Error('Incomplete snapshot page list');
   }
-
-  return dedupeRows(rows);
-}
-
-function pageNumber(fileName: string): number {
-  return Number(fileName.match(/list-page-(\d+)\.html/)?.[1] ?? 0);
+  const rows: ParsedStoreRow[] = [];
+  for (const file of snapshot.files) {
+    const html = await readFile(path.join(snapshot.directory, file), 'utf8');
+    if (officialStoreCount(html) !== snapshot.total)
+      throw new Error(`Official total changed during collection: ${file}`);
+    const parsed = parseListPage(html);
+    const cards = load(html)('#store-list-inner > .box').length;
+    if (cards === 0 || parsed.length !== cards)
+      throw new Error(
+        `Skipped rows in ${file}: ${cards - parsed.length} of ${cards}`,
+      );
+    rows.push(...parsed);
+  }
+  const seen = new Set<string>();
+  const duplicates: string[] = [];
+  for (const row of rows) {
+    if (seen.has(row.id)) duplicates.push(row.id);
+    seen.add(row.id);
+  }
+  if (duplicates.length)
+    throw new Error(`Duplicate store IDs: ${duplicates.join(', ')}`);
+  if (rows.length !== snapshot.total)
+    throw new Error(
+      `Snapshot count mismatch: expected ${snapshot.total}, parsed ${rows.length}`,
+    );
+  return rows;
 }
 
 export function parseListPage(html: string): ParsedStoreRow[] {
@@ -56,14 +81,29 @@ export function parseListPage(html: string): ParsedStoreRow[] {
       ? new URL(officialDetailUrl).pathname.split('/').filter(Boolean).at(-1)
       : null;
     const name = box.find('h4').text().replace(/\s+/g, ' ').trim();
-    const addressText = box.find('a.box-link > p').first().text().replace(/\s+/g, ' ').trim();
-    const categoryRaw = box.find('.category').text().replace(/\s+/g, ' ').trim();
+    const addressText = box
+      .find('a.box-link > p')
+      .first()
+      .text()
+      .replace(/\s+/g, ' ')
+      .trim();
+    const categoryRaw = box
+      .find('.category')
+      .text()
+      .replace(/\s+/g, ' ')
+      .trim();
     const iconAlts = box
       .find('img')
       .map((_, image) => $(image).attr('alt') ?? '')
       .get();
 
-    if (!officialDetailUrl || !sourceDetailId || !name || !addressText || !categoryRaw) {
+    if (
+      !officialDetailUrl ||
+      !sourceDetailId ||
+      !name ||
+      !addressText ||
+      !categoryRaw
+    ) {
       return;
     }
 
@@ -93,19 +133,6 @@ export function parseListPage(html: string): ParsedStoreRow[] {
   return rows;
 }
 
-function parseOfficialUpdatedAt(html: string): string | null {
-  const match = html.match(/(\d{4})年[６6]月(\d{1,2})日/);
-  if (!match) return null;
-
-  const month = '06';
-  const day = match[2]?.padStart(2, '0');
-  return day ? `${match[1]}-${month}-${day}` : null;
-}
-
-function dedupeRows(rows: ParsedStoreRow[]): ParsedStoreRow[] {
-  const seen = new Map<string, ParsedStoreRow>();
-  for (const row of rows) {
-    seen.set(row.id, row);
-  }
-  return [...seen.values()];
+export function parseOfficialUpdatedAt(html: string): string | null {
+  return parseUpdatedDate(load(html)('body').text());
 }

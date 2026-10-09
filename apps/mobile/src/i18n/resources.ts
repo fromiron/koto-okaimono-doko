@@ -153,6 +153,8 @@ export const resources: Record<
         translationReview: '翻訳文はリリース前の確認が必要です。',
       },
       update: {
+        restartRequired:
+          'ダウンロード済みです。アプリを終了して開き直すと、新しいデータを適用します。',
         idle: '待機中',
         checking: '最新データを確認しています…',
         available: '新しいデータがあります。適用するまでダウンロードしません。',
@@ -316,6 +318,8 @@ export const resources: Record<
         translationReview: 'Translations need review before release.',
       },
       update: {
+        restartRequired:
+          'Downloaded. Close and reopen the app to apply the new data.',
         idle: 'Idle',
         checking: 'Checking for new data…',
         available:
@@ -479,6 +483,8 @@ export const resources: Record<
         translationReview: '출시 전 번역 검수가 필요합니다.',
       },
       update: {
+        restartRequired:
+          '다운로드했습니다. 앱을 종료한 뒤 다시 열면 새 데이터를 적용합니다.',
         idle: '대기 중',
         checking: '새 데이터를 확인하는 중…',
         available:
@@ -633,6 +639,7 @@ export const resources: Record<
         translationReview: '发布前需要校对翻译。',
       },
       update: {
+        restartRequired: '下载完成。关闭并重新打开应用以应用新数据。',
         idle: '待机',
         checking: '正在检查新数据…',
         available: '有新数据。应用更新前不会下载。',
@@ -784,6 +791,7 @@ export const resources: Record<
         translationReview: '發布前需要校對翻譯。',
       },
       update: {
+        restartRequired: '下載完成。關閉並重新開啟應用程式以套用新資料。',
         idle: '待機',
         checking: '正在檢查新資料…',
         available: '有新資料。套用更新前不會下載。',

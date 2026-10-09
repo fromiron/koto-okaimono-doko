@@ -11,12 +11,6 @@ const fileSystem = vi.hoisted(() => ({
 }));
 
 vi.mock('expo-file-system/legacy', () => fileSystem);
-vi.mock('@/src/features/bootstrap/AppProviders', () => ({
-  useDatabaseReload: () => ({
-    reloadDatabase: vi.fn(),
-    unmountDatabase: vi.fn(),
-  }),
-}));
 vi.mock('./verifyDataset', () => ({
   verifyCandidateDatabase: vi.fn(async () => {}),
   verifyCandidateHash: vi.fn(async () => {}),
@@ -24,7 +18,9 @@ vi.mock('./verifyDataset', () => ({
 }));
 
 const manifest: DatasetManifest = {
-  datasetId: 'koto-2026',
+  datasetId: 'koto-premium-coupon-2026',
+  schemaVersion: 1,
+  revision: 'a'.repeat(64),
   generatedAt: '2026-07-15T00:00:00.000Z',
   officialUpdatedAt: '2026-07-15',
   sqlite: {
@@ -33,7 +29,7 @@ const manifest: DatasetManifest = {
     url: 'https://example.test/stores.sqlite',
   },
   storeCount: 10,
-  version: '2026-07-15.1',
+  version: `r1-${'a'.repeat(64)}`,
 };
 
 const originalManifestUrl = process.env.EXPO_PUBLIC_DATASET_MANIFEST_URL;

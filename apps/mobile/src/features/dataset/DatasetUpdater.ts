@@ -3,16 +3,10 @@ import type {
   DatasetMeta,
   DatasetUpdateResult,
 } from '@koto/schema';
-import { DatasetManifestSchema } from '@koto/schema';
+import { DatasetManifestSchema, needsDatasetUpdate } from '@koto/schema';
 import * as FileSystem from 'expo-file-system/legacy';
 
-import { useDatabaseReload } from '@/src/features/bootstrap/AppProviders';
-
-import {
-  candidateDatabaseName,
-  datasetPaths,
-  sqliteDirectory,
-} from './datasetPaths';
+import { datasetPaths, sqliteDirectory } from './datasetPaths';
 import {
   verifyCandidateDatabase,
   verifyCandidateHash,
@@ -44,7 +38,7 @@ export async function checkForDatasetUpdate(
     }
 
     const manifest = DatasetManifestSchema.parse(await response.json());
-    if (currentMeta?.version === manifest.version) {
+    if (!needsDatasetUpdate(currentMeta, manifest)) {
       return {
         result: { status: 'up-to-date', version: manifest.version },
         manifest: null,
@@ -100,7 +94,7 @@ export async function verifyDownloadedCandidate(
       manifest.sqlite.size,
     );
     await verifyCandidateHash(manifest.sqlite.sha256);
-    await verifyCandidateDatabase(manifest.storeCount);
+    await verifyCandidateDatabase(manifest);
   } catch (error) {
     await FileSystem.deleteAsync(datasetPaths.candidateDatabaseUri, {
       idempotent: true,
@@ -109,66 +103,12 @@ export async function verifyDownloadedCandidate(
   }
 }
 
-export async function applyCandidateDataset(): Promise<void> {
-  const candidateInfo = await FileSystem.getInfoAsync(
-    datasetPaths.candidateDatabaseUri,
+// Written only after verification; the running provider keeps its active database.
+export async function stageCandidateDataset(
+  manifest: DatasetManifest,
+): Promise<void> {
+  await FileSystem.writeAsStringAsync(
+    datasetPaths.localManifestUri,
+    JSON.stringify(manifest),
   );
-  if (!candidateInfo.exists) {
-    throw new Error(`No pending ${candidateDatabaseName}`);
-  }
-
-  await FileSystem.deleteAsync(datasetPaths.backupDatabaseUri, {
-    idempotent: true,
-  });
-
-  const activeInfo = await FileSystem.getInfoAsync(
-    datasetPaths.activeDatabaseUri,
-  );
-  if (activeInfo.exists) {
-    await FileSystem.moveAsync({
-      from: datasetPaths.activeDatabaseUri,
-      to: datasetPaths.backupDatabaseUri,
-    });
-  }
-
-  // The previous active database's WAL/SHM sidecars are not moved with the
-  // .sqlite file, so remove the orphans before promoting the candidate. Leaving
-  // them would let SQLite apply a stale WAL to the newly promoted database.
-  await FileSystem.deleteAsync(`${datasetPaths.activeDatabaseUri}-wal`, {
-    idempotent: true,
-  });
-  await FileSystem.deleteAsync(`${datasetPaths.activeDatabaseUri}-shm`, {
-    idempotent: true,
-  });
-
-  try {
-    await FileSystem.moveAsync({
-      from: datasetPaths.candidateDatabaseUri,
-      to: datasetPaths.activeDatabaseUri,
-    });
-  } catch (error) {
-    const backupInfo = await FileSystem.getInfoAsync(
-      datasetPaths.backupDatabaseUri,
-    );
-    if (backupInfo.exists) {
-      await FileSystem.moveAsync({
-        from: datasetPaths.backupDatabaseUri,
-        to: datasetPaths.activeDatabaseUri,
-      });
-    }
-    throw error;
-  }
-}
-
-export function useApplyCandidateDataset() {
-  const { reloadDatabase, unmountDatabase } = useDatabaseReload();
-
-  return async () => {
-    unmountDatabase();
-    try {
-      await applyCandidateDataset();
-    } finally {
-      reloadDatabase();
-    }
-  };
 }
