@@ -1,14 +1,12 @@
 import { isAllowedOfficialDetailUrl, type Store } from '@koto/schema';
 import {
   Building2,
-  ChevronRight,
   ExternalLink,
   Footprints,
   MapPin,
-  Navigation,
   Phone,
 } from 'lucide-react-native';
-import { Linking, Platform, Pressable, View } from 'react-native';
+import { Linking, Platform, View } from 'react-native';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
@@ -16,21 +14,22 @@ import type { TFunction } from 'i18next';
 import { StoreMarker } from '@/src/components/map/StoreMarker';
 import { Button } from '@/src/components/ui/Button';
 import { InfoRow } from '@/src/components/ui/InfoRow';
-import { SurfaceCard } from '@/src/components/ui/SurfaceCard';
 import { Text } from '@/src/components/ui/Text';
 import type { LatLng } from '@/src/features/map/mapStore';
 import { colors } from '@/src/theme/tokens';
 
-import { CouponBadge } from './CouponBadge';
-import { PaymentBadge } from './PaymentBadge';
 import { SourceDateNote } from './SourceDateNote';
+import { StoreListRow } from './StoreListRow';
+import { VoucherStatus } from './VoucherStatus';
+import { DirectionsActions } from './DirectionsActions';
+import { useDatasetStore } from '@/src/features/dataset/datasetStore';
+import { useRef } from 'react';
 import {
   getAddressText,
   getCategoryText,
   getDistanceValueText,
   getFacilityAddress,
   getFacilityName,
-  openDirections,
 } from './storeDisplay';
 
 type Mode = 'sheet' | 'page';
@@ -41,24 +40,31 @@ type StoreDetailContentProps = {
   userLocation?: LatLng | null;
   mode?: Mode;
   onSelectStore?: (id: string) => void;
+  onStoreLayout?: (id: string, y: number) => void;
+  forceFacility?: boolean;
 };
 
 export function StoreDetailContent({
   mode = 'sheet',
   onSelectStore,
+  onStoreLayout,
   sourceDate,
   stores,
   userLocation,
+  forceFacility = false,
 }: StoreDetailContentProps) {
   if (stores.length === 0) {
     return null;
   }
 
-  if (stores.length > 1) {
+  if (forceFacility || stores.length > 1) {
     return (
       <LocationGroupContent
+        key={stores.map((store) => store.id).join(',')}
         mode={mode}
         onSelectStore={onSelectStore}
+        onStoreLayout={onStoreLayout}
+        userLocation={userLocation}
         sourceDate={sourceDate}
         stores={stores}
       />
@@ -67,6 +73,7 @@ export function StoreDetailContent({
 
   return (
     <SingleStoreContent
+      key={stores[0].id}
       mode={mode}
       sourceDate={sourceDate}
       store={stores[0]}
@@ -111,7 +118,7 @@ function SingleStoreContent({
       </View>
 
       {mode === 'page' ? <MapPreview store={store} /> : null}
-      {sourceDate ? <SourceDateNote sourceDate={sourceDate} /> : null}
+      <SourceDateNote sourceDate={store.sourceUpdatedAt ?? sourceDate} />
     </View>
   );
 }
@@ -119,18 +126,24 @@ function SingleStoreContent({
 function LocationGroupContent({
   mode,
   onSelectStore,
+  onStoreLayout,
   sourceDate,
   stores,
+  userLocation,
 }: {
   stores: Store[];
+  userLocation?: LatLng | null;
   sourceDate?: string | null;
   mode: Mode;
   onSelectStore?: (id: string) => void;
+  onStoreLayout?: (id: string, y: number) => void;
 }) {
   const { t } = useTranslation();
   const title =
     getFacilityName(stores) ?? t('map.groupedStores', { count: stores.length });
   const first = stores[0];
+  const rowContainerY = useRef(0);
+  const rowPositions = useRef(new Map<string, number>());
 
   return (
     <View className={mode === 'page' ? 'gap-5 pb-8' : 'gap-4 px-5 pb-8 pt-1'}>
@@ -148,63 +161,67 @@ function LocationGroupContent({
         <Text variant="label">
           {t('store.facilityStoreCount', { count: stores.length })}
         </Text>
-        <Text className="mt-1" tone="muted">
-          {getFacilityAddress(stores)}
-        </Text>
+        {getFacilityAddress(stores) ? (
+          <Text className="mt-1" tone="muted">
+            {getFacilityAddress(stores)}
+          </Text>
+        ) : null}
       </View>
 
-      <SurfaceCard className="px-4">
+      <View
+        className="rounded-card border border-line"
+        onLayout={(event) => {
+          rowContainerY.current = event.nativeEvent.layout.y;
+          rowPositions.current.forEach((y, id) =>
+            onStoreLayout?.(id, rowContainerY.current + y),
+          );
+        }}
+      >
         {stores.map((store, index) => (
-          <Pressable
-            accessibilityLabel={`${store.name}, ${getCategoryText(store, t)}`}
-            accessibilityRole={onSelectStore ? 'button' : undefined}
-            className={`flex-row items-center gap-3 py-4 ${index < stores.length - 1 ? 'border-b border-line' : ''}`}
-            disabled={!onSelectStore}
+          <View
             key={store.id}
-            onPress={() => onSelectStore?.(store.id)}
+            className={index < stores.length - 1 ? 'border-b border-line' : ''}
+            onLayout={(event) => {
+              const y = event.nativeEvent.layout.y;
+              rowPositions.current.set(store.id, y);
+              onStoreLayout?.(store.id, rowContainerY.current + y);
+            }}
           >
-            <View className="min-w-0 flex-1 gap-1">
-              <Text variant="label">{store.name}</Text>
-              <Text tone="muted">
-                {[store.floor, getCategoryText(store, t)]
-                  .filter(Boolean)
-                  .join(' / ')}
-              </Text>
-            </View>
-            <CouponBadge couponType={store.couponType} />
-            {onSelectStore ? (
-              <ChevronRight color={colors.muted} size={20} />
-            ) : null}
-          </Pressable>
+            <StoreListRow
+              onPress={
+                onSelectStore ? () => onSelectStore(store.id) : undefined
+              }
+              store={store}
+              userLocation={userLocation}
+            />
+          </View>
         ))}
-      </SurfaceCard>
+      </View>
 
-      {first ? (
-        <Button
-          leftIcon={<Navigation color="#ffffff" size={20} />}
-          onPress={() => openDirections(first)}
-          size="lg"
-        >
-          {t('store.routeToFacility')}
-        </Button>
+      {first && getFacilityName(stores) && getFacilityAddress(stores) ? (
+        <DirectionsActions
+          store={first}
+          facilityName={getFacilityName(stores) ?? undefined}
+        />
       ) : null}
 
       {mode === 'page' && first ? <MapPreview store={first} /> : null}
-      {sourceDate ? <SourceDateNote sourceDate={sourceDate} /> : null}
+      <SourceDateNote sourceDate={sourceDate} />
     </View>
   );
 }
 
 function StoreSummary({ store }: { store: Store }) {
   const { t } = useTranslation();
+  const datasetId = useDatasetStore((state) => state.meta?.datasetId);
 
   return (
     <View className="gap-2 border-b border-line pb-4">
       <Text accessibilityRole="header" variant="title">
         {store.name}
       </Text>
+      <VoucherStatus datasetId={datasetId} store={store} />
       <Text tone="muted">{getCategoryText(store, t)}</Text>
-      <BadgeRow store={store} />
     </View>
   );
 }
@@ -219,13 +236,7 @@ function StoreQuickActions({ store, t }: { store: Store; t: TFunction }) {
 
   return (
     <View className="gap-3">
-      <Button
-        leftIcon={<Navigation color={colors.surface} size={20} />}
-        onPress={() => openDirections(store)}
-        size="lg"
-      >
-        {t('store.directions')}
-      </Button>
+      <DirectionsActions store={store} />
       {phone || officialDetailUrl ? (
         <View className="flex-row gap-3">
           {phone ? (
@@ -249,20 +260,6 @@ function StoreQuickActions({ store, t }: { store: Store; t: TFunction }) {
             </Button>
           ) : null}
         </View>
-      ) : null}
-    </View>
-  );
-}
-
-function BadgeRow({ store }: { store: Store }) {
-  const { t } = useTranslation();
-
-  return (
-    <View className="flex-row flex-wrap items-center gap-2">
-      <CouponBadge couponType={store.couponType} />
-      {store.acceptsPaper ? <PaymentBadge label={t('filters.paper')} /> : null}
-      {store.acceptsDigital ? (
-        <PaymentBadge label={t('filters.digital')} />
       ) : null}
     </View>
   );

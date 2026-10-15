@@ -22,9 +22,9 @@ Validated builds are assembled in a staging directory before replacing `data/lat
 
 ## Search and selection (#13–#14)
 
-Search results are `Store[]` from SQLite, held in React state. Coordinate groups and pins are derived separately. Keyword search without a radius is global and includes unlocated stores. Viewport browsing and an active radius with a known location exclude stores whose coordinates are unknown; without a user location, radius filtering is not applied. No artificial coordinates are generated. List totals count search matches, not pins. Detail and coupon/address information work for unlocated stores. Distance reports unavailable, map camera/preview is omitted, and the existing external directions action uses the store's name/address as its search destination.
+Search results are `Store[]` from SQLite, held in React state. Coordinate groups and pins are derived separately. Keyword search without a radius is global and includes unlocated stores. Viewport browsing and an active radius with a known location exclude stores whose coordinates are unknown; without a user location, radius filtering is not applied. No artificial coordinates are generated. List totals count search matches, not pins. Detail and coupon/address information work for unlocated stores. Distance reports unavailable, map camera/preview is omitted, and external directions use the store's official name/address as the route destination when coordinates are unavailable.
 
-Selected detail is fetched by ID independently of the current result set. Search/filter changes refresh results while preserving the open detail; map pans and selection camera movement preserve it as well. Empty-map taps/back explicitly clear selection. Superseded asynchronous queries cannot overwrite newer results. Query failures retain the previous results with an error/retry state.
+Selected detail is fetched by ID independently of the current result set. Search/filter changes refresh results while preserving the open detail; map pans and selection camera movement preserve it as well. Empty-map taps/back return one level in the selection context. Superseded asynchronous queries cannot overwrite newer results. A retry of the same criteria/revision retains its last good results with an error/retry state. New criteria or dataset revisions immediately withhold older rows, including during debounce or a failed query.
 
 ## CI and seed provenance (#16–#17)
 
@@ -41,14 +41,14 @@ The accompanying work log records local checks and native/hosted limitations sep
 
 ### 2026-10-09 local results
 
-| Check | Result |
-| --- | --- |
-| `pnpm typecheck`, `pnpm lint`, `git diff --check` | Passed |
-| `pnpm test` / final Mobile CI | 27 files, 120 tests passed |
-| `expo install --check` | Compatible SDK 56 package versions |
-| `act pull_request -W .github/workflows/mobile-ci.yml -j quality` | Passed, including fixture build, seed verification and Expo check |
+| Check                                                                           | Result                                                                 |
+| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `pnpm typecheck`, `pnpm lint`, `git diff --check`                               | Passed                                                                 |
+| `pnpm test` / final Mobile CI                                                   | 27 files, 120 tests passed                                             |
+| `expo install --check`                                                          | Compatible SDK 56 package versions                                     |
+| `act pull_request -W .github/workflows/mobile-ci.yml -j quality`                | Passed, including fixture build, seed verification and Expo check      |
 | `act workflow_dispatch -W .github/workflows/build-dataset.yml -j build-dataset` | Passed; live collection produced 1,467 stores; 35 dataset tests passed |
-| `act workflow_dispatch -W .github/workflows/release-apk.yml -j verify-seed` | Passed; committed legacy seed has 1,444 stores |
+| `act workflow_dispatch -W .github/workflows/release-apk.yml -j verify-seed`     | Passed; committed legacy seed has 1,444 stores                         |
 
 Two independent live builds produced the same content revision: `e68a7b8b096d2a48dabfef09a4fc9632bceba910b9789731c62cb943d9f9b0c3`. The committed seed remained unchanged at SHA-256 `b90c7f9cd20be217ae7d71342bffba9d3df79b8235047a00888a7f87ed7578f2`.
 
@@ -65,3 +65,13 @@ Limits: iOS hardware/simulator, APK assembly/signing, GitHub-hosted CI/artifact 
 `pnpm audit --prod` still reports 67 transitive advisories (4 low, 22 moderate, 40 high, 1 critical). These are dependency advisory matches, not validated app exploits; broad dependency-security remediation is outside #9–#17. The new test path's `source-map-js` advisory was removed by resolving 1.2.2, and unrelated lockfile refreshes were minimized.
 
 API references used when Context7 was unavailable: [Expo SDK 56 SQLite](https://docs.expo.dev/versions/v56.0.0/sdk/sqlite/), [React act](https://react.dev/reference/react/act), [Testing Library API](https://testing-library.com/docs/react-testing-library/api/).
+
+## Comparison navigation (#20)
+
+The committed search region is separate from the displayed camera. Pan, zoom and current-location recentering offer **このエリアで検索**; only that action replaces viewport results and clears the global keyword. Selecting a result or restoring its parent camera never changes the committed region or requests a new result list. Explicit area confirmation was chosen over automatic refresh so a camera movement cannot replace a set of candidates during comparison.
+
+Navigation keeps a small parent stack of IDs, camera, sheet index and list position (store ID, relative offset and scroll offset). No Store records are stored in Zustand. A facility child returns to that facility before returning to the overall results. The list uses SQLite order, or nearest-first with a session location. The sheet's actual snap index also drives the map/list toggle, including after dragging.
+
+Applying a keyword, voucher or filter starts a new search session, resets result return positions, and keeps the selected detail open with its latest eligibility and a notice when outside the new results. Back never applies stored filter values. Dataset revisions rerun search/detail reads; missing selected records return to a parent with an announcement, and a missing return anchor falls back to the top. External directions do not clear selection. Android Back dismisses the keyboard before returning to a parent; the root browse screen keeps the platform Back behavior.
+
+Behavioral MapScreen tests run real React state/effects and SQLite with native IO mocked. They cover ten comparisons of three candidates, facility parents, camera/query separation, area confirmation, new conditions, keyboard Back, missing records and Apple Maps callbacks without Google-only gesture metadata. Native scroll physics, OS external-map handoff, and iOS hardware behavior still require device validation.

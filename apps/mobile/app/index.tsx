@@ -1,8 +1,8 @@
 import { boundsFromRegion } from '@koto/core';
 import { Filter, Settings } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Keyboard, useWindowDimensions, View } from 'react-native';
+import { BackHandler, Keyboard, useWindowDimensions, View } from 'react-native';
 import type MapView from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -25,7 +25,7 @@ import {
   getMapCameraLatitude,
   getSheetHeightAtIndex,
 } from '@/src/components/store/sheetLayout';
-import { Chip } from '@/src/components/ui/Chip';
+import { Button } from '@/src/components/ui/Button';
 import { IconButton } from '@/src/components/ui/IconButton';
 import { SearchInput } from '@/src/components/ui/SearchInput';
 import { useDatasetStore } from '@/src/features/dataset/datasetStore';
@@ -35,13 +35,13 @@ import { useStoreSearch } from '@/src/features/db/useStoreSearch';
 import { useStoreRepository } from '@/src/features/db/useStoreRepository';
 import { filterGroupsByRadius } from '@/src/features/filters/filterByRadius';
 import { useFilterStore } from '@/src/features/filters/filterStore';
-import {
-  KOTO_INITIAL_REGION,
-  type MapRegion,
-  useMapStore,
-} from '@/src/features/map/mapStore';
+import { type MapRegion, useMapStore } from '@/src/features/map/mapStore';
+import { useVoucherIntentStore } from '@/src/features/preferences/voucherIntentStore';
 import { usePreferencesStore } from '@/src/features/preferences/preferencesStore';
-import { useSelectedStoreStore } from '@/src/features/selected-store/selectedStoreStore';
+import {
+  type ListPosition,
+  useSelectedStoreStore,
+} from '@/src/features/selected-store/selectedStoreStore';
 import { colors, space } from '@/src/theme/tokens';
 
 const QUERY_LIMIT = 2_000;
@@ -51,30 +51,68 @@ export default function MapScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const reduceMotion = useReducedMotion();
-  const { height: screenHeight, width: screenWidth } = useWindowDimensions();
+  const {
+    height: screenHeight,
+    width: screenWidth,
+    fontScale,
+  } = useWindowDimensions();
   const mapRef = useRef<MapView | null>(null);
   const pendingCameraRef = useRef<MapRegion | null>(null);
+  const userPannedRef = useRef(false);
+  const programmaticMoveRef = useRef(true);
   const repository = useStoreRepository();
   const region = useMapStore((state) => state.region);
   const setRegion = useMapStore((state) => state.setRegion);
+  const searchRegion = useMapStore((state) => state.searchRegion);
+  const pendingSearchRegion = useMapStore((state) => state.pendingSearchRegion);
+  const proposeSearchRegion = useMapStore((state) => state.proposeSearchRegion);
+  const searchThisArea = useMapStore((state) => state.searchThisArea);
+  const clearPendingSearch = useMapStore((state) => state.clearPendingSearch);
   const userLocation = useMapStore((state) => state.userLocation);
   const setUserLocation = useMapStore((state) => state.setUserLocation);
   const locationEnabled = usePreferencesStore((state) => state.locationEnabled);
   const filters = useFilterStore();
+  const voucherIntent = useVoucherIntentStore((state) => state.intent);
   const selectedStoreIds = useSelectedStoreStore(
     (state) => state.selectedStoreIds,
   );
   const selectStores = useSelectedStoreStore((state) => state.selectStores);
-  const clearSelectedStore = useSelectedStoreStore(
-    (state) => state.clearSelectedStore,
-  );
+  const navigation = useSelectedStoreStore();
+  const {
+    sheetIndex,
+    setSheetIndex,
+    task,
+    scrollPosition,
+    setScrollPosition,
+    contextVersion,
+    startSearch,
+    goBack,
+  } = navigation;
+  const latestScrollPosition = useRef(scrollPosition);
+  const scrollContext = useRef(contextVersion);
+  if (scrollContext.current !== contextVersion) {
+    latestScrollPosition.current = scrollPosition;
+    scrollContext.current = contextVersion;
+  }
+  const captureScrollPosition = useCallback((position: ListPosition) => {
+    latestScrollPosition.current = position;
+  }, []);
   const meta = useDatasetStore((state) => state.meta);
   const setDatasetMeta = useDatasetStore((state) => state.setDatasetMeta);
   const { checkUpdate } = useDatasetUpdate();
   const [queryAttempt, setQueryAttempt] = useState(0);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
-  const [viewMode, setViewMode] = useState<MapViewMode>('map');
-  const [sheetIndex, setSheetIndex] = useState(0);
+  const viewMode: MapViewMode = sheetIndex === 2 ? 'list' : 'map';
+  const [contextNotice, setContextNotice] = useState<string | null>(null);
+  const previousRevision = useRef(meta?.version);
+  const setViewMode = useCallback(
+    (mode: MapViewMode) => setSheetIndex(mode === 'list' ? 2 : 0),
+    [setSheetIndex],
+  );
+  useEffect(() => {
+    if (screenWidth / fontScale < 360 || screenHeight < 600) setSheetIndex(2);
+  }, [screenWidth, screenHeight, fontScale, setSheetIndex]);
+
   const estimatedDeckHeight =
     Math.max(insets.top, space.lg) + 56 + space.md + 44;
   const [deckHeight, setDeckHeight] = useState(estimatedDeckHeight);
@@ -95,24 +133,39 @@ export default function MapScreen() {
   const searching = filters.keyword.trim().length > 0;
   const searchParams = useMemo(
     () => ({
+      medium: voucherIntent.medium,
+      voucher: voucherIntent.voucher,
       keyword: filters.keyword,
       couponType: filters.couponType,
       payment: filters.payment,
       categoryMajorId: filters.categoryMajorId,
-      bounds: searching ? undefined : boundsFromRegion(region),
+      bounds: searching ? undefined : boundsFromRegion(searchRegion),
       limit: QUERY_LIMIT,
     }),
     [
+      voucherIntent.medium,
+      voucherIntent.voucher,
       filters.keyword,
       filters.couponType,
       filters.payment,
       filters.categoryMajorId,
       searching,
-      region,
+      searchRegion,
     ],
   );
-  const { stores, selectedStores, queryStatus, selectionFailed } =
-    useStoreSearch(repository, searchParams, selectedStoreIds, queryAttempt);
+  const {
+    stores,
+    selectedStores,
+    queryStatus,
+    selectionStatus,
+    selectionFailed,
+  } = useStoreSearch(
+    repository,
+    searchParams,
+    selectedStoreIds,
+    queryAttempt,
+    meta?.version,
+  );
   const visibleStores = useMemo(
     () =>
       filterGroupsByRadius(
@@ -168,26 +221,110 @@ export default function MapScreen() {
     insets.bottom,
   );
   const top = Math.max(insets.top, space.lg);
-  // Concrete width for the absolutely-positioned deck so its flex-1 children
-  // (search + chip row) always get a firm width instead of collapsing to 0.
-  const allSelected = filters.couponType === 'all';
-  // Only the coupon filter lives inline; payment / category / radius are set in
-  // the filter sheet, so the filter button lights up when any of them is active.
+  // The filter indicator describes extra constraints beyond the visible voucher choice.
   const advancedActive =
+    filters.couponType !== 'all' ||
     filters.payment !== 'all' ||
     filters.categoryMajorId !== null ||
     filters.radiusMeters !== 'all';
   const locationButtonBottom = sheetHeight + space.md;
 
   const handleRegionChange = useCallback(
-    (nextRegion: typeof region) => {
+    (nextRegion: MapRegion, details: { isGesture?: boolean }) => {
       setRegion(nextRegion);
+      if (
+        details.isGesture ||
+        userPannedRef.current ||
+        (details.isGesture == null && !programmaticMoveRef.current)
+      ) {
+        proposeSearchRegion(nextRegion);
+      }
+      userPannedRef.current = false;
+      programmaticMoveRef.current = false;
     },
-    [setRegion],
+    [proposeSearchRegion, setRegion],
   );
+
+  const clearSelectedStore = useCallback(() => {
+    Keyboard.dismiss();
+    pendingCameraRef.current = null;
+    const parent = goBack();
+    if (parent) {
+      clearPendingSearch();
+      userPannedRef.current = false;
+      setRegion(parent.camera);
+      programmaticMoveRef.current = true;
+      mapRef.current?.animateToRegion(parent.camera, reduceMotion ? 0 : 320);
+    }
+  }, [clearPendingSearch, goBack, reduceMotion, setRegion]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const subscription = BackHandler.addEventListener(
+        'hardwareBackPress',
+        () => {
+          if (Keyboard.isVisible()) {
+            Keyboard.dismiss();
+            return true;
+          }
+          if (useSelectedStoreStore.getState().task === 'browse') return false;
+          clearSelectedStore();
+          return true;
+        },
+      );
+      return () => subscription.remove();
+    }, [clearSelectedStore]),
+  );
+
+  const searchSession = JSON.stringify([
+    searchParams,
+    filters.radiusMeters,
+    locationEnabled ? userLocation : null,
+  ]);
+  useEffect(() => {
+    startSearch(searching);
+  }, [searchSession, searching, startSearch]);
+
+  useEffect(() => {
+    if (
+      previousRevision.current &&
+      previousRevision.current !== meta?.version
+    ) {
+      setContextNotice(t('navigation.resultsChanged'));
+    }
+    previousRevision.current = meta?.version;
+  }, [meta?.version, t]);
+
+  useEffect(() => {
+    if (
+      selectedStoreIds.length > 0 &&
+      selectionStatus === 'success' &&
+      selectedStores.length === 0
+    ) {
+      clearSelectedStore();
+      setContextNotice(t('navigation.selectionMissing'));
+    }
+  }, [
+    clearSelectedStore,
+    selectedStoreIds,
+    selectedStores,
+    selectionStatus,
+    t,
+  ]);
+
+  const commitSearchArea = useCallback(() => {
+    // Explicit area search replaces the current comparison session.
+    while (useSelectedStoreStore.getState().parents.length > 0) goBack();
+    pendingCameraRef.current = null;
+    searchThisArea();
+    filters.setKeyword('');
+    setContextNotice(null);
+  }, [filters, goBack, searchThisArea]);
 
   const queueCameraToStore = useCallback(
     (lat: number, lng: number, zoomIn: boolean) => {
+      clearPendingSearch();
+      userPannedRef.current = false;
       pendingCameraRef.current = {
         latitude: lat,
         longitude: lng,
@@ -195,7 +332,7 @@ export default function MapScreen() {
         longitudeDelta: zoomIn ? 0.008 : region.longitudeDelta,
       };
     },
-    [region.latitudeDelta, region.longitudeDelta],
+    [clearPendingSearch, region.latitudeDelta, region.longitudeDelta],
   );
 
   useEffect(() => {
@@ -207,6 +344,7 @@ export default function MapScreen() {
     }
     if (sheetIndex !== 1) return;
     pendingCameraRef.current = null;
+    programmaticMoveRef.current = true;
     // react-native-maps can crash Android while applying mapPadding to a
     // recreated map. Offset only the selection camera instead.
     mapRef.current?.animateToRegion(
@@ -236,13 +374,23 @@ export default function MapScreen() {
   const handleSelectStore = useCallback(
     (id: string) => {
       Keyboard.dismiss();
-      const store = visibleStores.find((candidate) => candidate.id === id);
+      const store = [...visibleStores, ...selectedStores].find(
+        (candidate) => candidate.id === id,
+      );
       if (store?.lat != null && store.lng != null) {
         queueCameraToStore(store.lat, store.lng, true);
       }
-      selectStores([id]);
+      setScrollPosition(latestScrollPosition.current);
+      selectStores([id], region);
     },
-    [queueCameraToStore, selectStores, visibleStores],
+    [
+      queueCameraToStore,
+      region,
+      selectStores,
+      selectedStores,
+      setScrollPosition,
+      visibleStores,
+    ],
   );
 
   const handleSelectStores = useCallback(
@@ -251,24 +399,34 @@ export default function MapScreen() {
       if (store?.lat != null && store.lng != null) {
         queueCameraToStore(store.lat, store.lng, false);
       }
-      selectStores(stores.map((item) => item.id));
+      Keyboard.dismiss();
+      setScrollPosition(latestScrollPosition.current);
+      selectStores(
+        stores.map((item) => item.id),
+        region,
+      );
     },
-    [queueCameraToStore, selectStores],
+    [queueCameraToStore, region, selectStores, setScrollPosition],
   );
 
   const handleClusterPress = useCallback(
     (cluster: MarkerCluster<StoreLocationGroup>) => {
-      mapRef.current?.animateToRegion(
-        {
-          latitude: cluster.lat,
-          longitude: cluster.lng,
-          latitudeDelta: Math.max(region.latitudeDelta / 2.5, 0.004),
-          longitudeDelta: Math.max(region.longitudeDelta / 2.5, 0.004),
-        },
-        reduceMotion ? 0 : 320,
-      );
+      const nextRegion = {
+        latitude: cluster.lat,
+        longitude: cluster.lng,
+        latitudeDelta: Math.max(region.latitudeDelta / 2.5, 0.004),
+        longitudeDelta: Math.max(region.longitudeDelta / 2.5, 0.004),
+      };
+      proposeSearchRegion(nextRegion);
+      programmaticMoveRef.current = true;
+      mapRef.current?.animateToRegion(nextRegion, reduceMotion ? 0 : 320);
     },
-    [reduceMotion, region.latitudeDelta, region.longitudeDelta],
+    [
+      proposeSearchRegion,
+      reduceMotion,
+      region.latitudeDelta,
+      region.longitudeDelta,
+    ],
   );
 
   return (
@@ -277,11 +435,14 @@ export default function MapScreen() {
           it. (An absolutely-positioned wrapper hides the Android map surface.) */}
       <StoreMap
         clusters={clusters}
-        initialRegion={KOTO_INITIAL_REGION}
+        initialRegion={region}
         mapRef={mapRef}
         onClusterPress={handleClusterPress}
         onMapPress={clearSelectedStore}
         onRegionChangeComplete={handleRegionChange}
+        onPanDrag={() => {
+          userPannedRef.current = true;
+        }}
         onSelectStores={handleSelectStores}
         selectedStoreIds={selectedStoreIds}
         showsUserLocation={locationEnabled}
@@ -336,41 +497,46 @@ export default function MapScreen() {
             </IconButton>
           </View>
 
-          {/* Only the coupon-type chips stay inline — the one decision every
-              user makes constantly. Payment / genre / distance live behind the
-              filter button so the map stays uncluttered. */}
-          <View className="mt-3 flex-row flex-wrap" style={{ gap: space.sm }}>
-            <Chip
-              selected={allSelected}
-              onPress={() => filters.setCouponType('all')}
+          <View className="mt-3">
+            <Button
+              accessibilityLabel={`${t('voucher.label')}: ${t(
+                'voucher.summary',
+                {
+                  medium: t(
+                    `voucher.${voucherIntent.medium === 'any' ? 'notSpecified' : voucherIntent.medium}`,
+                  ),
+                  voucher: t(
+                    `voucher.${voucherIntent.voucher === 'any' ? 'notSpecified' : voucherIntent.voucher}`,
+                  ),
+                },
+              )}`}
+              onPress={() => router.push('/filters')}
+              variant="secondary"
             >
-              {t('common.all')}
-            </Chip>
-            <Chip
-              selected={filters.couponType === 'ab'}
-              onPress={() =>
-                filters.setCouponType(
-                  filters.couponType === 'ab' ? 'all' : 'ab',
-                )
-              }
-            >
-              {t('filters.ab')}
-            </Chip>
-            <Chip
-              selected={filters.couponType === 'b_only'}
-              tone="orange"
-              onPress={() =>
-                filters.setCouponType(
-                  filters.couponType === 'b_only' ? 'all' : 'b_only',
-                )
-              }
-            >
-              {t('filters.bOnly')}
-            </Chip>
+              {t('voucher.label')}:{' '}
+              {t('voucher.summary', {
+                medium: t(
+                  `voucher.${voucherIntent.medium === 'any' ? 'notSpecified' : voucherIntent.medium}`,
+                ),
+                voucher: t(
+                  `voucher.${voucherIntent.voucher === 'any' ? 'notSpecified' : voucherIntent.voucher}`,
+                ),
+              })}
+            </Button>
           </View>
         </View>
       </View>
 
+      {pendingSearchRegion && !keyboardVisible && sheetIndex < 2 ? (
+        <View
+          className="absolute self-center"
+          style={{ top: deckHeight + space.sm }}
+        >
+          <Button onPress={commitSearchArea} variant="secondary">
+            {t('map.searchHere')}
+          </Button>
+        </View>
+      ) : null}
       {selectedStoreIds.length === 0 &&
       viewMode === 'map' &&
       sheetIndex < 2 &&
@@ -384,10 +550,26 @@ export default function MapScreen() {
             zIndex: 18,
           }}
         >
-          <UserLocationButton mapRef={mapRef} />
+          <UserLocationButton mapRef={mapRef} onLocate={proposeSearchRegion} />
         </View>
       ) : null}
       <StoreBottomSheet
+        task={task}
+        contextVersion={contextVersion}
+        datasetRevision={meta?.version}
+        sheetIndex={sheetIndex}
+        scrollPosition={scrollPosition}
+        onScrollPositionChange={captureScrollPosition}
+        backToFacility={navigation.parents.at(-1)?.task === 'facility'}
+        contextNotice={
+          contextNotice ??
+          (task === 'store' &&
+          queryStatus === 'success' &&
+          selectedStores.length > 0 &&
+          !visibleStores.some((store) => store.id === selectedStoreIds[0])
+            ? t('navigation.outsideResults')
+            : null)
+        }
         onChangeViewMode={setViewMode}
         onClearSelection={clearSelectedStore}
         onResetFilters={filters.reset}

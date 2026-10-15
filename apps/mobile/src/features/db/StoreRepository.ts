@@ -1,6 +1,7 @@
 import {
   boundsFromRadius,
   distanceMeters,
+  getVoucherConditions,
   normalizeSearchText,
 } from '@koto/core';
 import type {
@@ -124,6 +125,17 @@ export function createStoreRepository(db: StoreDatabase): StoreRepository & {
 function buildSearchQuery(params: StoreSearchParams) {
   const where: string[] = [];
   const args: Array<string | number> = [];
+  const voucherConditions = getVoucherConditions(params);
+
+  if (voucherConditions.couponType) {
+    where.push('coupon_type = ?');
+    args.push(voucherConditions.couponType);
+  }
+  if (voucherConditions.medium === 'paper') {
+    where.push('accepts_paper = 1');
+  } else if (voucherConditions.medium === 'digital') {
+    where.push('accepts_digital = 1');
+  }
 
   if (params.keyword?.trim()) {
     const keyword = `%${normalizeSearchText(params.keyword)}%`;

@@ -19,11 +19,14 @@ import {
 } from '@/src/features/dataset/datasetPaths';
 import { getStoredLocationEnabled } from '@/src/features/preferences/locationPreference';
 import { usePreferencesStore } from '@/src/features/preferences/preferencesStore';
+import { useVoucherClock } from '@/src/features/preferences/useVoucherClock';
+import { useVoucherIntentStore } from '@/src/features/preferences/voucherIntentStore';
 import { i18nReady } from '@/src/i18n';
 
 const NOTICE_KEY = 'koto.unofficialNoticeSeen';
 
 export function AppProviders({ children }: { children: ReactNode }) {
+  useVoucherClock();
   const { t } = useTranslation();
   const [bootState, setBootState] = useState<'loading' | 'ready' | 'failed'>(
     'loading',
@@ -33,7 +36,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     setBootState('loading');
-    Promise.all([bootApp(), i18nReady])
+    Promise.all([
+      bootApp(),
+      i18nReady,
+      useVoucherIntentStore.getState().hydrate(),
+    ])
       .then(() => {
         if (!cancelled) {
           setBootState('ready');

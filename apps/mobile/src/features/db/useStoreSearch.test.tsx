@@ -105,3 +105,41 @@ it('ignores superseded responses and shows errors while keeping the last good re
   await waitFor(() => expect(result.current.queryStatus).toBe('error'));
   expect(result.current.stores).toEqual([]);
 });
+
+it('withholds rows from old criteria before debounce and after a new-criteria failure', async () => {
+  const ids: string[] = [];
+  const { result, rerender } = renderHook(
+    ({ params, revision }: { params: StoreSearchParams; revision: string }) =>
+      useStoreSearch(repository, params, ids, 0, revision),
+    { initialProps: { params: {}, revision: 'old' } },
+  );
+  await waitFor(() => expect(result.current.stores).toHaveLength(2));
+  vi.spyOn(repository, 'searchStores').mockRejectedValue(
+    new Error('read failed'),
+  );
+  rerender({ params: { couponType: 'ab' }, revision: 'old' });
+  expect(result.current.stores).toEqual([]);
+  expect(result.current.queryStatus).toBe('loading');
+  await waitFor(() => expect(result.current.queryStatus).toBe('error'));
+  expect(result.current.stores).toEqual([]);
+  rerender({ params: {}, revision: 'new' });
+  expect(result.current.stores).toEqual([]);
+  expect(result.current.queryStatus).toBe('loading');
+});
+
+it('retains last good rows only when retrying the same criteria and revision', async () => {
+  const params = {};
+  const ids: string[] = [];
+  const { result, rerender } = renderHook(
+    ({ attempt }) => useStoreSearch(repository, params, ids, attempt, 'same'),
+    { initialProps: { attempt: 0 } },
+  );
+  await waitFor(() => expect(result.current.stores).toHaveLength(2));
+  vi.spyOn(repository, 'searchStores').mockRejectedValueOnce(
+    new Error('read failed'),
+  );
+  rerender({ attempt: 1 });
+  expect(result.current.stores).toHaveLength(2);
+  await waitFor(() => expect(result.current.queryStatus).toBe('error'));
+  expect(result.current.stores).toHaveLength(2);
+});

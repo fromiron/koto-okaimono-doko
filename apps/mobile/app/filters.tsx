@@ -1,7 +1,7 @@
 import { categories } from '@koto/core';
 import { useRouter } from 'expo-router';
 import { X } from 'lucide-react-native';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   Modal,
   Pressable,
@@ -27,6 +27,7 @@ import {
 import { useCurrentLocationWithFeedback } from '@/src/features/location/useCurrentLocationWithFeedback';
 import { useMapStore } from '@/src/features/map/mapStore';
 import { usePreferencesStore } from '@/src/features/preferences/preferencesStore';
+import { useVoucherIntentStore } from '@/src/features/preferences/voucherIntentStore';
 import { bottomSheetShadow, colors, space } from '@/src/theme/tokens';
 
 export default function FiltersScreen() {
@@ -36,6 +37,15 @@ export default function FiltersScreen() {
   const reduceMotion = useReducedMotion();
   const window = useWindowDimensions();
   const filters = useFilterStore();
+  const { intent, setIntent, saveFailed } = useVoucherIntentStore();
+  const [draftIntent, setDraftIntent] = useState(intent);
+  const [draftFilters, setDraftFilters] = useState(() => ({
+    keyword: filters.keyword,
+    couponType: filters.couponType,
+    categoryMajorId: filters.categoryMajorId,
+    radiusMeters: filters.radiusMeters,
+  }));
+  const [applying, setApplying] = useState(false);
   const userLocation = useMapStore((state) => state.userLocation);
   const locationEnabled = usePreferencesStore((state) => state.locationEnabled);
   const { requestLocation, status: locationStatus } =
@@ -47,8 +57,24 @@ export default function FiltersScreen() {
       currentLocation: userLocation,
       radius,
       requestLocation,
-      selectRadius: filters.setRadiusMeters,
+      selectRadius: (radiusMeters) =>
+        setDraftFilters((draft) => ({ ...draft, radiusMeters })),
     });
+  };
+  const handleClose = () => {
+    if (!applying) router.back();
+  };
+  const handleApply = async () => {
+    setApplying(true);
+    const saved = await setIntent(draftIntent);
+    setApplying(false);
+    if (!saved) return;
+    filters.setKeyword(draftFilters.keyword);
+    filters.setCouponType(draftFilters.couponType);
+    filters.setPayment('all');
+    filters.setCategoryMajorId(draftFilters.categoryMajorId);
+    filters.setRadiusMeters(draftFilters.radiusMeters);
+    router.back();
   };
   // A definite height + bottom anchor makes this a real bottom sheet. The
   // justify-end utility is not honoured on this overlay, so the anchor is set
@@ -60,7 +86,7 @@ export default function FiltersScreen() {
   return (
     <Modal
       animationType={reduceMotion ? 'none' : 'slide'}
-      onRequestClose={() => router.back()}
+      onRequestClose={handleClose}
       transparent
       visible
     >
@@ -73,7 +99,7 @@ export default function FiltersScreen() {
           accessible={false}
           className="absolute inset-0"
           importantForAccessibility="no-hide-descendants"
-          onPress={() => router.back()}
+          onPress={handleClose}
         />
         <View
           accessibilityViewIsModal
@@ -102,73 +128,136 @@ export default function FiltersScreen() {
             <IconButton
               accessibilityLabel={t('common.close')}
               className="shrink-0 bg-neutral-soft"
-              onPress={() => router.back()}
+              disabled={applying}
+              onPress={handleClose}
             >
               <X color={colors.ink} size={24} />
             </IconButton>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
-            <FilterSection title={t('filters.couponType')}>
+            <Text tone="muted" variant="caption">
+              {t('voucher.persistence')}
+            </Text>
+            {saveFailed ? (
+              <Text accessibilityRole="alert" className="pt-2" tone="danger">
+                {t('voucher.persistenceFailed')}
+              </Text>
+            ) : null}
+            <FilterSection title={t('voucher.medium')}>
+              {(['any', 'paper', 'digital'] as const).map((medium) => (
+                <Chip
+                  key={medium}
+                  disabled={applying}
+                  selected={draftIntent.medium === medium}
+                  tone="neutral"
+                  onPress={() =>
+                    setDraftIntent((draft) => ({ ...draft, medium }))
+                  }
+                >
+                  {t(`voucher.${medium === 'any' ? 'notSpecified' : medium}`)}
+                </Chip>
+              ))}
+            </FilterSection>
+
+            <FilterSection title={t('voucher.voucher')}>
+              {(['any', 'A', 'B'] as const).map((voucher) => (
+                <Chip
+                  key={voucher}
+                  disabled={applying}
+                  selected={draftIntent.voucher === voucher}
+                  onPress={() =>
+                    setDraftIntent((draft) => ({ ...draft, voucher }))
+                  }
+                >
+                  {t(`voucher.${voucher === 'any' ? 'notSpecified' : voucher}`)}
+                </Chip>
+              ))}
+            </FilterSection>
+
+            <FilterSection title={t('voucher.advancedStoreType')}>
               <Chip
-                selected={filters.couponType === 'all'}
-                onPress={() => filters.setCouponType('all')}
+                disabled={applying}
+                selected={draftFilters.couponType === 'all'}
+                onPress={() =>
+                  setDraftFilters((draft) => ({ ...draft, couponType: 'all' }))
+                }
               >
                 {t('common.all')}
               </Chip>
               <Chip
-                selected={filters.couponType === 'ab'}
-                onPress={() => filters.setCouponType('ab')}
+                disabled={applying}
+                selected={draftFilters.couponType === 'ab'}
+                onPress={() =>
+                  setDraftFilters((draft) => ({ ...draft, couponType: 'ab' }))
+                }
               >
                 {t('filters.ab')}
               </Chip>
               <Chip
-                selected={filters.couponType === 'b_only'}
+                disabled={applying}
+                selected={draftFilters.couponType === 'b_only'}
                 tone="orange"
-                onPress={() => filters.setCouponType('b_only')}
+                onPress={() =>
+                  setDraftFilters((draft) => ({
+                    ...draft,
+                    couponType: 'b_only',
+                  }))
+                }
               >
                 {t('filters.bOnly')}
               </Chip>
             </FilterSection>
-
-            <FilterSection title={t('filters.payment')}>
-              <Chip
-                selected={filters.payment === 'all'}
-                tone="neutral"
-                onPress={() => filters.setPayment('all')}
-              >
-                {t('common.all')}
-              </Chip>
-              <Chip
-                selected={filters.payment === 'paper'}
-                tone="neutral"
-                onPress={() => filters.setPayment('paper')}
-              >
-                {t('filters.paper')}
-              </Chip>
-              <Chip
-                selected={filters.payment === 'digital'}
-                tone="neutral"
-                onPress={() => filters.setPayment('digital')}
-              >
-                {t('filters.digital')}
-              </Chip>
-            </FilterSection>
+            <Text className="pt-2" tone="muted" variant="caption">
+              {t('voucher.advancedStoreTypeHelp')}
+            </Text>
+            {draftIntent.voucher === 'A' &&
+            draftFilters.couponType === 'b_only' ? (
+              <View className="gap-2 pt-3">
+                <Text accessibilityRole="alert" tone="danger" variant="caption">
+                  {t('voucher.conflict')}
+                </Text>
+                <Button
+                  disabled={applying}
+                  variant="secondary"
+                  onPress={() =>
+                    setDraftFilters((draft) => ({
+                      ...draft,
+                      couponType: 'all',
+                    }))
+                  }
+                >
+                  {t('voucher.clearAdvanced')}
+                </Button>
+              </View>
+            ) : null}
 
             <FilterSection title={t('filters.category')}>
               <Chip
-                selected={filters.categoryMajorId === null}
+                disabled={applying}
+                selected={draftFilters.categoryMajorId === null}
                 tone="neutral"
-                onPress={() => filters.setCategoryMajorId(null)}
+                onPress={() =>
+                  setDraftFilters((draft) => ({
+                    ...draft,
+                    categoryMajorId: null,
+                  }))
+                }
               >
                 {t('common.all')}
               </Chip>
               {categories.map((category) => (
                 <Chip
                   key={category.id}
-                  selected={filters.categoryMajorId === category.id}
+                  disabled={applying}
+                  selected={draftFilters.categoryMajorId === category.id}
                   tone="neutral"
-                  onPress={() => filters.setCategoryMajorId(category.id)}
+                  onPress={() =>
+                    setDraftFilters((draft) => ({
+                      ...draft,
+                      categoryMajorId: category.id,
+                    }))
+                  }
                 >
                   {t(category.translationKey)}
                 </Chip>
@@ -177,9 +266,15 @@ export default function FiltersScreen() {
 
             <FilterSection divider={false} title={t('filters.radius')}>
               <Chip
-                selected={filters.radiusMeters === 'all'}
+                disabled={applying || radiusRequesting}
+                selected={draftFilters.radiusMeters === 'all'}
                 tone="neutral"
-                onPress={() => filters.setRadiusMeters('all')}
+                onPress={() =>
+                  setDraftFilters((draft) => ({
+                    ...draft,
+                    radiusMeters: 'all',
+                  }))
+                }
               >
                 {t('common.all')}
               </Chip>
@@ -198,8 +293,8 @@ export default function FiltersScreen() {
                       ? undefined
                       : t('filters.radiusNeedsLocation')
                   }
-                  disabled={!locationEnabled || radiusRequesting}
-                  selected={filters.radiusMeters === value}
+                  disabled={applying || !locationEnabled || radiusRequesting}
+                  selected={draftFilters.radiusMeters === value}
                   tone="neutral"
                   onPress={() => handleRadiusPress(value)}
                 >
@@ -219,13 +314,27 @@ export default function FiltersScreen() {
           </ScrollView>
 
           <View className="gap-3 pt-4">
-            <Button size="lg" onPress={() => router.back()}>
-              {t('common.done')}
+            <Button
+              disabled={radiusRequesting}
+              loading={applying}
+              size="lg"
+              onPress={() => void handleApply()}
+            >
+              {t('common.apply')}
             </Button>
             <PressableScale
               accessibilityRole="button"
               className="min-h-11 items-center justify-center self-center rounded-full px-5 active:bg-neutral-soft"
-              onPress={filters.reset}
+              disabled={applying || radiusRequesting}
+              onPress={() => {
+                setDraftIntent({ medium: 'any', voucher: 'any' });
+                setDraftFilters({
+                  keyword: '',
+                  couponType: 'all',
+                  categoryMajorId: null,
+                  radiusMeters: 'all',
+                });
+              }}
             >
               <Text tone="accent" variant="label">
                 {t('filters.resetConditions')}
