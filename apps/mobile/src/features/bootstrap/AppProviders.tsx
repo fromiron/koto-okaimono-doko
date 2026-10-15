@@ -1,14 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { SQLiteProvider } from 'expo-sqlite';
+import * as FileSystem from 'expo-file-system/legacy';
+import { useDatasetStore } from '../dataset/datasetStore';
+import { validateDatabase } from '../db/validateDatabase';
+import { SQLiteProvider, type SQLiteDatabase } from 'expo-sqlite';
 import type { ReactNode } from 'react';
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Alert, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -18,39 +14,35 @@ import { Text } from '@/src/components/ui/Text';
 import { bootApp } from '@/src/features/bootstrap/appBoot';
 import {
   activeDatabaseName,
+  datasetPaths,
   sqliteDirectory,
 } from '@/src/features/dataset/datasetPaths';
 import { getStoredLocationEnabled } from '@/src/features/preferences/locationPreference';
 import { usePreferencesStore } from '@/src/features/preferences/preferencesStore';
+import { useVoucherClock } from '@/src/features/preferences/useVoucherClock';
+import { useVoucherIntentStore } from '@/src/features/preferences/voucherIntentStore';
 import { i18nReady } from '@/src/i18n';
-
-type DatabaseReloadContextValue = {
-  reloadDatabase: () => void;
-  unmountDatabase: () => void;
-};
-
-const DatabaseReloadContext = createContext<DatabaseReloadContextValue | null>(
-  null,
-);
 
 const NOTICE_KEY = 'koto.unofficialNoticeSeen';
 
 export function AppProviders({ children }: { children: ReactNode }) {
+  useVoucherClock();
   const { t } = useTranslation();
   const [bootState, setBootState] = useState<'loading' | 'ready' | 'failed'>(
     'loading',
   );
   const [bootAttempt, setBootAttempt] = useState(0);
-  const [databaseGeneration, setDatabaseGeneration] = useState(0);
-  const [databaseMounted, setDatabaseMounted] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     setBootState('loading');
-    Promise.all([bootApp(), i18nReady])
+    Promise.all([
+      bootApp(),
+      i18nReady,
+      useVoucherIntentStore.getState().hydrate(),
+    ])
       .then(() => {
         if (!cancelled) {
-          setDatabaseMounted(true);
           setBootState('ready');
         }
       })
@@ -86,24 +78,22 @@ export function AppProviders({ children }: { children: ReactNode }) {
     });
   }, [bootState, t]);
 
-  const reloadDatabase = useCallback(() => {
-    setDatabaseMounted(true);
-    setDatabaseGeneration((value) => value + 1);
+  const initializeDatabase = useCallback(async (db: SQLiteDatabase) => {
+    const meta = await validateDatabase(db);
+    const result = await bootApp();
+    const state = useDatasetStore.getState();
+    state.setDatasetMeta(meta);
+    if (result.updated) {
+      await FileSystem.deleteAsync(datasetPaths.localManifestUri, {
+        idempotent: true,
+      });
+      state.setUpdateStatus('updated');
+    } else if (result.error) {
+      state.setUpdateStatus('failed', result.error);
+    }
   }, []);
 
-  const unmountDatabase = useCallback(() => {
-    setDatabaseMounted(false);
-  }, []);
-
-  const handleDatabaseError = useCallback(() => {
-    setDatabaseMounted(false);
-    setBootState('failed');
-  }, []);
-
-  const reloadContext = useMemo(
-    () => ({ reloadDatabase, unmountDatabase }),
-    [reloadDatabase, unmountDatabase],
-  );
+  const handleDatabaseError = useCallback(() => setBootState('failed'), []);
 
   if (bootState === 'loading') {
     return <LoadingState message={t('common.loading')} />;
@@ -133,27 +123,13 @@ export function AppProviders({ children }: { children: ReactNode }) {
   }
 
   return (
-    <DatabaseReloadContext.Provider value={reloadContext}>
-      {databaseMounted ? (
-        <SQLiteProvider
-          key={databaseGeneration}
-          databaseName={activeDatabaseName}
-          directory={sqliteDirectory}
-          onError={handleDatabaseError}
-        >
-          {children}
-        </SQLiteProvider>
-      ) : (
-        <LoadingState message={t('common.loading')} />
-      )}
-    </DatabaseReloadContext.Provider>
+    <SQLiteProvider
+      databaseName={activeDatabaseName}
+      directory={sqliteDirectory}
+      onInit={initializeDatabase}
+      onError={handleDatabaseError}
+    >
+      {children}
+    </SQLiteProvider>
   );
-}
-
-export function useDatabaseReload() {
-  const context = useContext(DatabaseReloadContext);
-  if (!context) {
-    throw new Error('useDatabaseReload must be used inside AppProviders');
-  }
-  return context;
 }

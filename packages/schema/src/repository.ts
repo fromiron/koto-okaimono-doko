@@ -1,7 +1,10 @@
 import type { Store, StoreWithDistance } from './store';
 import type { DatasetMeta } from './dataset';
+import type { VoucherIntent } from './voucher';
 
 export type StoreSearchParams = {
+  medium?: VoucherIntent['medium'];
+  voucher?: VoucherIntent['voucher'];
   keyword?: string;
   couponType?: 'all' | 'ab' | 'b_only';
   payment?: 'all' | 'paper' | 'digital';

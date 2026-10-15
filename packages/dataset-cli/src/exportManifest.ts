@@ -3,17 +3,22 @@ import { readFile, stat, writeFile } from 'node:fs/promises';
 
 import type { DatasetManifest, DatasetMeta, Store } from '@koto/schema';
 
-import { outputPaths } from './paths';
+import { datasetOutputPaths, outputPaths } from './paths';
 
 const DATASET_BASE_URL =
-  process.env.DATASET_BASE_URL ?? 'https://fromiron.github.io/koto-okaimono-doko';
+  process.env.DATASET_BASE_URL ??
+  'https://fromiron.github.io/koto-okaimono-doko';
 
-export async function exportManifest(meta: DatasetMeta, stores: Store[]): Promise<DatasetManifest> {
+export async function exportManifest(
+  meta: DatasetMeta,
+  stores: Store[],
+  paths: ReturnType<typeof datasetOutputPaths> = outputPaths,
+): Promise<DatasetManifest> {
   const [sqliteHash, sqliteStat, jsonHash, jsonStat] = await Promise.all([
-    sha256File(outputPaths.sqlite),
-    stat(outputPaths.sqlite),
-    sha256File(outputPaths.storesJson),
-    stat(outputPaths.storesJson),
+    sha256File(paths.sqlite),
+    stat(paths.sqlite),
+    sha256File(paths.storesJson),
+    stat(paths.storesJson),
   ]);
 
   const manifest: DatasetManifest = {
@@ -30,9 +35,16 @@ export async function exportManifest(meta: DatasetMeta, stores: Store[]): Promis
     },
   };
 
-  await writeFile(outputPaths.manifest, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
-  await writeFile(outputPaths.seedManifest, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
-  await writeFile(outputPaths.storesGeoJson, `${JSON.stringify(toGeoJson(stores), null, 2)}\n`, 'utf8');
+  await writeFile(
+    paths.manifest,
+    `${JSON.stringify(manifest, null, 2)}\n`,
+    'utf8',
+  );
+  await writeFile(
+    paths.storesGeoJson,
+    `${JSON.stringify(toGeoJson(stores), null, 2)}\n`,
+    'utf8',
+  );
 
   return manifest;
 }

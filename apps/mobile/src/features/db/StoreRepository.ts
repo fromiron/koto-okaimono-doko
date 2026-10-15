@@ -1,13 +1,23 @@
-import { boundsFromRadius, distanceMeters, normalizeSearchText } from '@koto/core';
+import {
+  boundsFromRadius,
+  distanceMeters,
+  getVoucherConditions,
+  normalizeSearchText,
+} from '@koto/core';
 import type {
-  DatasetMeta,
   NearbySearchParams,
   Store,
   StoreRepository,
   StoreSearchParams,
   StoreWithDistance,
 } from '@koto/schema';
+import { DatasetMetaSchema } from '@koto/schema';
 import type { SQLiteDatabase } from 'expo-sqlite';
+
+export type StoreDatabase = Pick<
+  SQLiteDatabase,
+  'getFirstAsync' | 'getAllAsync'
+>;
 
 type StoreRow = {
   id: string;
@@ -40,12 +50,17 @@ type StoreRow = {
   updated_at: string;
 };
 
-export function createStoreRepository(db: SQLiteDatabase): StoreRepository & {
-  getLocationGroups(params: StoreSearchParams): Promise<Array<{ id: string; lat: number; lng: number; stores: Store[] }>>;
+export function createStoreRepository(db: StoreDatabase): StoreRepository & {
+  getLocationGroups(
+    params: StoreSearchParams,
+  ): Promise<Array<{ id: string; lat: number; lng: number; stores: Store[] }>>;
 } {
   return {
     async getStoreById(id) {
-      const row = await db.getFirstAsync<StoreRow>('SELECT * FROM stores WHERE id = ?', [id]);
+      const row = await db.getFirstAsync<StoreRow>(
+        'SELECT * FROM stores WHERE id = ?',
+        [id],
+      );
       return row ? rowToStore(row) : null;
     },
 
@@ -56,7 +71,10 @@ export function createStoreRepository(db: SQLiteDatabase): StoreRepository & {
     },
 
     async findNearbyStores(params: NearbySearchParams) {
-      const bounds = boundsFromRadius({ lat: params.lat, lng: params.lng }, params.radiusMeters);
+      const bounds = boundsFromRadius(
+        { lat: params.lat, lng: params.lng },
+        params.radiusMeters,
+      );
       const stores = await this.searchStores({
         ...(params.filters ?? {}),
         bounds,
@@ -64,45 +82,42 @@ export function createStoreRepository(db: SQLiteDatabase): StoreRepository & {
       });
 
       return stores
-        .filter((store): store is Store & { lat: number; lng: number } => store.lat !== null && store.lng !== null)
+        .filter(
+          (store): store is Store & { lat: number; lng: number } =>
+            store.lat !== null && store.lng !== null,
+        )
         .map<StoreWithDistance>((store) => ({
           ...store,
-          distanceMeters: distanceMeters({ lat: params.lat, lng: params.lng }, { lat: store.lat, lng: store.lng }),
+          distanceMeters: distanceMeters(
+            { lat: params.lat, lng: params.lng },
+            { lat: store.lat, lng: store.lng },
+          ),
         }))
         .filter((store) => store.distanceMeters <= params.radiusMeters)
         .sort((a, b) => a.distanceMeters - b.distanceMeters);
     },
 
     async getDatasetMeta() {
-      const rows = await db.getAllAsync<{ key: string; value: string }>('SELECT key, value FROM dataset_meta');
+      const rows = await db.getAllAsync<{ key: string; value: string }>(
+        'SELECT key, value FROM dataset_meta',
+      );
       const meta = Object.fromEntries(rows.map((row) => [row.key, row.value]));
-      return {
-        datasetId: meta.datasetId ?? 'unknown',
-        version: meta.version ?? 'unknown',
-        officialUpdatedAt: meta.officialUpdatedAt ?? 'unknown',
-        generatedAt: meta.generatedAt ?? 'unknown',
-        storeCount: Number(meta.storeCount ?? 0),
-      } satisfies DatasetMeta;
+      return DatasetMetaSchema.parse({
+        ...meta,
+        storeCount: Number(meta.storeCount),
+        schemaVersion:
+          meta.schemaVersion === undefined
+            ? undefined
+            : Number(meta.schemaVersion),
+        sourceDates: meta.sourceDates
+          ? JSON.parse(meta.sourceDates)
+          : undefined,
+      });
     },
 
     async getLocationGroups(params) {
       const stores = await this.searchStores(params);
-      const groups = new Map<string, { id: string; lat: number; lng: number; stores: Store[] }>();
-
-      for (const store of stores) {
-        if (store.lat === null || store.lng === null) continue;
-        const key = `${store.lat.toFixed(6)},${store.lng.toFixed(6)}`;
-        const group = groups.get(key) ?? {
-          id: key,
-          lat: store.lat,
-          lng: store.lng,
-          stores: [],
-        };
-        group.stores.push(store);
-        groups.set(key, group);
-      }
-
-      return [...groups.values()];
+      return groupStoresByLocation(stores);
     },
   };
 }
@@ -110,13 +125,31 @@ export function createStoreRepository(db: SQLiteDatabase): StoreRepository & {
 function buildSearchQuery(params: StoreSearchParams) {
   const where: string[] = [];
   const args: Array<string | number> = [];
+  const voucherConditions = getVoucherConditions(params);
+
+  if (voucherConditions.couponType) {
+    where.push('coupon_type = ?');
+    args.push(voucherConditions.couponType);
+  }
+  if (voucherConditions.medium === 'paper') {
+    where.push('accepts_paper = 1');
+  } else if (voucherConditions.medium === 'digital') {
+    where.push('accepts_digital = 1');
+  }
 
   if (params.keyword?.trim()) {
     const keyword = `%${normalizeSearchText(params.keyword)}%`;
     where.push(
       '(normalized_name LIKE ? OR normalized_address LIKE ? OR name LIKE ? OR address LIKE ? OR mall_name LIKE ? OR shopping_street LIKE ?)',
     );
-    args.push(keyword, keyword, `%${params.keyword}%`, `%${params.keyword}%`, `%${params.keyword}%`, `%${params.keyword}%`);
+    args.push(
+      keyword,
+      keyword,
+      `%${params.keyword}%`,
+      `%${params.keyword}%`,
+      `%${params.keyword}%`,
+      `%${params.keyword}%`,
+    );
   }
 
   if (params.couponType && params.couponType !== 'all') {
@@ -142,7 +175,12 @@ function buildSearchQuery(params: StoreSearchParams) {
 
   if (params.bounds) {
     where.push('lat BETWEEN ? AND ? AND lng BETWEEN ? AND ?');
-    args.push(params.bounds.minLat, params.bounds.maxLat, params.bounds.minLng, params.bounds.maxLng);
+    args.push(
+      params.bounds.minLat,
+      params.bounds.maxLat,
+      params.bounds.minLng,
+      params.bounds.maxLng,
+    );
   }
 
   args.push(params.limit ?? 500);
@@ -190,4 +228,26 @@ function rowToStore(row: StoreRow): Store {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+export function groupStoresByLocation(stores: Store[]) {
+  const groups = new Map<
+    string,
+    { id: string; lat: number; lng: number; stores: Store[] }
+  >();
+
+  for (const store of stores) {
+    if (store.lat === null || store.lng === null) continue;
+    const key = `${store.lat.toFixed(6)},${store.lng.toFixed(6)}`;
+    const group = groups.get(key) ?? {
+      id: key,
+      lat: store.lat,
+      lng: store.lng,
+      stores: [],
+    };
+    group.stores.push(store);
+    groups.set(key, group);
+  }
+
+  return [...groups.values()];
 }

@@ -24,7 +24,7 @@ describe('parseListPage', () => {
           </a>
         </div>
       </div>
-      <time>2026年６月24日</time>
+      <time>2026年６月24日 更新</time>
     `);
 
     expect(rows).toHaveLength(1);
@@ -37,7 +37,8 @@ describe('parseListPage', () => {
       acceptsDigital: true,
       categoryMajorId: 'shopping',
       categoryMinorId: 'sweets_bread',
-      officialDetailUrl: 'https://koto-okaimono-premium.jp/list/detail/example-id',
+      officialDetailUrl:
+        'https://koto-okaimono-premium.jp/list/detail/example-id',
       sourceUpdatedAt: '2026-06-24',
     });
   });

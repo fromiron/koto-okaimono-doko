@@ -1,20 +1,27 @@
+import { distanceMeters } from '@koto/core';
 import type { Store } from '@koto/schema';
 import BottomSheet, {
   type BottomSheetBackgroundProps,
   BottomSheetFlatList,
+  type BottomSheetFlatListMethods,
+  type BottomSheetScrollViewMethods,
   type BottomSheetHandleProps,
   BottomSheetScrollView,
 } from '@gorhom/bottom-sheet';
+import { AlertCircle, ChevronLeft, SearchX } from 'lucide-react-native';
 import {
-  AlertCircle,
-  ChevronLeft,
-  ChevronRight,
-  SearchX,
-} from 'lucide-react-native';
-import { useEffect, useMemo, useRef } from 'react';
+  type ComponentProps,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   ActivityIndicator,
-  Pressable,
+  type FlatListProps,
+  type NativeSyntheticEvent,
+  type NativeScrollEvent,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -30,18 +37,27 @@ import type { LatLng } from '@/src/features/map/mapStore';
 import { bottomSheetShadow, colors, radii } from '@/src/theme/tokens';
 
 import { StoreDetailContent } from './StoreDetailContent';
+import { StoreListRow } from './StoreListRow';
 import {
-  SHEET_FULL_RATIO,
-  SHEET_MID_RATIO,
-  SHEET_PEEK_HEIGHT,
-} from './sheetLayout';
-import { getCategoryText, getDistanceValueText } from './storeDisplay';
+  type BrowseTask,
+  type ListPosition,
+  INITIAL_LIST_POSITION,
+} from '@/src/features/selected-store/selectedStoreStore';
+import { getSheetHeightAtIndex, SHEET_PEEK_HEIGHT } from './sheetLayout';
 
 export { SHEET_PEEK_HEIGHT };
 
 export type MapViewMode = 'map' | 'list';
 
 type StoreBottomSheetProps = {
+  task: BrowseTask;
+  contextVersion: number;
+  datasetRevision?: string;
+  sheetIndex: number;
+  scrollPosition: ListPosition;
+  onScrollPositionChange: (position: ListPosition) => void;
+  backToFacility?: boolean;
+  contextNotice?: string | null;
   stores: Store[];
   visibleStores: Store[];
   visibleStoreCount: number;
@@ -61,6 +77,14 @@ type StoreBottomSheetProps = {
 };
 
 export function StoreBottomSheet({
+  task,
+  contextVersion,
+  datasetRevision,
+  sheetIndex,
+  scrollPosition,
+  onScrollPositionChange,
+  backToFacility = false,
+  contextNotice,
   onChangeViewMode,
   onClearSelection,
   onResetFilters,
@@ -80,58 +104,57 @@ export function StoreBottomSheet({
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const sheetRef = useRef<BottomSheet>(null);
+  const { height } = useWindowDimensions();
   const snapPoints = useMemo(
-    () => [
-      SHEET_PEEK_HEIGHT + insets.bottom,
-      `${SHEET_MID_RATIO * 100}%`,
-      `${SHEET_FULL_RATIO * 100}%`,
-    ],
-    [insets.bottom],
+    () =>
+      [0, 1, 2].map((index) =>
+        getSheetHeightAtIndex(index, height, insets.bottom),
+      ),
+    [height, insets.bottom],
   );
-  const hasSelection = stores.length > 0;
-  const hasEmptyState =
-    !hasSelection && visibleStoreCount === 0 && !queryLoading;
-  // The 地図/リスト toggle just controls how far the sheet opens; the browse
-  // surface is always the same vertical list, so it scans cleanly at any size.
-  const expandList =
-    !hasSelection && viewMode === 'list' && visibleStoreCount > 0;
-
-  // Search results open to half height (map + list both visible); tapping a
-  // result then shows that store's detail at the same height.
-  const targetIndex =
-    hasSelection || hasEmptyState ? 1 : expandList ? 2 : searching ? 1 : 0;
+  const hasSelection = task !== 'browse';
   useEffect(() => {
-    sheetRef.current?.snapToIndex(targetIndex);
-  }, [targetIndex]);
+    sheetRef.current?.snapToIndex(sheetIndex);
+  }, [sheetIndex]);
 
   // Nearest-first when a location is known; otherwise keep the query order.
   const sortedStores = useMemo(() => {
     if (!userLocation) return visibleStores;
     const distance = (store: Store) =>
       store.lat != null && store.lng != null
-        ? (userLocation.latitude - store.lat) ** 2 +
-          (userLocation.longitude - store.lng) ** 2
+        ? distanceMeters(
+            { lat: userLocation.latitude, lng: userLocation.longitude },
+            { lat: store.lat, lng: store.lng },
+          )
         : Number.POSITIVE_INFINITY;
-    return [...visibleStores].sort((a, b) => distance(a) - distance(b));
+    return [...visibleStores].sort(
+      (a, b) => distance(a) - distance(b) || a.id.localeCompare(b.id),
+    );
   }, [visibleStores, userLocation]);
 
-  const abCount = useMemo(
-    () => visibleStores.filter((store) => store.couponType !== 'b_only').length,
-    [visibleStores],
-  );
-
+  const notice = contextNotice ? (
+    <Text
+      accessibilityLiveRegion="polite"
+      className="px-5 pb-2"
+      tone="muted"
+      variant="caption"
+    >
+      {contextNotice}
+    </Text>
+  ) : null;
   const header = (
-    <NearbyHeader
-      abCount={abCount}
-      count={visibleStoreCount}
-      hasLocation={!!userLocation}
-      onChangeViewMode={onChangeViewMode}
-      queryFailed={queryFailed}
-      queryLoading={queryLoading}
-      searching={searching}
-      t={t}
-      viewMode={viewMode}
-    />
+    <>
+      {notice}
+      <NearbyHeader
+        count={visibleStoreCount}
+        onChangeViewMode={onChangeViewMode}
+        queryFailed={queryFailed}
+        queryLoading={queryLoading}
+        searching={searching}
+        t={t}
+        viewMode={viewMode}
+      />
+    </>
   );
 
   return (
@@ -146,8 +169,9 @@ export function StoreBottomSheet({
         borderRadius: radii.sheet,
       }}
       enableDynamicSizing={false}
+      enableContentPanningGesture={false}
       handleComponent={SheetHandle}
-      index={targetIndex}
+      index={sheetIndex}
       onAnimate={(_fromIndex, toIndex) => onSheetIndexChange?.(toIndex)}
       onChange={onSheetIndexChange}
       snapPoints={snapPoints}
@@ -164,28 +188,32 @@ export function StoreBottomSheet({
           >
             <PressableScale
               accessibilityRole="button"
-              className="h-12 flex-row items-center gap-1 rounded-card border border-control-line bg-surface pl-2 pr-4 active:bg-neutral-soft"
+              className="min-h-12 max-w-full flex-row items-center gap-1 rounded-card border border-control-line bg-surface py-2 pl-2 pr-4 active:bg-neutral-soft"
               onPress={onClearSelection}
             >
               <ChevronLeft color={colors.ink} size={20} />
-              <Text variant="label">{t('map.backToList')}</Text>
+              <Text className="min-w-0 shrink" variant="label">
+                {t(
+                  backToFacility
+                    ? 'navigation.backToFacility'
+                    : 'map.backToList',
+                )}
+              </Text>
             </PressableScale>
           </View>
-          <BottomSheetScrollView
-            contentContainerStyle={{
-              paddingBottom: insets.bottom,
-              paddingLeft: insets.left,
-              paddingRight: insets.right,
-            }}
-            showsVerticalScrollIndicator={false}
-          >
-            <StoreDetailContent
-              onSelectStore={onSelectStore}
-              sourceDate={sourceDate}
-              stores={stores}
-              userLocation={userLocation}
-            />
-          </BottomSheetScrollView>
+          <SelectionScroll
+            key={`${contextVersion}:${datasetRevision}`}
+            position={scrollPosition}
+            onPositionChange={onScrollPositionChange}
+            stores={stores}
+            task={task}
+            onSelectStore={onSelectStore}
+            sourceDate={sourceDate}
+            userLocation={userLocation}
+            notice={notice}
+            queryFailed={queryFailed}
+            onRetryQuery={onRetryQuery}
+          />
         </>
       ) : queryLoading && visibleStoreCount === 0 ? (
         <BottomSheetScrollView
@@ -251,31 +279,14 @@ export function StoreBottomSheet({
           </View>
         </BottomSheetScrollView>
       ) : (
-        <BottomSheetFlatList
-          ListHeaderComponent={header}
-          contentContainerStyle={{
-            paddingBottom: insets.bottom + 8,
-            paddingLeft: insets.left,
-            paddingRight: insets.right,
-          }}
-          data={sortedStores}
-          ItemSeparatorComponent={() => (
-            <View
-              className="bg-line"
-              style={{ height: 1, marginHorizontal: 20 }}
-            />
-          )}
-          keyboardShouldPersistTaps="handled"
-          keyExtractor={(store) => store.id}
-          renderItem={({ item }) => (
-            <StoreListRow
-              onPress={() => onSelectStore(item.id)}
-              store={item}
-              t={t}
-              userLocation={userLocation}
-            />
-          )}
-          showsVerticalScrollIndicator={false}
+        <ResultList
+          key={`${contextVersion}:${datasetRevision}`}
+          stores={sortedStores}
+          position={scrollPosition}
+          onPositionChange={onScrollPositionChange}
+          header={header}
+          onSelectStore={onSelectStore}
+          userLocation={userLocation}
         />
       )}
     </BottomSheet>
@@ -283,9 +294,7 @@ export function StoreBottomSheet({
 }
 
 function NearbyHeader({
-  abCount,
   count,
-  hasLocation,
   onChangeViewMode,
   queryFailed,
   queryLoading,
@@ -293,9 +302,7 @@ function NearbyHeader({
   t,
   viewMode,
 }: {
-  abCount: number;
   count: number;
-  hasLocation: boolean;
   queryFailed: boolean;
   queryLoading: boolean;
   searching: boolean;
@@ -305,7 +312,6 @@ function NearbyHeader({
 }) {
   const { fontScale, width } = useWindowDimensions();
   const stackHeader = width / fontScale < 360;
-  const bCount = Math.max(count - abCount, 0);
 
   return (
     <View
@@ -319,14 +325,14 @@ function NearbyHeader({
       >
         <View className="min-w-0 flex-1">
           <Text tone="muted" variant="caption">
-            {searching
-              ? t('map.searchResults')
-              : hasLocation
-                ? t('map.nearby')
-                : t('map.inThisArea')}
+            {searching ? t('map.searchResults') : t('map.inThisArea')}
           </Text>
           <View className="flex-row items-center gap-2">
-            <Text accessibilityLiveRegion="polite" tabularNums variant="title">
+            <Text
+              accessibilityLiveRegion="polite"
+              tabularNums
+              variant="subtitle"
+            >
               {queryLoading && count === 0
                 ? t('common.loading')
                 : t('map.visibleStores', { count })}
@@ -369,20 +375,6 @@ function NearbyHeader({
           />
         </View>
       </View>
-      {count > 0 ? (
-        <View className="flex-row gap-2">
-          <CountLegend
-            dotColor={colors.primary}
-            label={t('filters.ab')}
-            value={abCount}
-          />
-          <CountLegend
-            dotColor={colors.couponB}
-            label={t('filters.bOnly')}
-            value={bCount}
-          />
-        </View>
-      ) : null}
     </View>
   );
 }
@@ -410,75 +402,289 @@ function SheetHandle(_props: BottomSheetHandleProps) {
   );
 }
 
-function CountLegend({
-  dotColor,
-  label,
-  value,
+function positionAtOffset(
+  offset: number,
+  rows: Map<string, number>,
+): ListPosition {
+  const entries = [...rows].sort((a, b) => a[1] - b[1]);
+  const anchor = entries.findLast(([, y]) => y <= offset) ?? entries[0];
+  return {
+    offset,
+    storeId: anchor?.[0] ?? null,
+    relativeOffset: anchor ? offset - anchor[1] : 0,
+  };
+}
+
+function ResultList({
+  stores,
+  position,
+  onPositionChange,
+  header,
+  onSelectStore,
+  userLocation,
 }: {
-  dotColor: string;
-  label: string;
-  value: number;
+  stores: Store[];
+  position: ListPosition;
+  onPositionChange: (position: ListPosition) => void;
+  header: React.ReactElement;
+  onSelectStore: (id: string) => void;
+  userLocation?: LatLng | null;
 }) {
-  return (
-    <View className="flex-row items-center gap-2">
+  const insets = useSafeAreaInsets();
+  const listRef = useRef<BottomSheetFlatListMethods>(null);
+  const rows = useRef(new Map<string, number>());
+  const anchorIndex = stores.findIndex(
+    (store) => store.id === position.storeId,
+  );
+  const [fallback, setFallback] = useState(
+    !!position.storeId && anchorIndex < 0,
+  );
+  const pending = useRef(fallback ? INITIAL_LIST_POSITION : position);
+  const latestOffset = useRef(pending.current.offset);
+  const restored = useRef(false);
+  const attempts = useRef(0);
+  const retry = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { t } = useTranslation();
+  useEffect(
+    () => () => {
+      if (retry.current) clearTimeout(retry.current);
+    },
+    [],
+  );
+  const remember = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    restored.current = true;
+    latestOffset.current = event.nativeEvent.contentOffset.y;
+    onPositionChange(positionAtOffset(latestOffset.current, rows.current));
+  };
+  const restore = useCallback(() => {
+    if (restored.current || !listRef.current) return;
+    const saved = pending.current;
+    const y = saved.storeId ? rows.current.get(saved.storeId) : undefined;
+    if (y != null || saved.offset === 0 || anchorIndex < 0) {
+      listRef.current?.scrollToOffset({
+        offset: Math.max(
+          0,
+          y == null ? saved.offset : y + saved.relativeOffset,
+        ),
+        animated: false,
+      });
+      restored.current = true;
+    } else {
+      listRef.current?.scrollToIndex({
+        index: anchorIndex,
+        viewOffset: -saved.relativeOffset,
+        animated: false,
+      });
+    }
+  }, [anchorIndex]);
+  const Cell = useCallback(
+    (
+      props: ComponentProps<
+        NonNullable<FlatListProps<Store>['CellRendererComponent']>
+      >,
+    ) => (
       <View
-        className="h-2 w-2 rounded-full"
-        style={{ backgroundColor: dotColor }}
-      />
-      <Text tone="muted" variant="caption">
-        {label}
-      </Text>
-      <Text tabularNums variant="label">
-        {value}
-      </Text>
-    </View>
+        style={props.style}
+        onLayout={(event) => {
+          props.onLayout?.(event);
+          rows.current.set(props.item.id, event.nativeEvent.layout.y);
+          if (props.item.id === pending.current.storeId) restore();
+        }}
+      >
+        {props.children}
+      </View>
+    ),
+    [restore],
+  );
+  return (
+    <BottomSheetFlatList
+      ref={listRef}
+      CellRendererComponent={Cell}
+      ListHeaderComponent={
+        <>
+          {fallback ? (
+            <Text accessibilityLiveRegion="polite" className="px-5 pb-2">
+              {t('navigation.positionReset')}
+            </Text>
+          ) : null}
+          {header}
+        </>
+      }
+      contentContainerStyle={{
+        paddingBottom: insets.bottom + 8,
+        paddingLeft: insets.left,
+        paddingRight: insets.right,
+      }}
+      data={stores}
+      ItemSeparatorComponent={() => (
+        <View className="bg-line" style={{ height: 1, marginHorizontal: 20 }} />
+      )}
+      keyboardShouldPersistTaps="handled"
+      keyExtractor={(store) => store.id}
+      {...{
+        // Gorhom forwards onScroll at runtime although its FlatList type omits it.
+        onScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+          latestOffset.current = event.nativeEvent.contentOffset.y;
+          onPositionChange(
+            positionAtOffset(latestOffset.current, rows.current),
+          );
+        },
+      }}
+      onScrollBeginDrag={() => {
+        restored.current = true;
+      }}
+      onContentSizeChange={restore}
+      onScrollToIndexFailed={({ averageItemLength, index }) => {
+        if (restored.current || retry.current) return;
+        if (attempts.current++ >= 3) {
+          restored.current = true;
+          listRef.current?.scrollToOffset({ offset: 0, animated: false });
+          onPositionChange(INITIAL_LIST_POSITION);
+          setFallback(true);
+          return;
+        }
+        listRef.current?.scrollToOffset({
+          offset: Math.max(
+            0,
+            averageItemLength * index + pending.current.relativeOffset,
+          ),
+          animated: false,
+        });
+        retry.current = setTimeout(() => {
+          retry.current = null;
+          restore();
+        }, 100);
+      }}
+      onScrollEndDrag={remember}
+      renderItem={({ item }) => (
+        <StoreListRow
+          onPress={() => {
+            onPositionChange(
+              positionAtOffset(latestOffset.current, rows.current),
+            );
+            onSelectStore(item.id);
+          }}
+          store={item}
+          userLocation={userLocation}
+        />
+      )}
+      showsVerticalScrollIndicator={false}
+    />
   );
 }
 
-function StoreListRow({
-  onPress,
-  store,
-  t,
+function SelectionScroll({
+  position,
+  onPositionChange,
+  stores,
+  task,
+  onSelectStore,
+  sourceDate,
   userLocation,
+  notice,
+  queryFailed,
+  onRetryQuery,
 }: {
-  store: Store;
+  position: ListPosition;
+  onPositionChange: (position: ListPosition) => void;
+  stores: Store[];
+  task: BrowseTask;
+  onSelectStore: (id: string) => void;
+  sourceDate?: string | null;
   userLocation?: LatLng | null;
-  onPress: () => void;
-  t: TFunction;
+  notice: React.ReactNode;
+  queryFailed: boolean;
+  onRetryQuery: () => void;
 }) {
-  const isAb = store.couponType !== 'b_only';
-  const raw = getDistanceValueText(store, userLocation, t);
-  const distanceText =
-    userLocation && raw !== t('store.distanceUnavailable') ? raw : null;
-
+  const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
+  const ref = useRef<BottomSheetScrollViewMethods>(null);
+  const rows = useRef(new Map<string, number>());
+  const saved = useRef(position);
+  const latestOffset = useRef(position.offset);
+  const restored = useRef(false);
+  const detailY = useRef(0);
+  const remember = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    restored.current = true;
+    latestOffset.current = event.nativeEvent.contentOffset.y;
+    onPositionChange(positionAtOffset(latestOffset.current, rows.current));
+  };
+  const restore = () => {
+    if (restored.current || !ref.current || stores.length === 0) return;
+    const id = saved.current.storeId;
+    const anchorY = id ? rows.current.get(id) : undefined;
+    const missing = id && !stores.some((store) => store.id === id);
+    ref.current?.scrollTo({
+      y: Math.max(
+        0,
+        missing
+          ? 0
+          : anchorY == null
+            ? saved.current.offset
+            : anchorY + saved.current.relativeOffset,
+      ),
+      animated: false,
+    });
+    if (missing || anchorY != null || saved.current.offset === 0)
+      restored.current = true;
+  };
   return (
-    <Pressable
-      accessibilityLabel={`${store.name}, ${getCategoryText(store, t)}${distanceText ? `, ${distanceText}` : ''}`}
-      accessibilityRole="button"
-      className="flex-row items-center gap-3 px-5 py-3 active:bg-neutral-soft"
-      onPress={onPress}
+    <BottomSheetScrollView
+      ref={ref}
+      contentContainerStyle={{
+        paddingBottom: insets.bottom,
+        paddingLeft: insets.left,
+        paddingRight: insets.right,
+      }}
+      keyboardShouldPersistTaps="handled"
+      onScroll={(event) => {
+        latestOffset.current = event.nativeEvent.contentOffset.y;
+        onPositionChange(positionAtOffset(latestOffset.current, rows.current));
+      }}
+      onScrollBeginDrag={() => {
+        restored.current = true;
+      }}
+      onContentSizeChange={restore}
+      onScrollEndDrag={remember}
+      showsVerticalScrollIndicator={false}
     >
+      {notice}
+      {queryFailed ? (
+        <Button onPress={onRetryQuery}>{t('common.retry')}</Button>
+      ) : stores.length === 0 ? (
+        <ActivityIndicator
+          accessibilityLabel={t('common.loading')}
+          color={colors.primary}
+        />
+      ) : null}
       <View
-        className="items-center justify-center rounded-thumb px-2 py-1"
-        style={{
-          backgroundColor: isAb ? colors.primaryStrong : colors.couponB,
-          minWidth: 46,
+        onLayout={(event) => {
+          const y = event.nativeEvent.layout.y;
+          const delta = y - detailY.current;
+          rows.current.forEach((rowY, id) =>
+            rows.current.set(id, rowY + delta),
+          );
+          detailY.current = y;
+          restore();
         }}
       >
-        <Text tone={isAb ? 'inverse' : 'default'} variant="micro">
-          {isAb ? 'A・B' : 'B'}
-        </Text>
+        <StoreDetailContent
+          forceFacility={task === 'facility'}
+          onSelectStore={(id) => {
+            onPositionChange(
+              positionAtOffset(latestOffset.current, rows.current),
+            );
+            onSelectStore(id);
+          }}
+          onStoreLayout={(id, y) => {
+            rows.current.set(id, y + detailY.current);
+            restore();
+          }}
+          sourceDate={sourceDate}
+          stores={stores}
+          userLocation={userLocation}
+        />
       </View>
-      <View className="min-w-0 flex-1">
-        <Text numberOfLines={2} variant="label">
-          {store.name}
-        </Text>
-        <Text numberOfLines={2} tone="muted" variant="caption">
-          {getCategoryText(store, t)}
-        </Text>
-      </View>
-      {distanceText ? <Text variant="label">{distanceText}</Text> : null}
-      <ChevronRight color={colors.muted} size={20} />
-    </Pressable>
+    </BottomSheetScrollView>
   );
 }

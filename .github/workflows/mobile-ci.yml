@@ -39,7 +39,8 @@ jobs:
 
       - run: pnpm test
 
-      - run: pnpm dataset:build
-        timeout-minutes: 45
+      - run: pnpm dataset:fixture
+
+      - run: pnpm dataset:verify-seed
 
       - run: pnpm --dir apps/mobile exec expo install --check

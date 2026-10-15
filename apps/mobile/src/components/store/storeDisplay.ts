@@ -1,6 +1,5 @@
 import { distanceMeters } from '@koto/core';
 import type { Store } from '@koto/schema';
-import { Linking, Platform } from 'react-native';
 import type { TFunction } from 'i18next';
 
 import type { LatLng } from '@/src/features/map/mapStore';
@@ -21,9 +20,11 @@ export function getCategoryText(store: Store, t: TFunction): string {
 }
 
 export function getAddressText(store: Store): string {
-  const address = store.address.startsWith('東京都')
-    ? store.address
-    : `東京都江東区${store.address}`;
+  const sourceAddress = store.address.trim();
+  if (!sourceAddress) return '';
+  const address = sourceAddress.startsWith('東京都')
+    ? sourceAddress
+    : `東京都江東区${sourceAddress}`;
   if (store.floor && !address.includes(store.floor)) {
     return `${address}\n${store.floor}`;
   }
@@ -32,12 +33,28 @@ export function getAddressText(store: Store): string {
 
 export function getFacilityName(stores: Store[]): string | null {
   const first = stores[0];
-  return first?.mallName ?? first?.shoppingStreet ?? null;
+  for (const field of ['mallName', 'shoppingStreet'] as const) {
+    const name = first?.[field]?.trim();
+    if (name && stores.every((store) => store[field]?.trim() === name)) {
+      return name;
+    }
+  }
+  return null;
 }
 
 export function getFacilityAddress(stores: Store[]): string {
-  const first = stores[0];
-  return first ? getAddressText(first) : '';
+  const addresses = stores.map((store) =>
+    getAddressText({
+      ...store,
+      address: store.floor
+        ? store.address.replaceAll(store.floor, '').trim()
+        : store.address,
+      floor: null,
+    }),
+  );
+  return addresses[0] && addresses.every((address) => address === addresses[0])
+    ? addresses[0]
+    : '';
 }
 
 export function getDistanceValueText(
@@ -57,17 +74,4 @@ export function getDistanceValueText(
     return t('store.approxMeters', { value: Math.round(distance) });
   }
   return t('store.approxKilometers', { value: (distance / 1000).toFixed(1) });
-}
-
-export function openDirections(store: Store) {
-  const query = encodeURIComponent(`${store.name} ${getAddressText(store)}`);
-  const latLng =
-    store.lat !== null && store.lng !== null
-      ? `${store.lat},${store.lng}`
-      : query;
-  const url =
-    Platform.OS === 'ios'
-      ? `http://maps.apple.com/?q=${query}`
-      : `https://www.google.com/maps/search/?api=1&query=${latLng}`;
-  void Linking.openURL(url);
 }

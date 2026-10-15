@@ -23,7 +23,11 @@ type StoreMapProps = {
   selectedStoreIds: string[];
   showsUserLocation: boolean;
   onMapPress: () => void;
-  onRegionChangeComplete: (region: MapRegion) => void;
+  onRegionChangeComplete: (
+    region: MapRegion,
+    details: { isGesture?: boolean },
+  ) => void;
+  onPanDrag: () => void;
   onSelectStores: (stores: Store[]) => void;
   onClusterPress: (cluster: MarkerCluster<StoreLocationGroup>) => void;
 };
@@ -35,6 +39,7 @@ export function StoreMap({
   onClusterPress,
   onMapPress,
   onRegionChangeComplete,
+  onPanDrag,
   onSelectStores,
   selectedStoreIds,
   showsUserLocation,
@@ -48,6 +53,7 @@ export function StoreMap({
         initialRegion={initialRegion}
         onPress={onMapPress}
         onRegionChangeComplete={onRegionChangeComplete}
+        onPanDrag={onPanDrag}
         provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
         showsCompass={false}
         showsMyLocationButton={false}

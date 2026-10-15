@@ -17,3 +17,5 @@ data/latest/*.sqlite
 data/latest/*.json
 data/latest/*.geojson
 !data/latest/.gitkeep
+
+seed-verification.json

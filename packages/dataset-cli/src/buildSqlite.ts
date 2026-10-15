@@ -1,22 +1,12 @@
-import { mkdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-
 import type { DatasetMeta, Store } from '@koto/schema';
 
-import { latestDir, mobileSeedDir, outputPaths } from './paths';
-
-export async function buildSqlite(stores: Store[], meta: DatasetMeta): Promise<void> {
-  await mkdir(latestDir, { recursive: true });
-  await mkdir(mobileSeedDir, { recursive: true });
-  await rm(outputPaths.sqlite, { force: true });
-  await rm(outputPaths.seedSqlite, { force: true });
-
-  createDatabase(outputPaths.sqlite, stores, meta);
-  createDatabase(outputPaths.seedSqlite, stores, meta);
-}
-
-function createDatabase(filePath: string, stores: Store[], meta: DatasetMeta): void {
+export function createDatabase(
+  filePath: string,
+  stores: Store[],
+  meta: DatasetMeta,
+): void {
   const db = new DatabaseSync(filePath);
   db.exec(schemaSql);
 
@@ -32,7 +22,9 @@ function createDatabase(filePath: string, stores: Store[], meta: DatasetMeta): v
     )
   `);
 
-  const insertMeta = db.prepare('INSERT INTO dataset_meta (key, value) VALUES (?, ?)');
+  const insertMeta = db.prepare(
+    'INSERT INTO dataset_meta (key, value) VALUES (?, ?)',
+  );
 
   db.exec('BEGIN');
   for (const store of stores) {
@@ -69,7 +61,11 @@ function createDatabase(filePath: string, stores: Store[], meta: DatasetMeta): v
   }
 
   for (const [key, value] of Object.entries(meta)) {
-    insertMeta.run(key, String(value));
+    if (value === undefined) continue;
+    insertMeta.run(
+      key,
+      typeof value === 'object' ? JSON.stringify(value) : String(value),
+    );
   }
   db.exec('COMMIT');
   db.close();
@@ -80,7 +76,7 @@ function createDatabase(filePath: string, stores: Store[], meta: DatasetMeta): v
 }
 
 const schemaSql = `
-PRAGMA journal_mode = WAL;
+PRAGMA journal_mode = DELETE;
 
 CREATE TABLE dataset_meta (
   key TEXT PRIMARY KEY,
@@ -127,5 +123,7 @@ CREATE INDEX idx_stores_mall ON stores(mall_name);
 `;
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  throw new Error('Run packages/dataset-cli/src/index.ts to build SQLite from parsed data.');
+  throw new Error(
+    'Run packages/dataset-cli/src/index.ts to build SQLite from parsed data.',
+  );
 }
